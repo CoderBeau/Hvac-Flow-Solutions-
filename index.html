@@ -32,43 +32,22 @@
       .hero h1 { font-size: 2.25rem !important; line-height: 1.1 !important; }
     }
     /* ── Shared form styles ── */
-/* Tab Navigation Styling */
-.tabs-nav {
-  display: flex;
-  background: #f1f4f8;
-  padding: 0.5rem;
-  gap: 0.5rem;
-}
-.tab-btn {
-  flex: 1;
-  padding: 0.75rem;
-  border: none;
-  background: transparent;
-  border-radius: 10px;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 0.8rem;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.tab-btn.active {
-  background: var(--white);
-  color: var(--navy);
-  box-shadow: 0 4px 12px rgba(11,30,59,0.08);
-}
-
-/* Toggle Visibility */
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-
-/* Adjustments for the scrollable card */
-.card { height: auto; max-height: 90vh; }
-  </style>
-</head>
-<body class="bg-zinc-50 text-zinc-900 overflow-x-hidden">
-
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .hero-bg { background-size: cover; background-position: center; transition: background-image 0.6s ease-in-out; }
+    .tab-active { border-bottom: 4px solid #f97316; color: #f97316; font-weight: 600; }
+    .form-card { transition: all 0.3s ease; }
+    .form-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); }
+    #privacy-modal { transition: opacity 0.3s ease; }
+    @media (max-width: 640px) {
+      .nav-tabs { flex-direction: column; gap: 8px; }
+      .nav-tabs button { width: 100%; justify-content: center; padding: 14px 0; font-size: 15px; }
+      .hero { min-height: 85vh !important; }
+      .hero h1 { font-size: 2.25rem !important; line-height: 1.1 !important; }
+    }
+    
 <!-- NAVBAR with your embedded SVG logo -->
+    
 <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
   <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3 flex-shrink-0">
