@@ -162,11 +162,147 @@
 </header>
 
 <!-- ── HOMEOWNER CONTENT ── -->
-<div id="homeowner-content">
-  <section class="py-10 md:py-14 bg-white">
-    <div class="max-w-2xl mx-auto px-4">
-      <h2 class="text-2xl md:text-3xl font-bold text-center mb-1">Takes 45 Seconds &nbsp;•&nbsp; 100% Free</h2>
-      <p class="text-center text-zinc-500 mb-6 text-sm">Vetted local pros only &nbsp;•&nbsp; Same-day emergency options &nbsp;•&nbsp; No spam calls</p>
+<div id="hw-error" style="display:none;background:#fff5f6;border:1px solid rgba(200,16,46,0.22);border-radius:8px;padding:0.6rem 0.9rem;font-size:0.82rem;color:#C8102E;margin-bottom:1rem;"></div>
+
+<div id="hw-form">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+    <div>
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.3rem;">First Name <span style="color:#C8102E">*</span></label>
+      <input id="hw-first" type="text" placeholder="Maria" style="width:100%;border:1.5px solid #dce4ef;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.9rem;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.3rem;">Last Name <span style="color:#C8102E">*</span></label>
+      <input id="hw-last" type="text" placeholder="Rodriguez" style="width:100%;border:1.5px solid #dce4ef;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.9rem;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.3rem;">Phone <span style="color:#C8102E">*</span></label>
+      <input id="hw-phone" type="tel" placeholder="(210) 555-0100" style="width:100%;border:1.5px solid #dce4ef;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.9rem;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.3rem;">Email <span style="color:#C8102E">*</span></label>
+      <input id="hw-email" type="email" placeholder="maria@email.com" style="width:100%;border:1.5px solid #dce4ef;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.9rem;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.3rem;">ZIP Code <span style="color:#C8102E">*</span></label>
+      <input id="hw-zip" type="text" placeholder="78201" maxlength="5" style="width:100%;border:1.5px solid #dce4ef;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.9rem;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div>
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.3rem;">City</label>
+      <input id="hw-city" type="text" placeholder="San Antonio" style="width:100%;border:1.5px solid #dce4ef;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.9rem;font-family:inherit;outline:none;box-sizing:border-box;">
+    </div>
+    <div style="grid-column:1/-1;">
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.3rem;">Service Needed <span style="color:#C8102E">*</span></label>
+      <select id="hw-service" style="width:100%;border:1.5px solid #dce4ef;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.9rem;font-family:inherit;outline:none;background:#fff;box-sizing:border-box;">
+        <option value="" disabled selected>Select a service...</option>
+        <option>AC Repair</option>
+        <option>AC Replacement / New Unit</option>
+        <option>Heating Repair</option>
+        <option>Heating Replacement</option>
+        <option>Full System Installation</option>
+        <option>Maintenance / Tune-Up</option>
+        <option>Duct Cleaning / Repair</option>
+        <option>Not Sure – Need Inspection</option>
+      </select>
+    </div>
+    <div style="grid-column:1/-1;">
+      <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0B1E3B;margin-bottom:0.5rem;">How Urgent? <span style="color:#C8102E">*</span></label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;">
+        <label style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.55rem 0.3rem;border:1.5px solid #dce4ef;border-radius:8px;cursor:pointer;text-align:center;transition:all 0.15s;" id="urg-lbl-1">
+          <input type="radio" name="hw-urg" value="Emergency – Today" onchange="hlUrgency()" style="display:none;">
+          <span style="font-size:1rem;">🔥</span>
+          <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#5a6a80;" class="ut">Emergency Today</span>
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.55rem 0.3rem;border:1.5px solid #0B1E3B;border-radius:8px;cursor:pointer;text-align:center;background:#0B1E3B;" id="urg-lbl-2">
+          <input type="radio" name="hw-urg" value="This Week" checked onchange="hlUrgency()" style="display:none;">
+          <span style="font-size:1rem;">📅</span>
+          <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#fff;" class="ut">This Week</span>
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.55rem 0.3rem;border:1.5px solid #dce4ef;border-radius:8px;cursor:pointer;text-align:center;transition:all 0.15s;" id="urg-lbl-3">
+          <input type="radio" name="hw-urg" value="Just Getting Quotes" onchange="hlUrgency()" style="display:none;">
+          <span style="font-size:1rem;">💬</span>
+          <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#5a6a80;" class="ut">Just Quotes</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <button onclick="submitHomeowner()" id="hw-btn" style="width:100%;margin-top:1.1rem;padding:0.9rem;background:#C8102E;color:#fff;border:none;border-radius:9px;font-size:1rem;font-weight:800;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;box-shadow:0 4px 16px rgba(200,16,46,0.28);">
+    <span id="hw-btn-text">Get My Free Quotes</span>
+    <span id="hw-btn-arrow">→</span>
+    <span id="hw-spn" style="display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;"></span>
+  </button>
+  <p style="text-align:center;font-size:0.72rem;color:#9ca3af;margin-top:0.6rem;">By submitting you agree to be contacted by up to 3 HVAC contractors. We never sell your data.</p>
+</div>
+
+<!-- Success screen -->
+<div id="hw-success" style="display:none;text-align:center;padding:2rem 1rem;">
+  <div style="width:60px;height:60px;background:linear-gradient(135deg,#0B1E3B,#1a3358);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 6px 20px rgba(11,30,59,0.22);">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <h3 style="font-size:1.4rem;font-weight:900;color:#0B1E3B;margin-bottom:0.4rem;">Request Submitted!</h3>
+  <p style="color:#5a6a80;font-size:0.85rem;line-height:1.6;">Local HVAC pros are reviewing your request right now.<br>Expect a call or text within 1–2 hours.</p>
+</div>
+
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media(max-width:520px) {
+    #hw-form > div:first-child { grid-template-columns: 1fr !important; }
+    #hw-form > div:first-child > div[style*="grid-column"] { grid-column: auto !important; }
+  }
+</style>
+
+<script>
+const SHEET_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+function hlUrgency() {
+  const labels = [document.getElementById('urg-lbl-1'), document.getElementById('urg-lbl-2'), document.getElementById('urg-lbl-3')];
+  labels.forEach(lbl => {
+    const inp = lbl.querySelector('input');
+    const txt = lbl.querySelector('.ut');
+    if (inp.checked) {
+      lbl.style.borderColor = '#0B1E3B'; lbl.style.background = '#0B1E3B'; txt.style.color = '#fff';
+    } else {
+      lbl.style.borderColor = '#dce4ef'; lbl.style.background = '#fff'; txt.style.color = '#5a6a80';
+    }
+  });
+}
+
+function submitHomeowner() {
+  const err = document.getElementById('hw-error');
+  const g = id => document.getElementById(id).value.trim();
+  const urgency = document.querySelector('input[name="hw-urg"]:checked')?.value || '';
+  const firstName=g('hw-first'), lastName=g('hw-last'), phone=g('hw-phone'),
+        email=g('hw-email'), zip=g('hw-zip'), city=g('hw-city'), service=g('hw-service');
+  err.style.display = 'none';
+  if (!firstName||!lastName||!phone||!email||!zip||!service||!urgency) { err.textContent='Please fill out all required fields.'; err.style.display='block'; return; }
+  if (!/^\d{5}$/.test(zip)) { err.textContent='Please enter a valid 5-digit ZIP code.'; err.style.display='block'; return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { err.textContent='Please enter a valid email address.'; err.style.display='block'; return; }
+  const btn=document.getElementById('hw-btn'), txt=document.getElementById('hw-btn-text'),
+        arr=document.getElementById('hw-btn-arrow'), spn=document.getElementById('hw-spn');
+  btn.disabled=true; txt.textContent='Submitting...'; arr.style.display='none'; spn.style.display='block';
+  fetch(SHEET_URL, {
+    method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'Homeowner',firstName,lastName,phone,email,zip,city,service,urgency,
+      submittedAt:new Date().toLocaleString('en-US',{timeZone:'America/Chicago'})})
+  }).then(() => {
+    document.getElementById('hw-form').style.display = 'none';
+    document.getElementById('hw-success').style.display = 'block';
+  }).catch(() => {
+    err.textContent='Something went wrong. Please try again.'; err.style.display='block';
+    btn.disabled=false; txt.textContent='Get My Free Quotes'; arr.style.display='inline'; spn.style.display='none';
+  });
+}
+
+document.getElementById('hw-phone').addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g,'').substring(0,10);
+  if (v.length>=6) v=`(${v.slice(0,3)}) ${v.slice(3,6)}-${v.slice(6)}`;
+  else if (v.length>=3) v=`(${v.slice(0,3)}) ${v.slice(3)}`;
+  e.target.value = v;
+});
+document.getElementById('hw-zip').addEventListener('input', function(e) {
+  e.target.value = e.target.value.replace(/\D/g,'').substring(0,5);
+});
+</script>
 
 <script type="text/javascript">
   var load = 0;
