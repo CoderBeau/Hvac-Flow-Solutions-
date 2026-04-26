@@ -161,77 +161,12 @@
   <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/70"></div>
 </header>
 
-<!-- HOMEOWNER CONTENT -->
-<div class="bg-white rounded-2xl shadow-xl border border-zinc-100 overflow-hidden">
-  <div class="form-card-header">
-    <div class="fch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-    <div><div class="fch-title">Homeowner Request</div><div class="fch-sub">Match with up to 3 vetted local pros</div></div>
-    <div class="fch-chips"><span class="fch-chip">✓ Free</span><span class="fch-chip">⚡ Fast</span><span class="fch-chip">🔒 No Spam</span></div>
-  </div>
-  <div class="p-5 md:p-6">
-    <div class="form-steps">
-      <div class="fs on"><span class="fs-num">1</span> Your Info</div>
-      <div class="fs-line"></div>
-      <div class="fs on"><span class="fs-num">2</span> Service</div>
-      <div class="fs-line"></div>
-      <div class="fs"><span class="fs-num">3</span> Match</div>
-    </div>
-    <div id="hw-error" class="err-banner"></div>
-    <div id="hw-form">
-      <div class="fg">
-        <div class="ff"><label class="fl">First Name <span class="req">*</span></label><input class="fi" type="text" id="hw-first" placeholder="Maria"/></div>
-        <div class="ff"><label class="fl">Last Name <span class="req">*</span></label><input class="fi" type="text" id="hw-last" placeholder="Rodriguez"/></div>
-        <div class="ff"><label class="fl">Phone <span class="req">*</span></label><input class="fi" type="tel" id="hw-phone" placeholder="(210) 555-0100"/></div>
-        <div class="ff"><label class="fl">Email <span class="req">*</span></label><input class="fi" type="email" id="hw-email" placeholder="maria@email.com"/></div>
-        <div class="ff"><label class="fl">ZIP Code <span class="req">*</span></label><input class="fi" type="text" id="hw-zip" placeholder="78201" maxlength="5"/></div>
-        <div class="ff"><label class="fl">City</label><input class="fi" type="text" id="hw-city" placeholder="San Antonio"/></div>
-        <div class="ff ff-full">
-          <label class="fl">Service Needed <span class="req">*</span></label>
-          <select class="fs-el" id="hw-service">
-            <option value="" disabled selected>Select a service...</option>
-            <option>AC Repair</option><option>AC Replacement / New Unit</option>
-            <option>Heating Repair</option><option>Heating Replacement</option>
-            <option>Full System Installation</option><option>Maintenance / Tune-Up</option>
-            <option>Duct Cleaning / Repair</option><option>Not Sure – Need Inspection</option>
-          </select>
-        </div>
-        <div class="ff ff-full">
-          <label class="fl">How Urgent? <span class="req">*</span></label>
-          <div class="urg-grid">
-            <div class="urg-opt"><input type="radio" name="hw-urg" id="hw-u1" value="Emergency – Today"/><label class="urg-lbl" for="hw-u1"><span class="ui">🔥</span><span class="ut">Emergency Today</span></label></div>
-            <div class="urg-opt"><input type="radio" name="hw-urg" id="hw-u2" value="This Week" checked/><label class="urg-lbl" for="hw-u2"><span class="ui">📅</span><span class="ut">This Week</span></label></div>
-            <div class="urg-opt"><input type="radio" name="hw-urg" id="hw-u3" value="Just Getting Quotes"/><label class="urg-lbl" for="hw-u3"><span class="ui">💬</span><span class="ut">Just Quotes</span></label></div>
-          </div>
-        </div>
-        <div class="ff ff-full">
-          <label class="fl">Brief Description <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#b0bbc8;font-size:0.65rem;">(optional)</span></label>
-          <textarea class="fta" id="hw-desc" placeholder="e.g. AC stopped blowing cold air, unit is 8 years old..."></textarea>
-        </div>
-      </div>
-      <button class="sub-btn mt-3" id="hw-btn" onclick="submitHomeowner()">
-        <span id="hw-btn-text">Get My Free Quotes</span>
-        <span id="hw-btn-arrow">→</span>
-        <span class="spn" id="hw-spn"></span>
-      </button>
-      <p class="text-center text-zinc-400 text-xs mt-3 leading-relaxed">By submitting you agree to be contacted by up to 3 HVAC contractors. We never sell your data.</p>
-    </div>
-    <div class="success-screen" id="hw-success">
-      <div class="success-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <h3>Request Submitted!</h3>
-      <p>Local HVAC pros in your area are reviewing your request right now.</p>
-      <ul class="success-list">
-        <li>You'll receive a call or text within 1–2 hours</li>
-        <li>Up to 3 vetted contractors will compete for your job</li>
-        <li>Compare quotes — no obligation to hire</li>
-      </ul>
-    </div>
-  </div>
-</div>
-<div style="width:100%; overflow:hidden;">
-  <iframe 
-    src="https://docs.google.com/forms/d/e/1FAIpQLSc6s5hvSSf4c3tkYYyBQlV9QMbCqDm2MDcJ_Mef87tFUF0U1A/viewform?usp=header" 
-    ...
-</div>
+<!-- ── HOMEOWNER CONTENT ── -->
+<div id="homeowner-content">
+  <section class="py-10 md:py-14 bg-white">
+    <div class="max-w-2xl mx-auto px-4">
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-1">Takes 45 Seconds &nbsp;•&nbsp; 100% Free</h2>
+      <p class="text-center text-zinc-500 mb-6 text-sm">Vetted local pros only &nbsp;•&nbsp; Same-day emergency options &nbsp;•&nbsp; No spam calls</p>
 
 <script type="text/javascript">
   var load = 0;
