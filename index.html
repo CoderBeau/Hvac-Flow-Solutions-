@@ -134,16 +134,50 @@
       <span class="text-orange-600 text-2xl md:text-3xl font-bold">SOLUTIONS</span>
     </div>
     
-   <div class="nav-tabs flex border-b border-zinc-200 w-full max-w-md md:max-w-none mx-auto md:mx-0">
-      <button onclick="switchTab(0)" id="tab-home" class="tab-active flex-1 px-6 py-3 text-base md:text-lg flex items-center justify-center gap-2">
-        <i class="fas fa-home text-sm"></i> <span class="hidden sm:inline">Homeowners</span>
-      </button>
-      <button onclick="switchTab(1)" id="tab-contractors" class="flex-1 px-6 py-3 text-base md:text-lg flex items-center justify-center gap-2 text-zinc-500 hover:text-zinc-900 transition">
-        <i class="fas fa-briefcase text-sm"></i> <span class="hidden sm:inline">Contractors</span>
-      </button>
+  <div class="card">
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('homeowner')">For Homeowners</button>
+    <button class="tab-btn" onclick="switchTab('contractor')">For Contractors</button>
+  </div>
+
+  <div class="card-header">
+    <div class="header-icon" id="headerIcon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="header-text">
+      <h2 id="headerTitle">Homeowner Request</h2>
+      <p id="headerSub">Match with up to 3 vetted local HVAC pros</p>
     </div>
   </div>
-</nav>
+
+  <div class="card-body">
+    <div id="formView">
+      <div id="homeownerFields" class="tab-content active">
+        <div class="field-grid">
+           <div class="field"><label>First Name <span class="req">*</span></label><input type="text" id="firstName" placeholder="Maria"/></div>
+           <div class="field"><label>Last Name <span class="req">*</span></label><input type="text" id="lastName" placeholder="Rodriguez"/></div>
+           </div>
+      </div>
+
+      <div id="contractorFields" class="tab-content">
+        <div class="field-grid">
+           <div class="field field-full"><label>Company Name <span class="req">*</span></label><input type="text" id="companyName" placeholder="San Antonio AC Experts"/></div>
+           <div class="field"><label>Contact Name <span class="req">*</span></label><input type="text" id="contactName" placeholder="Beau"/></div>
+           <div class="field"><label>Business Phone <span class="req">*</span></label><input type="tel" id="bizPhone" placeholder="(210) 555-0100"/></div>
+           <div class="field field-full"><label>Service Areas (ZIPs)</label><textarea id="areas" placeholder="e.g. 78201, 78209..."></textarea></div>
+        </div>
+      </div>
+
+      <div class="submit-wrap">
+        <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
+          <span id="btnText">Get My Free Quotes</span>
+          <span id="btnArrow">→</span>
+          <span class="spinner" id="spinner"></span>
+        </button>
+      </div>
+    </div>
+    </div>
+</div>
 
 <!-- HERO -->
 <header id="hero" class="hero-bg min-h-[85vh] md:h-screen flex items-center text-white relative overflow-hidden">
