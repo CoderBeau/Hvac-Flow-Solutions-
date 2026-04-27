@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /sitemap.xml
-
-Sitemap: https://boosthvacleads.com/sitemap.xml
