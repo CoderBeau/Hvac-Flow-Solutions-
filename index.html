@@ -1,42 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="canonical" href="https://boosthvacleads.com/" />
-<title>Boost HVAC Leads | Top-Rated HVAC Services in Texas</title>
-<meta name="description" content="Get fast, reliable HVAC repair, installation, and maintenance from local Texas experts. 35+ homeowners matched today. Get your free quote now!">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta charset="UTF-8">
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-8H5MND1Y6W"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-8H5MND1Y6W');
-</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HVAC Flow Solutions | Texas HVAC Leads & Free Matching</title>
+  <meta name="description" content="Homeowners: Get matched with local pros for free. Contractors: Buy exclusive high-intent leads in San Antonio, Dallas, Austin, Houston & El Paso.">
   <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap');
     body { font-family: 'Inter', sans-serif; }
     .hero-bg { background-size: cover; background-position: center; transition: background-image 0.6s ease-in-out; }
     .tab-active { border-bottom: 4px solid #f97316; color: #f97316; font-weight: 600; }
     .form-card { transition: all 0.3s ease; }
     .form-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); }
     #privacy-modal { transition: opacity 0.3s ease; }
-    @media (max-width: 640px) {
-      .nav-tabs { flex-direction: column; gap: 8px; }
-      .nav-tabs button { width: 100%; justify-content: center; padding: 14px 0; font-size: 15px; }
-      .hero { min-height: 85vh !important; }
-      .hero h1 { font-size: 2.25rem !important; line-height: 1.1 !important; }
+
+    /* ── Custom form styles ── */
+    :root { --navy:#0B1E3B; --navy-light:#1a3358; --red:#C8102E; --border:#dce4ef; }
+    .fch { background:linear-gradient(135deg,var(--navy),var(--navy-light)); padding:1rem 1.25rem; display:flex; align-items:center; gap:0.75rem; border-radius:16px 16px 0 0; }
+    .fch-icon { width:34px;height:34px;background:rgba(200,16,46,0.18);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .fch-icon svg { width:17px;height:17px;color:#ff4d6d; }
+    .fch-title { font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.88rem;color:#fff; }
+    .fch-sub { font-size:0.7rem;color:rgba(255,255,255,0.5);margin-top:0.1rem; }
+    .fch-chips { margin-left:auto;display:flex;gap:0.3rem; }
+    .fch-chip { background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:100px;padding:0.15rem 0.45rem;font-size:0.6rem;font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap; }
+    .fg { display:grid;grid-template-columns:1fr 1fr;gap:0.65rem; }
+    .ff { margin-bottom:0; }
+    .ff-full { grid-column:1/-1; }
+    .fl { display:block;font-size:0.63rem;font-weight:700;font-family:'Montserrat',sans-serif;letter-spacing:0.07em;text-transform:uppercase;color:var(--navy);margin-bottom:0.28rem; }
+    .fl .req { color:var(--red);margin-left:2px; }
+    .fi,.fse,.fta { width:100%;background:#fff;border:1.5px solid var(--border);border-radius:7px;padding:0.55rem 0.75rem;color:#1a1a2e;font-family:'Inter',sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.15s,box-shadow 0.15s;appearance:none;box-sizing:border-box; }
+    .fi::placeholder,.fta::placeholder { color:#b0bbc8; }
+    .fi:focus,.fse:focus,.fta:focus { border-color:var(--navy);box-shadow:0 0 0 3px rgba(11,30,59,0.08); }
+    .fse { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%235a6a80' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:1.8rem;cursor:pointer; }
+    .urg-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem; }
+    .urg-opt { position:relative; }
+    .urg-opt input { position:absolute;opacity:0;width:0;height:0; }
+    .urg-lbl { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.1rem;padding:0.45rem 0.2rem;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;transition:all 0.15s;text-align:center; }
+    .urg-lbl .ui { font-size:0.9rem; }
+    .urg-lbl .ut { font-size:0.58rem;font-weight:700;font-family:'Montserrat',sans-serif;color:#5a6a80;text-transform:uppercase;letter-spacing:0.03em;line-height:1.2; }
+    .urg-opt input:checked + .urg-lbl { border-color:var(--navy);background:var(--navy); }
+    .urg-opt input:checked + .urg-lbl .ut { color:#fff; }
+    .pkg-grid { display:grid;grid-template-columns:1fr 1fr;gap:0.45rem; }
+    .pkg-opt { position:relative; }
+    .pkg-opt input { position:absolute;opacity:0;width:0;height:0; }
+    .pkg-lbl { display:flex;flex-direction:column;padding:0.6rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s;position:relative; }
+    .pkg-pop { position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:#F5A623;color:var(--navy);font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.5rem;letter-spacing:0.07em;text-transform:uppercase;padding:0.1rem 0.4rem;border-radius:100px;white-space:nowrap; }
+    .pkg-name { font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.68rem;color:var(--navy);text-transform:uppercase;letter-spacing:0.04em; }
+    .pkg-leads { font-size:0.92rem;font-weight:700;color:var(--navy);margin:0.08rem 0; }
+    .pkg-price { font-size:0.67rem;color:#5a6a80; }
+    .pkg-opt input:checked + .pkg-lbl { border-color:var(--navy);background:linear-gradient(135deg,var(--navy),var(--navy-light)); }
+    .pkg-opt input:checked + .pkg-lbl .pkg-name,
+    .pkg-opt input:checked + .pkg-lbl .pkg-leads { color:#fff; }
+    .pkg-opt input:checked + .pkg-lbl .pkg-price { color:rgba(255,255,255,0.55); }
+    .cb-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:0.35rem; }
+    .cb-opt { position:relative; }
+    .cb-opt input { position:absolute;opacity:0;width:0;height:0; }
+    .cb-lbl { display:flex;align-items:center;justify-content:center;padding:0.4rem 0.2rem;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;transition:all 0.15s;font-size:0.63rem;font-weight:700;font-family:'Montserrat',sans-serif;color:#5a6a80;text-transform:uppercase;letter-spacing:0.03em;text-align:center; }
+    .cb-opt input:checked + .cb-lbl { border-color:var(--navy);background:var(--navy);color:#fff; }
+    .sub-btn { width:100%;padding:0.82rem 1.25rem;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.92rem;letter-spacing:0.04em;cursor:pointer;transition:background 0.15s,transform 0.13s,box-shadow 0.15s;box-shadow:0 4px 14px rgba(200,16,46,0.28);display:flex;align-items:center;justify-content:center;gap:0.4rem; }
+    .sub-btn:hover { background:#a50d25;transform:translateY(-1px); }
+    .sub-btn:disabled { opacity:0.65;cursor:not-allowed;transform:none; }
+    .err-msg { background:#fff5f6;border:1px solid rgba(200,16,46,0.22);border-radius:7px;padding:0.5rem 0.75rem;font-size:0.76rem;color:var(--red);margin-bottom:0.65rem;display:none; }
+    .spn { width:15px;height:15px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spnspin 0.65s linear infinite;display:none; }
+    @keyframes spnspin { to { transform:rotate(360deg); } }
+    .sec-label { font-size:0.63rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9ca3af;border-bottom:1px solid #f1f5f9;padding-bottom:0.35rem;margin-bottom:0.65rem;margin-top:0.75rem; }
+    .sec-label:first-child { margin-top:0; }
+    .success-screen { display:none;text-align:center;padding:1.5rem 1rem; }
+    .scc { width:56px;height:56px;background:linear-gradient(135deg,var(--navy),var(--navy-light));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 0.85rem;box-shadow:0 6px 18px rgba(11,30,59,0.2); }
+    .scc svg { width:24px;height:24px;color:#fff; }
+    .success-screen h3 { font-family:'Montserrat',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy);margin-bottom:0.3rem; }
+    .success-screen p { color:#5a6a80;font-size:0.82rem;line-height:1.6; }
+    .slist { display:flex;flex-direction:column;gap:0.35rem;margin-top:0.85rem;text-align:left; }
+    .slist li { display:flex;align-items:center;gap:0.45rem;font-size:0.76rem;color:var(--navy);font-weight:500;list-style:none; }
+    .slist li::before { content:'✓';width:16px;height:16px;background:rgba(11,30,59,0.08);border-radius:50%;font-size:0.52rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .nxt { margin-top:0.85rem;background:#f4f6fa;border-radius:9px;padding:0.8rem 0.9rem;text-align:left; }
+    .nxt h4 { font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);margin-bottom:0.5rem; }
+    .nxt-i { display:flex;gap:0.5rem;font-size:0.76rem;color:#1a1a2e;margin-bottom:0.4rem;align-items:flex-start; }
+    .nxt-n { width:17px;height:17px;background:var(--navy);color:#fff;border-radius:50%;font-size:0.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px; }
+    @media(max-width:520px) {
+      .fg { grid-template-columns:1fr; }
+      .ff-full { grid-column:auto; }
+      .fch-chips { display:none; }
+      .pkg-grid { grid-template-columns:1fr 1fr; }
+      .cb-grid { grid-template-columns:repeat(2,1fr); }
     }
-   
   </style>
 </head>
 <body class="bg-zinc-50 text-zinc-900 overflow-x-hidden">
-  
-<!-- NAVBAR with your embedded SVG logo -->
+
+<!-- NAVBAR -->
 <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
   <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3 flex-shrink-0">
@@ -44,18 +98,18 @@
       <span class="text-2xl md:text-3xl font-bold tracking-tighter">HVAC FLOW</span>
       <span class="text-orange-600 text-2xl md:text-3xl font-bold">SOLUTIONS</span>
     </div>
-    
     <div class="nav-tabs flex border-b border-zinc-200 w-full max-w-md md:max-w-none mx-auto md:mx-0">
-      <button onclick="switchTab(0)" id="tab-home" class="tab-active flex-1 px-6 py-3 text-base md:text-lg flex items-center justify-center gap-2">
-        <i class="fas fa-home text-sm"></i> <span class="hidden sm:inline">Homeowners</span>
+      <!-- FIXED: removed hidden sm:inline so labels always show on mobile -->
+      <button onclick="switchTab(0)" id="tab-home" class="tab-active flex-1 px-4 py-3 text-sm md:text-lg flex items-center justify-center gap-2">
+        <i class="fas fa-home text-sm"></i> <span>Homeowners</span>
       </button>
-      <button onclick="switchTab(1)" id="tab-contractors" class="flex-1 px-6 py-3 text-base md:text-lg flex items-center justify-center gap-2 text-zinc-500 hover:text-zinc-900 transition">
-        <i class="fas fa-briefcase text-sm"></i> <span class="hidden sm:inline">Contractors</span>
+      <button onclick="switchTab(1)" id="tab-contractors" class="flex-1 px-4 py-3 text-sm md:text-lg flex items-center justify-center gap-2 text-zinc-500 hover:text-zinc-900 transition">
+        <i class="fas fa-briefcase text-sm"></i> <span>Contractors</span>
       </button>
     </div>
   </div>
 </nav>
-    
+
 <!-- HERO -->
 <header id="hero" class="hero-bg min-h-[85vh] md:h-screen flex items-center text-white relative overflow-hidden">
   <div class="max-w-5xl mx-auto px-4 md:px-6 text-center z-10">
@@ -63,7 +117,6 @@
       Broken AC in Texas Heat?<br>Get Local Pros Fighting for Your Job
     </h1>
     <p id="hero-subtitle" class="text-lg md:text-2xl mb-8">San Antonio • Dallas • Austin • Houston • El Paso</p>
-    
     <div class="inline-flex items-center gap-3 bg-white/10 backdrop-blur-2xl px-6 py-2.5 md:px-8 md:py-3 rounded-3xl mb-10 text-sm md:text-base">
       <span class="animate-pulse text-xl">🔥</span>
       <span id="live-counter" class="font-medium">31 Texas homeowners matched today</span>
@@ -72,35 +125,70 @@
   <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/70"></div>
 </header>
 
-<!-- ── HOMEOWNER CONTENT ── -->
-<div style="width: 100%; max-width: 650px; margin: 0 auto;">
-  <iframe 
-    src="homeowner-form.html" 
-    id="homeowner-iframe" 
-    style="width: 100%; border: none; overflow: hidden; transition: height 0.3s ease;" 
-    scrolling="no">
-  </iframe>
-</div>
+<!-- ══════════════════════════════════════════ -->
+<!--  HOMEOWNER CONTENT                         -->
+<!-- ══════════════════════════════════════════ -->
+<div id="homeowner-content">
+  <section class="py-12 md:py-16 bg-white">
+    <div class="max-w-2xl mx-auto px-4">
+      <div class="form-card bg-white border border-zinc-100 shadow-2xl rounded-3xl p-6 md:p-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-center mb-2">Takes 45 Seconds • 100% Free</h2>
+        <p class="text-center text-zinc-500 mb-6 text-sm">Vetted local pros only • Same-day emergency options • No spam calls</p>
 
-<script>
-  // This listener catches the "resize" message from your form's script
-  window.addEventListener('message', function(e) {
-    if (e.data.type === 'resize' && e.data.id === 'homeowner-iframe') {
-      document.getElementById('homeowner-iframe').style.height = e.data.height + 'px';
-    }
-  }, false);
-</script>
-  
-<script type="text/javascript">
-  var load = 0;
-  document.getElementById('gform').onload = function(){
-    /* The first load is the form appearing. The second load is the 'Thank You' submit. */
-    load++;
-    if(load > 1){
-      window.location = "https://boosthvacleads.com/thanks.html";
-    }
-  }
-</script>
+        <!-- Homeowner form card -->
+        <div class="rounded-2xl overflow-hidden border border-zinc-100">
+          <div class="fch">
+            <div class="fch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+            <div><div class="fch-title">Homeowner Request</div><div class="fch-sub">Match with up to 3 vetted local pros</div></div>
+            <div class="fch-chips"><span class="fch-chip">✓ Free</span><span class="fch-chip">⚡ Fast</span><span class="fch-chip">🔒 No Spam</span></div>
+          </div>
+          <div class="p-4 md:p-5 bg-white">
+            <div id="hw-err" class="err-msg"></div>
+            <div id="hw-form">
+              <div class="fg">
+                <div class="ff"><label class="fl">First Name <span class="req">*</span></label><input class="fi" type="text" id="hw-first" placeholder="Maria"/></div>
+                <div class="ff"><label class="fl">Last Name <span class="req">*</span></label><input class="fi" type="text" id="hw-last" placeholder="Rodriguez"/></div>
+                <div class="ff"><label class="fl">Phone <span class="req">*</span></label><input class="fi" type="tel" id="hw-phone" placeholder="(210) 555-0100"/></div>
+                <div class="ff"><label class="fl">Email <span class="req">*</span></label><input class="fi" type="email" id="hw-email" placeholder="maria@email.com"/></div>
+                <div class="ff"><label class="fl">ZIP <span class="req">*</span></label><input class="fi" type="text" id="hw-zip" placeholder="78201" maxlength="5"/></div>
+                <div class="ff"><label class="fl">City</label><input class="fi" type="text" id="hw-city" placeholder="San Antonio"/></div>
+                <div class="ff ff-full">
+                  <label class="fl">Service Needed <span class="req">*</span></label>
+                  <select class="fse" id="hw-service">
+                    <option value="" disabled selected>Select a service...</option>
+                    <option>AC Repair</option><option>AC Replacement / New Unit</option>
+                    <option>Heating Repair</option><option>Heating Replacement</option>
+                    <option>Full System Installation</option><option>Maintenance / Tune-Up</option>
+                    <option>Duct Cleaning / Repair</option><option>Not Sure – Need Inspection</option>
+                  </select>
+                </div>
+                <div class="ff ff-full">
+                  <label class="fl">How Urgent? <span class="req">*</span></label>
+                  <div class="urg-grid">
+                    <div class="urg-opt"><input type="radio" name="hw-urg" id="hw-u1" value="Emergency – Today"/><label class="urg-lbl" for="hw-u1"><span class="ui">🔥</span><span class="ut">Emergency</span></label></div>
+                    <div class="urg-opt"><input type="radio" name="hw-urg" id="hw-u2" value="This Week" checked/><label class="urg-lbl" for="hw-u2"><span class="ui">📅</span><span class="ut">This Week</span></label></div>
+                    <div class="urg-opt"><input type="radio" name="hw-urg" id="hw-u3" value="Just Getting Quotes"/><label class="urg-lbl" for="hw-u3"><span class="ui">💬</span><span class="ut">Just Quotes</span></label></div>
+                  </div>
+                </div>
+              </div>
+              <button class="sub-btn mt-3" id="hw-btn" onclick="submitHomeowner()">
+                <span id="hw-bt">Get My Free Quotes</span>
+                <span id="hw-ba">→</span>
+                <span class="spn" id="hw-sp"></span>
+              </button>
+              <p class="text-center text-zinc-400 text-xs mt-2">By submitting you agree to be contacted by up to 3 HVAC contractors. We never sell your data.</p>
+            </div>
+            <div class="success-screen" id="hw-success">
+              <div class="scc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <h3>Request Submitted!</h3>
+              <p>Local HVAC pros are reviewing your request.<br>Expect a call or text within 1–2 hours.</p>
+              <ul class="slist">
+                <li>Up to 3 vetted contractors will reach out</li>
+                <li>Compare quotes — no obligation to hire</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -118,67 +206,104 @@
   </section>
 </div>
 
-<!-- CONTRACTOR CONTENT -->
+<!-- ══════════════════════════════════════════ -->
+<!--  CONTRACTOR CONTENT                        -->
+<!-- ══════════════════════════════════════════ -->
 <div id="contractor-content" class="hidden">
   <section id="pricing" class="py-12 md:py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4">
       <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Exclusive Texas HVAC Leads</h2>
       <p class="text-center text-zinc-600 mb-10">100% exclusive • Most delivered in 3–7 business days • Money-back on invalid leads</p>
-      
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
-          <h3 class="text-xl font-bold">Tester</h3>
-          <p class="text-4xl font-bold text-orange-600 my-3">$75</p>
-          <p class="text-xs md:text-sm text-zinc-500 mb-6">5 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
-          <h3 class="text-xl font-bold">Starter</h3>
-          <p class="text-4xl font-bold text-orange-600 my-3">$150</p>
-          <p class="text-xs md:text-sm text-zinc-500 mb-6">10 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
-        <div class="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-3xl p-6 text-center shadow-2xl relative scale-105">
-          <div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-white text-orange-600 px-5 py-1 rounded-full text-xs font-bold">MOST POPULAR</div>
-          <h3 class="text-xl font-bold">Growth</h3>
-          <p class="text-4xl font-bold my-3">$375</p>
-          <p class="text-xs md:text-sm opacity-90 mb-6">25 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-white text-zinc-900 py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
-          <h3 class="text-xl font-bold">Pro Partner</h3>
-          <p class="text-4xl font-bold text-orange-600 my-3">$700</p>
-          <p class="text-xs md:text-sm text-zinc-500 mb-6">50 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
-          <h3 class="text-xl font-bold">Elite</h3>
-          <p class="text-4xl font-bold text-orange-600 my-3">$1,300</p>
-          <p class="text-xs md:text-sm text-zinc-500 mb-6">100 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Tester</h3><p class="text-4xl font-bold text-orange-600 my-3">$75</p><p class="text-xs md:text-sm text-zinc-500 mb-6">5 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Starter</h3><p class="text-4xl font-bold text-orange-600 my-3">$150</p><p class="text-xs md:text-sm text-zinc-500 mb-6">10 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-3xl p-6 text-center shadow-2xl relative scale-105"><div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-white text-orange-600 px-5 py-1 rounded-full text-xs font-bold">MOST POPULAR</div><h3 class="text-xl font-bold">Growth</h3><p class="text-4xl font-bold my-3">$375</p><p class="text-xs md:text-sm opacity-90 mb-6">25 Exclusive Leads</p><a href="#contractor-form" class="block bg-white text-zinc-900 py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Pro Partner</h3><p class="text-4xl font-bold text-orange-600 my-3">$700</p><p class="text-xs md:text-sm text-zinc-500 mb-6">50 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Elite</h3><p class="text-4xl font-bold text-orange-600 my-3">$1,300</p><p class="text-xs md:text-sm text-zinc-500 mb-6">100 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
       </div>
     </div>
   </section>
 
   <section id="contractor-form" class="py-12 bg-zinc-100">
-    <div class="max-w-4xl mx-auto px-4">
-      <div class="form-card bg-white border border-zinc-100 shadow-2xl rounded-3xl p-6 md:p-10">
-        <h2 class="text-3xl md:text-4xl font-bold text-center mb-3">Start Receiving Leads Today</h2>
-        <p class="text-center text-zinc-600 mb-8 text-sm md:text-base">Takes 60 seconds • Payment link sent after form</p>
-        <iframe src="contractor-form.html" width="100%" height="950" frameborder="0" scrolling="no"></iframe>
+    <div class="max-w-2xl mx-auto px-4">
+      <div class="form-card bg-white border border-zinc-100 shadow-2xl rounded-3xl p-6 md:p-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-center mb-2">Start Receiving Leads Today</h2>
+        <p class="text-center text-zinc-500 mb-6 text-sm">Takes 60 seconds • Payment link sent after form</p>
+
+        <!-- Contractor form card -->
+        <div class="rounded-2xl overflow-hidden border border-zinc-100">
+          <div class="fch">
+            <div class="fch-icon" style="background:rgba(245,166,35,0.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2" width="17" height="17"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+            <div><div class="fch-title">Contractor Application</div><div class="fch-sub">Payment link sent after approval</div></div>
+            <div class="fch-chips"><span class="fch-chip">Free to Apply</span></div>
+          </div>
+          <div class="p-4 md:p-5 bg-white">
+            <div id="ct-err" class="err-msg"></div>
+            <div id="ct-form">
+              <div class="sec-label">Your Business</div>
+              <div class="fg">
+                <div class="ff"><label class="fl">First Name <span class="req">*</span></label><input class="fi" type="text" id="ct-first" placeholder="John"/></div>
+                <div class="ff"><label class="fl">Last Name <span class="req">*</span></label><input class="fi" type="text" id="ct-last" placeholder="Smith"/></div>
+                <div class="ff ff-full"><label class="fl">Company Name <span class="req">*</span></label><input class="fi" type="text" id="ct-company" placeholder="Smith HVAC Services LLC"/></div>
+                <div class="ff"><label class="fl">Phone <span class="req">*</span></label><input class="fi" type="tel" id="ct-phone" placeholder="(210) 555-0100"/></div>
+                <div class="ff"><label class="fl">Email <span class="req">*</span></label><input class="fi" type="email" id="ct-email" placeholder="john@smithhvac.com"/></div>
+                <div class="ff"><label class="fl">ZIP <span class="req">*</span></label><input class="fi" type="text" id="ct-zip" placeholder="78201" maxlength="5"/></div>
+                <div class="ff"><label class="fl">Years in Business</label>
+                  <select class="fse" id="ct-years">
+                    <option value="" disabled selected>Select...</option>
+                    <option>Less than 1 year</option><option>1–3 years</option>
+                    <option>4–7 years</option><option>8–15 years</option><option>15+ years</option>
+                  </select>
+                </div>
+              </div>
+              <div class="sec-label">Service Areas <span style="color:#C8102E">*</span></div>
+              <div class="cb-grid mb-3">
+                <div class="cb-opt"><input type="checkbox" id="ct-sa" value="San Antonio"/><label class="cb-lbl" for="ct-sa">San Antonio</label></div>
+                <div class="cb-opt"><input type="checkbox" id="ct-hou" value="Houston"/><label class="cb-lbl" for="ct-hou">Houston</label></div>
+                <div class="cb-opt"><input type="checkbox" id="ct-dal" value="Dallas"/><label class="cb-lbl" for="ct-dal">Dallas</label></div>
+                <div class="cb-opt"><input type="checkbox" id="ct-aus" value="Austin"/><label class="cb-lbl" for="ct-aus">Austin</label></div>
+                <div class="cb-opt"><input type="checkbox" id="ct-ftw" value="Fort Worth"/><label class="cb-lbl" for="ct-ftw">Ft. Worth</label></div>
+                <div class="cb-opt"><input type="checkbox" id="ct-ep" value="El Paso"/><label class="cb-lbl" for="ct-ep">El Paso</label></div>
+              </div>
+              <div class="sec-label">Lead Package <span style="color:#C8102E">*</span></div>
+              <div class="pkg-grid mb-4">
+                <div class="pkg-opt"><input type="radio" name="ct-pkg" id="ct-p1" value="Tester – 5 Leads – $75"/><label class="pkg-lbl" for="ct-p1"><span class="pkg-name">Tester</span><span class="pkg-leads">5 Leads</span><span class="pkg-price">$75</span></label></div>
+                <div class="pkg-opt"><input type="radio" name="ct-pkg" id="ct-p2" value="Starter – 10 Leads – $150"/><label class="pkg-lbl" for="ct-p2"><span class="pkg-name">Starter</span><span class="pkg-leads">10 Leads</span><span class="pkg-price">$150</span></label></div>
+                <div class="pkg-opt"><input type="radio" name="ct-pkg" id="ct-p3" value="Growth – 25 Leads – $375"/><label class="pkg-lbl" for="ct-p3"><span class="pkg-pop">Most Popular</span><span class="pkg-name">Growth</span><span class="pkg-leads">25 Leads</span><span class="pkg-price">$375</span></label></div>
+                <div class="pkg-opt"><input type="radio" name="ct-pkg" id="ct-p4" value="Pro Partner – 50 Leads – $700"/><label class="pkg-lbl" for="ct-p4"><span class="pkg-name">Pro Partner</span><span class="pkg-leads">50 Leads</span><span class="pkg-price">$700</span></label></div>
+              </div>
+              <button class="sub-btn" id="ct-btn" onclick="submitContractor()">
+                <span id="ct-bt">Submit Application</span>
+                <span id="ct-ba">→</span>
+                <span class="spn" id="ct-sp"></span>
+              </button>
+              <p class="text-center text-zinc-400 text-xs mt-2">After submitting you'll receive a PayPal payment link. Leads start in 3–7 business days.</p>
+            </div>
+            <div class="success-screen" id="ct-success">
+              <div class="scc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <h3>Application Received!</h3>
+              <p>You're one step away from exclusive Texas HVAC leads.</p>
+              <div class="nxt">
+                <h4>What Happens Next</h4>
+                <div class="nxt-i"><span class="nxt-n">1</span><span>Check your email for a PayPal payment link (sent within minutes)</span></div>
+                <div class="nxt-i"><span class="nxt-n">2</span><span>Complete payment to activate your account</span></div>
+                <div class="nxt-i"><span class="nxt-n">3</span><span>Leads begin arriving within 3–7 business days</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- UPDATED FOOTER with privacy link -->
+<!-- FOOTER -->
 <footer class="bg-zinc-900 text-white py-10 text-center text-sm">
   © 2026 HVAC Flow Solutions • Texas Only<br>
   <a href="#" onclick="togglePrivacy(); return false;" class="text-orange-400 hover:underline">Privacy Policy & Lead Agreement</a>
 </footer>
 
-<!-- PRIVACY MODAL (ad-compliant) -->
+<!-- PRIVACY MODAL -->
 <div id="privacy-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
   <div class="bg-white max-w-lg w-full mx-4 rounded-2xl overflow-y-auto p-8 relative">
     <button onclick="togglePrivacy()" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-900 text-2xl">&times;</button>
@@ -195,39 +320,118 @@
 </div>
 
 <script>
-function switchTab(tab) {
-  const homeowner = document.getElementById('homeowner-content');
-  const contractor = document.getElementById('contractor-content');
-  const tabHome = document.getElementById('tab-home');
-  const tabContractors = document.getElementById('tab-contractors');
-  const hero = document.getElementById('hero');
-  const heroTitle = document.getElementById('hero-title');
-  const heroSubtitle = document.getElementById('hero-subtitle');
+// ═══════════════════════════════════════════════
+//  PASTE YOUR GOOGLE APPS SCRIPT URL HERE
+//  Get it from: Google Sheet → Extensions →
+//  Apps Script → Deploy → Manage Deployments
+// ═══════════════════════════════════════════════
+const SHEET_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
 
+// ── Homeowner submit ─────────────────────────
+function submitHomeowner() {
+  const err = document.getElementById('hw-err');
+  const g = id => document.getElementById(id).value.trim();
+  const urgency = document.querySelector('input[name="hw-urg"]:checked')?.value || '';
+  const firstName=g('hw-first'), lastName=g('hw-last'), phone=g('hw-phone'),
+        email=g('hw-email'), zip=g('hw-zip'), city=g('hw-city'), service=g('hw-service');
+  err.style.display = 'none';
+  if (!firstName||!lastName||!phone||!email||!zip||!service||!urgency) {
+    err.textContent='Please fill out all required fields.'; err.style.display='block'; return;
+  }
+  if (!/^\d{5}$/.test(zip)) { err.textContent='Please enter a valid 5-digit ZIP.'; err.style.display='block'; return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { err.textContent='Please enter a valid email.'; err.style.display='block'; return; }
+  const btn=document.getElementById('hw-btn'), bt=document.getElementById('hw-bt'),
+        ba=document.getElementById('hw-ba'), sp=document.getElementById('hw-sp');
+  btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
+  fetch(SHEET_URL, {
+    method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ type:'Homeowner', firstName, lastName, phone, email, zip, city, service, urgency,
+      submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}) })
+  }).then(() => {
+    document.getElementById('hw-form').style.display = 'none';
+    document.getElementById('hw-success').style.display = 'block';
+  }).catch(() => {
+    err.textContent='Something went wrong. Please try again.'; err.style.display='block';
+    btn.disabled=false; bt.textContent='Get My Free Quotes'; ba.style.display='inline'; sp.style.display='none';
+  });
+}
+
+// ── Contractor submit ────────────────────────
+function submitContractor() {
+  const err = document.getElementById('ct-err');
+  const g = id => document.getElementById(id).value.trim();
+  const pkg = document.querySelector('input[name="ct-pkg"]:checked')?.value || '';
+  const areas = [...document.querySelectorAll('.cb-opt input:checked')].map(el=>el.value).join(', ');
+  const firstName=g('ct-first'), lastName=g('ct-last'), company=g('ct-company'),
+        phone=g('ct-phone'), email=g('ct-email'), zip=g('ct-zip'), years=g('ct-years');
+  err.style.display = 'none';
+  if (!firstName||!lastName||!company||!phone||!email||!zip) {
+    err.textContent='Please fill out all required fields.'; err.style.display='block'; return;
+  }
+  if (!areas) { err.textContent='Please select at least one service area.'; err.style.display='block'; return; }
+  if (!pkg)   { err.textContent='Please select a lead package.'; err.style.display='block'; return; }
+  if (!/^\d{5}$/.test(zip)) { err.textContent='Please enter a valid 5-digit ZIP.'; err.style.display='block'; return; }
+  const btn=document.getElementById('ct-btn'), bt=document.getElementById('ct-bt'),
+        ba=document.getElementById('ct-ba'), sp=document.getElementById('ct-sp');
+  btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
+  fetch(SHEET_URL, {
+    method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ type:'Contractor', firstName, lastName, company, phone, email, zip, years,
+      serviceAreas: areas, package: pkg,
+      submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}) })
+  }).then(() => {
+    document.getElementById('ct-form').style.display = 'none';
+    document.getElementById('ct-success').style.display = 'block';
+  }).catch(() => {
+    err.textContent='Something went wrong. Please try again.'; err.style.display='block';
+    btn.disabled=false; bt.textContent='Submit Application'; ba.style.display='inline'; sp.style.display='none';
+  });
+}
+
+// ── Phone & ZIP formatters ───────────────────
+['hw-phone','ct-phone'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function(e) {
+    let v = e.target.value.replace(/\D/g,'').substring(0,10);
+    if (v.length>=6) v=`(${v.slice(0,3)}) ${v.slice(3,6)}-${v.slice(6)}`;
+    else if (v.length>=3) v=`(${v.slice(0,3)}) ${v.slice(3)}`;
+    e.target.value = v;
+  });
+});
+['hw-zip','ct-zip'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function(e) {
+    e.target.value = e.target.value.replace(/\D/g,'').substring(0,5);
+  });
+});
+
+// ── Tab switcher ─────────────────────────────
+function switchTab(tab) {
+  const hw  = document.getElementById('homeowner-content');
+  const ct  = document.getElementById('contractor-content');
+  const th  = document.getElementById('tab-home');
+  const tc  = document.getElementById('tab-contractors');
+  const hero = document.getElementById('hero');
+  const ht  = document.getElementById('hero-title');
+  const hs  = document.getElementById('hero-subtitle');
   if (tab === 0) {
-    homeowner.classList.remove('hidden'); contractor.classList.add('hidden');
-    tabHome.classList.add('tab-active'); tabContractors.classList.remove('tab-active');
-    hero.style.backgroundImage = "linear-gradient(rgba(15,23,42,0.75), rgba(15,23,42,0.75)), url('https://images.unsplash.com/photo-1621905252507-b35492cc74b3')";
-    heroTitle.innerHTML = "Broken AC in Texas Heat?<br>Get Local Pros Fighting for Your Job";
-    heroSubtitle.textContent = "San Antonio • Dallas • Austin • Houston • El Paso";
+    hw.classList.remove('hidden'); ct.classList.add('hidden');
+    th.classList.add('tab-active'); tc.classList.remove('tab-active'); tc.classList.add('text-zinc-500');
+    hero.style.backgroundImage = "linear-gradient(rgba(15,23,42,0.75),rgba(15,23,42,0.75)),url('https://images.unsplash.com/photo-1621905252507-b35492cc74b3')";
+    ht.innerHTML = "Broken AC in Texas Heat?<br>Get Local Pros Fighting for Your Job";
+    hs.textContent = "San Antonio • Dallas • Austin • Houston • El Paso";
   } else {
-    homeowner.classList.add('hidden'); contractor.classList.remove('hidden');
-    tabHome.classList.remove('tab-active'); tabContractors.classList.add('tab-active');
-    hero.style.backgroundImage = "linear-gradient(rgba(15,23,42,0.75), rgba(15,23,42,0.75)), url('https://images.unsplash.com/photo-1554224155-6726b3ff858f')";
-    heroTitle.innerHTML = "Stop Wasting Money on Ads.<br>Buy Exclusive Texas Leads That Close";
-    heroSubtitle.textContent = "1 buyer per lead • Most delivered in 3–7 days";
+    hw.classList.add('hidden'); ct.classList.remove('hidden');
+    th.classList.remove('tab-active'); tc.classList.add('tab-active'); tc.classList.remove('text-zinc-500');
+    hero.style.backgroundImage = "linear-gradient(rgba(15,23,42,0.75),rgba(15,23,42,0.75)),url('https://images.unsplash.com/photo-1554224155-6726b3ff858f')";
+    ht.innerHTML = "Stop Wasting Money on Ads.<br>Buy Exclusive Texas Leads That Close";
+    hs.textContent = "1 buyer per lead • Most delivered in 3–7 days";
   }
 }
 
-function togglePrivacy() {
-  document.getElementById('privacy-modal').classList.toggle('hidden');
-}
+// ── Privacy modal ────────────────────────────
+function togglePrivacy() { document.getElementById('privacy-modal').classList.toggle('hidden'); }
+document.getElementById('privacy-modal').addEventListener('click', function(e) { if (e.target===this) togglePrivacy(); });
 
-// Close modal when clicking outside
-document.getElementById('privacy-modal').addEventListener('click', function(e) {
-  if (e.target === this) togglePrivacy();
-});
-
+// ── Live counter ─────────────────────────────
 let counter = 31;
 setInterval(() => { counter++; document.getElementById('live-counter').textContent = `${counter} Texas homeowners matched today`; }, 12000);
 
