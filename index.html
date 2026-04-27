@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="canonical" href="https://boosthvacleads.com/" />
-<title>Boost HVAC Leads | Top-Rated HVAC Services in Texas</title>
-<meta name="description" content="Get fast, reliable HVAC repair, installation, and maintenance from local Texas experts. 35+ homeowners matched today. Get your free quote now!">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta charset="UTF-8">
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-8H5MND1Y6W"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <title>Boost HVAC Leads | Top-Rated HVAC Services in Texas</title>
+  <meta name="description" content="Get fast, reliable HVAC repair, installation, and maintenance from local Texas experts. 35+ homeowners matched today. Get your free quote now!">
+  
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8H5MND1Y6W"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8H5MND1Y6W');
+  </script>
 
-  gtag('config', 'G-8H5MND1Y6W');
-</script>
   <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
@@ -24,20 +24,16 @@
     .tab-active { border-bottom: 4px solid #f97316; color: #f97316; font-weight: 600; }
     .form-card { transition: all 0.3s ease; }
     .form-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); }
-    #privacy-modal { transition: opacity 0.3s ease; }
     @media (max-width: 640px) {
       .nav-tabs { flex-direction: column; gap: 8px; }
       .nav-tabs button { width: 100%; justify-content: center; padding: 14px 0; font-size: 15px; }
       .hero { min-height: 85vh !important; }
       .hero h1 { font-size: 2.25rem !important; line-height: 1.1 !important; }
     }
-   
   </style>
 </head>
 <body class="bg-zinc-50 text-zinc-900 overflow-x-hidden">
 
-    
-<!-- NAVBAR with your embedded SVG logo -->
 <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
   <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3 flex-shrink-0">
@@ -57,110 +53,66 @@
   </div>
 </nav>
 
-
-
-<!-- HERO -->
 <header id="hero" class="hero-bg min-h-[85vh] md:h-screen flex items-center text-white relative overflow-hidden">
   <div class="max-w-5xl mx-auto px-4 md:px-6 text-center z-10">
     <h1 id="hero-title" class="text-3xl md:text-6xl font-bold leading-tight mb-4 md:mb-6">
       Broken AC in Texas Heat?<br>Get Local Pros Fighting for Your Job
     </h1>
     <p id="hero-subtitle" class="text-lg md:text-2xl mb-8">San Antonio • Dallas • Austin • Houston • El Paso</p>
-    
     <div class="inline-flex items-center gap-3 bg-white/10 backdrop-blur-2xl px-6 py-2.5 md:px-8 md:py-3 rounded-3xl mb-10 text-sm md:text-base">
       <span class="animate-pulse text-xl">🔥</span>
-      <span id="live-counter" class="font-medium">31 Texas homeowners matched today</span>
+      <span id="live-counter" class="font-medium">35 Texas homeowners matched today</span>
     </div>
   </div>
   <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/70"></div>
 </header>
 
-<!-- ── HOMEOWNER CONTENT ── -->
-<div style="width: 100%; max-width: 650px; margin: 0 auto;">
-  <iframe 
-    src="homeowner-form.html" 
-    id="homeowner-iframe" 
-    style="width: 100%; border: none; overflow: hidden; transition: height 0.3s ease;" 
-    scrolling="no">
-  </iframe>
-</div>
-
-<script>
-  // This listener catches the "resize" message from your form's script
-  window.addEventListener('message', function(e) {
-    if (e.data.type === 'resize' && e.data.id === 'homeowner-iframe') {
-      document.getElementById('homeowner-iframe').style.height = e.data.height + 'px';
-    }
-  }, false);
-</script>
-  
-<script type="text/javascript">
-  var load = 0;
-  document.getElementById('gform').onload = function(){
-    /* The first load is the form appearing. The second load is the 'Thank You' submit. */
-    load++;
-    if(load > 1){
-      window.location = "https://boosthvacleads.com/thanks.html";
-    }
-  }
-</script>
+<div id="homeowner-content">
+  <section class="py-12 md:py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="form-card bg-white border border-zinc-100 shadow-2xl rounded-3xl p-6 md:p-10">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-3">Takes 45 Seconds • 100% Free</h2>
+        <p class="text-center text-zinc-600 mb-8 text-sm md:text-base">Vetted local pros only • Same-day emergency options</p>
+        
+        <div style="width: 100%; margin: 0 auto;">
+          <iframe 
+            src="homeowner-form.html" 
+            id="homeowner-iframe" 
+            onload="handleRedirect('homeowner')"
+            style="width: 100%; border: none; min-height: 600px;" 
+            scrolling="no">
+          </iframe>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Testimonials -->
   <section class="py-12 md:py-20 bg-zinc-100">
     <div class="max-w-5xl mx-auto px-4">
       <h2 class="text-3xl md:text-4xl font-bold text-center mb-8">What Texas Homeowners Say</h2>
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-3xl shadow"><div class="text-orange-500 text-3xl mb-4">★★★★★</div><p class="italic">"AC died on a 102° day in Houston. Got 3 quotes in minutes..."</p><p class="font-semibold mt-6">Maria R. – Houston, TX</p></div>
-        <div class="bg-white p-6 rounded-3xl shadow"><div class="text-orange-500 text-3xl mb-4">★★★★★</div><p class="italic">"Furnace went out in Dallas winter. Super easy..."</p><p class="font-semibold mt-6">James T. – Dallas, TX</p></div>
-        <div class="bg-white p-6 rounded-3xl shadow"><div class="text-orange-500 text-3xl mb-4">★★★★★</div><p class="italic">"New install in Austin – compared 3 great options..."</p><p class="font-semibold mt-6">Sarah L. – Austin, TX</p></div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm"><div class="text-orange-500 text-3xl mb-4">★★★★★</div><p class="italic">"AC died on a 102° day in Houston. Got 3 quotes in minutes..."</p><p class="font-semibold mt-6">Maria R. – Houston, TX</p></div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm"><div class="text-orange-500 text-3xl mb-4">★★★★★</div><p class="italic">"Furnace went out in Dallas winter. Super easy..."</p><p class="font-semibold mt-6">James T. – Dallas, TX</p></div>
+        <div class="bg-white p-6 rounded-3xl shadow-sm"><div class="text-orange-500 text-3xl mb-4">★★★★★</div><p class="italic">"New install in Austin – compared 3 great options..."</p><p class="font-semibold mt-6">Sarah L. – Austin, TX</p></div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- CONTRACTOR CONTENT -->
 <div id="contractor-content" class="hidden">
   <section id="pricing" class="py-12 md:py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4">
       <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Exclusive Texas HVAC Leads</h2>
-      <p class="text-center text-zinc-600 mb-10">100% exclusive • Most delivered in 3–7 business days • Money-back on invalid leads</p>
+      <p class="text-center text-zinc-600 mb-10">100% exclusive • Most delivered in 3–7 business days</p>
       
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
+        <div class="bg-white border border-zinc-200 rounded-3xl p-6 text-center">
           <h3 class="text-xl font-bold">Tester</h3>
           <p class="text-4xl font-bold text-orange-600 my-3">$75</p>
           <p class="text-xs md:text-sm text-zinc-500 mb-6">5 Exclusive Leads</p>
           <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
         </div>
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
-          <h3 class="text-xl font-bold">Starter</h3>
-          <p class="text-4xl font-bold text-orange-600 my-3">$150</p>
-          <p class="text-xs md:text-sm text-zinc-500 mb-6">10 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
         </div>
-        <div class="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-3xl p-6 text-center shadow-2xl relative scale-105">
-          <div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-white text-orange-600 px-5 py-1 rounded-full text-xs font-bold">MOST POPULAR</div>
-          <h3 class="text-xl font-bold">Growth</h3>
-          <p class="text-4xl font-bold my-3">$375</p>
-          <p class="text-xs md:text-sm opacity-90 mb-6">25 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-white text-zinc-900 py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
-          <h3 class="text-xl font-bold">Pro Partner</h3>
-          <p class="text-4xl font-bold text-orange-600 my-3">$700</p>
-          <p class="text-xs md:text-sm text-zinc-500 mb-6">50 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
-        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all">
-          <h3 class="text-xl font-bold">Elite</h3>
-          <p class="text-4xl font-bold text-orange-600 my-3">$1,300</p>
-          <p class="text-xs md:text-sm text-zinc-500 mb-6">100 Exclusive Leads</p>
-          <a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -169,35 +121,49 @@
       <div class="form-card bg-white border border-zinc-100 shadow-2xl rounded-3xl p-6 md:p-10">
         <h2 class="text-3xl md:text-4xl font-bold text-center mb-3">Start Receiving Leads Today</h2>
         <p class="text-center text-zinc-600 mb-8 text-sm md:text-base">Takes 60 seconds • Payment link sent after form</p>
-        <iframe src="contractor-form.html" width="100%" height="950" frameborder="0" scrolling="no"></iframe>
+        <iframe 
+            src="contractor-form.html" 
+            id="contractor-iframe" 
+            onload="handleRedirect('contractor')"
+            width="100%" height="950" frameborder="0" scrolling="no">
+        </iframe>
       </div>
     </div>
   </section>
 </div>
 
-<!-- UPDATED FOOTER with privacy link -->
 <footer class="bg-zinc-900 text-white py-10 text-center text-sm">
   © 2026 HVAC Flow Solutions • Texas Only<br>
   <a href="#" onclick="togglePrivacy(); return false;" class="text-orange-400 hover:underline">Privacy Policy & Lead Agreement</a>
 </footer>
 
-<!-- PRIVACY MODAL (ad-compliant) -->
-<div id="privacy-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-  <div class="bg-white max-w-lg w-full mx-4 rounded-2xl overflow-y-auto p-8 relative">
-    <button onclick="togglePrivacy()" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-900 text-2xl">&times;</button>
-    <h2 class="text-2xl font-bold mb-4">Privacy Policy & Lead Agreement</h2>
-    <div class="text-zinc-600 text-sm leading-relaxed space-y-4 text-left">
-      <p><strong>Information we collect:</strong> Name, phone, email, location, and HVAC issue details when you submit a request.</p>
-      <p><strong>How we use it:</strong> We share your request with up to 3 vetted local HVAC contractors so they can contact you directly for quotes.</p>
-      <p><strong>Data sharing:</strong> We do not sell your data to third-party marketers. Your info is only shared with contractors for the purpose of providing service.</p>
-      <p><strong>Texas only:</strong> This service is provided exclusively in Texas.</p>
-      <p><strong>Changes:</strong> We may update this policy. Continued use means you accept changes.</p>
-      <p><strong>Contact:</strong> Questions? Reply to your confirmation email.</p>
-    </div>
-  </div>
-</div>
-
 <script>
+// TRACKING FOR REDIRECTS
+var homeLoad = 0;
+var contractLoad = 0;
+
+function handleRedirect(type) {
+  if (type === 'homeowner') {
+    homeLoad++;
+    if (homeLoad > 1) {
+      window.location = "https://boosthvacleads.com/thanks.html";
+    }
+  } else if (type === 'contractor') {
+    contractLoad++;
+    if (contractLoad > 1) {
+      window.location = "https://boosthvacleads.com/thanks.html";
+    }
+  }
+}
+
+// RESIZE LISTENER
+window.addEventListener('message', function(e) {
+  if (e.data.type === 'resize' && e.data.id === 'homeowner-iframe') {
+    document.getElementById('homeowner-iframe').style.height = e.data.height + 'px';
+  }
+}, false);
+
+// TAB SWITCHING LOGIC
 function switchTab(tab) {
   const homeowner = document.getElementById('homeowner-content');
   const contractor = document.getElementById('contractor-content');
@@ -223,16 +189,16 @@ function switchTab(tab) {
 }
 
 function togglePrivacy() {
-  document.getElementById('privacy-modal').classList.toggle('hidden');
+  const modal = document.getElementById('privacy-modal');
+  if(modal) modal.classList.toggle('hidden');
 }
 
-// Close modal when clicking outside
-document.getElementById('privacy-modal').addEventListener('click', function(e) {
-  if (e.target === this) togglePrivacy();
-});
-
-let counter = 31;
-setInterval(() => { counter++; document.getElementById('live-counter').textContent = `${counter} Texas homeowners matched today`; }, 12000);
+let counter = 35;
+setInterval(() => { 
+  counter++; 
+  const counterEl = document.getElementById('live-counter');
+  if(counterEl) counterEl.textContent = `${counter} Texas homeowners matched today`; 
+}, 15000);
 
 window.onload = () => switchTab(0);
 </script>
