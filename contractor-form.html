@@ -434,8 +434,30 @@ select{
 </head>
 <body>
 
-  <!-- Contractor form card -->
-       <div class="rounded-2xl overflow-hidden border border-zinc-100">
+═══════════════ -->
+<div id="contractor-content" class="hidden">
+  <section id="pricing" class="py-12 md:py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Exclusive Texas HVAC Leads</h2>
+      <p class="text-center text-zinc-600 mb-10">100% exclusive • Most delivered in 3–7 business days • Money-back on invalid leads</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Tester</h3><p class="text-4xl font-bold text-orange-600 my-3">$75</p><p class="text-xs md:text-sm text-zinc-500 mb-6">5 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Starter</h3><p class="text-4xl font-bold text-orange-600 my-3">$150</p><p class="text-xs md:text-sm text-zinc-500 mb-6">10 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-3xl p-6 text-center shadow-2xl relative scale-105"><div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-white text-orange-600 px-5 py-1 rounded-full text-xs font-bold">MOST POPULAR</div><h3 class="text-xl font-bold">Growth</h3><p class="text-4xl font-bold my-3">$375</p><p class="text-xs md:text-sm opacity-90 mb-6">25 Exclusive Leads</p><a href="#contractor-form" class="block bg-white text-zinc-900 py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Pro Partner</h3><p class="text-4xl font-bold text-orange-600 my-3">$700</p><p class="text-xs md:text-sm text-zinc-500 mb-6">50 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Elite</h3><p class="text-4xl font-bold text-orange-600 my-3">$1,300</p><p class="text-xs md:text-sm text-zinc-500 mb-6">100 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contractor-form" class="py-12 bg-zinc-100">
+    <div class="max-w-2xl mx-auto px-4">
+      <div class="form-card bg-white border border-zinc-100 shadow-2xl rounded-3xl p-6 md:p-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-center mb-2">Start Receiving Leads Today</h2>
+        <p class="text-center text-zinc-500 mb-6 text-sm">Takes 60 seconds • Payment link sent after form</p>
+
+        <!-- Contractor form card -->
+        <div class="rounded-2xl overflow-hidden border border-zinc-100">
           <div class="fch">
             <div class="fch-icon" style="background:rgba(245,166,35,0.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#F5A623" stroke-width="2" width="17" height="17"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
             <div><div class="fch-title">Contractor Application</div><div class="fch-sub">Payment link sent after approval</div></div>
@@ -501,7 +523,7 @@ select{
       </div>
     </div>
   </section>
-</div>
+
       <!-- Success -->
       <div class="success-view" id="successView">
         <div class="success-circle">
