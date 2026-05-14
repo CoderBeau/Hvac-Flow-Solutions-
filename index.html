@@ -379,14 +379,8 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-//  PASTE YOUR GOOGLE APPS SCRIPT URL HERE
-//  Get it from: Google Sheet → Extensions →
-//  Apps Script → Deploy → Manage Deployments
-// ═══════════════════════════════════════════════
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzIS1ycP5I5MWREObwy_FAf0EI3XoAcF27I9VG8JrbGtrj8kKMvKhA1jKMryJxIuD4/exec";
 
-// ── Homeowner submit ─────────────────────────
 function submitHomeowner() {
   const err = document.getElementById('hw-err');
   const g = id => document.getElementById(id).value.trim();
@@ -415,7 +409,6 @@ function submitHomeowner() {
   });
 }
 
-// ── Contractor submit ────────────────────────
 function submitContractor() {
   const err = document.getElementById('ct-err');
   const g = id => document.getElementById(id).value.trim();
@@ -448,7 +441,6 @@ function submitContractor() {
   });
 }
 
-// ── Phone & ZIP formatters ───────────────────
 ['hw-phone','ct-phone'].forEach(id => {
   document.getElementById(id).addEventListener('input', function(e) {
     let v = e.target.value.replace(/\D/g,'').substring(0,10);
@@ -463,7 +455,6 @@ function submitContractor() {
   });
 });
 
-// ── Tab switcher ─────────────────────────────
 function switchTab(tab) {
   const hw  = document.getElementById('homeowner-content');
   const ct  = document.getElementById('contractor-content');
@@ -487,11 +478,9 @@ function switchTab(tab) {
   }
 }
 
-// ── Privacy modal ────────────────────────────
 function togglePrivacy() { document.getElementById('privacy-modal').classList.toggle('hidden'); }
 document.getElementById('privacy-modal').addEventListener('click', function(e) { if (e.target===this) togglePrivacy(); });
 
-// ── Live counter ─────────────────────────────
 let counter = 31;
 setInterval(() => { counter++; document.getElementById('live-counter').textContent = `${counter} Texas homeowners matched today`; }, 12000);
 
@@ -501,7 +490,6 @@ window.onload = () => switchTab(0);
 <script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
 
 <script>
-// PayPal button IDs mapped to each package
 const PAYPAL_BUTTONS = {
   'Tester':      '9VHMU8UYMVXXC',
   'Starter':     'Y55WAFWV7DTHW',
@@ -511,7 +499,6 @@ const PAYPAL_BUTTONS = {
 };
 
 function loadPayPalButton(pkg) {
-  // Find which package was selected
   var buttonId = null;
   for (var name in PAYPAL_BUTTONS) {
     if (pkg.indexOf(name) !== -1) {
@@ -521,7 +508,6 @@ function loadPayPalButton(pkg) {
   }
   if (!buttonId) return;
 
-  // Clear any existing button and render the correct one
   document.getElementById('ct-paypal-btn').innerHTML = '';
   paypal.HostedButtons({
     hostedButtonId: buttonId
