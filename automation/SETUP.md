@@ -6,34 +6,43 @@
 - Contractor fills out the form → they get a welcome text instantly
 - You get an admin alert with their name, company, package, and areas
 
-**When a homeowner calls the business number:**
-1. Homeowner hears a menu and presses their city (San Antonio, Houston, Dallas, etc.)
-2. They record their HVAC problem description (up to 2 minutes)
-3. Every contractor signed up for that city receives an SMS with:
-   - A link to the recording
-   - The homeowner's call-back number
-4. You also receive the same alert as admin
-5. The voicemail is logged to a Google Sheet tab ("Voicemails")
+**When a homeowner calls the Vapi AI number on your site:**
+1. The AI agent answers, introduces itself, and has a natural conversation
+2. It collects: caller's name, city, HVAC problem description, urgency, and best callback number
+3. When the call ends, Vapi fires a webhook to your Google Apps Script
+4. Every contractor signed up for that city gets an SMS with:
+   - Homeowner's name and callback number
+   - Problem description and urgency
+   - Link to the full call recording
+5. You also get the same alert as admin
+6. Every call is logged to the "AI Calls" tab in Google Sheets
 
 ---
 
-## Step 1 — Twilio Account (5 min)
+## What You Need
 
-1. Sign up at **twilio.com** (free trial gives ~$15 credit)
-2. Go to **Phone Numbers > Manage > Buy a number** — buy a Texas number (~$1/month)
-3. Note down:
-   - Account SID (on the Console dashboard)
-   - Auth Token (click "show" on the dashboard)
-   - Your new Twilio phone number (e.g. +12105551234)
+| Service | Purpose | Cost |
+|---|---|---|
+| **Vapi** (vapi.ai) | AI voice agent — answers calls, captures lead info, records | ~$0.05–0.10/min |
+| **Twilio** (twilio.com) | SMS only — texts contractors and you | ~$1/mo + $0.0075/text |
+
+You do **not** need Twilio for calls or phone numbers. Vapi handles all of that.
+
+---
+
+## Step 1 — Twilio (SMS only, 5 min)
+
+1. Sign up at **twilio.com**
+2. Go to **Phone Numbers > Buy a number** — any US number (~$1/month)
+3. Note your Account SID, Auth Token, and phone number
 
 ---
 
 ## Step 2 — Google Apps Script (10 min)
 
-1. Open the Google Sheet that receives form submissions
-2. Click **Extensions > Apps Script**
-3. Delete any existing code and paste the entire contents of `contractor-automation.gs`
-4. Click the **gear icon** (Project Settings) and scroll to **Script Properties**. Add all 6:
+1. Open your Google Sheet > **Extensions > Apps Script**
+2. Delete existing code, paste the full contents of `contractor-automation.gs`
+3. Click the gear icon > **Script Properties**, add all 6:
 
 | Property | Value |
 |---|---|
@@ -42,65 +51,100 @@
 | `TWILIO_FROM` | Your Twilio number, e.g. `+12105551234` |
 | `ADMIN_PHONE` | Your cell, e.g. `+12105559999` |
 | `SHEET_ID` | The long ID from your Google Sheet URL |
-| `THIS_URL` | Leave blank for now — fill in after deploying |
+| `VAPI_SECRET` | Make up any random string, e.g. `hvac-secret-2026` |
 
-5. Click **Deploy > New Deployment**
-   - Type: **Web App**
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-6. Click **Deploy** and copy the Web App URL
-7. Go back to Script Properties, set `THIS_URL` to that URL
-8. Click **Deploy > Manage Deployments > Edit** (pencil icon) and re-deploy (new version) so the URL is baked in
+4. Click **Deploy > New Deployment**
+   - Type: **Web App** | Execute as: **Me** | Access: **Anyone**
+5. Copy the Web App URL — you'll need it in Step 4
 
 ---
 
-## Step 3 — Wire Twilio to the Script (5 min)
+## Step 3 — Vapi Setup (15 min)
 
-1. In Twilio Console, go to **Phone Numbers > Manage > Active Numbers**
-2. Click your number
-3. Under **Voice Configuration**:
-   - "A call comes in" → **Webhook** → paste your Apps Script Web App URL
-   - HTTP method: **GET**
-4. Save
+### 3a. Create account
+Sign up at **vapi.ai**, go to **Assistants > Create Assistant**.
+
+### 3b. System prompt (paste this in the "System" field)
+```
+You are an AI receptionist for HVAC Flow Solutions, a Texas HVAC lead service.
+Your job is to have a friendly, natural conversation to capture homeowner lead info.
+
+Ask for:
+1. Their first name
+2. Which Texas city they are in (San Antonio, Houston, Dallas, Austin, Fort Worth, or El Paso)
+3. What HVAC problem they are having — let them describe it in their own words
+4. How urgent it is (emergency / today / this week / just getting quotes)
+5. The best phone number to reach them (confirm it vs the number they called from)
+
+Keep it conversational — do not read a list of questions robotically. Acknowledge what
+they say before moving to the next question. When you have all five pieces of info,
+tell them a local HVAC contractor will call them back shortly, thank them, and end the call.
+```
+
+### 3c. Structured data schema (in Assistant > Analysis > Structured Data)
+Paste this JSON schema so Vapi extracts clean fields from every call:
+```json
+{
+  "type": "object",
+  "properties": {
+    "callerName":    { "type": "string",  "description": "Homeowner first name" },
+    "city":          { "type": "string",  "description": "Texas city: San Antonio, Houston, Dallas, Austin, Fort Worth, or El Paso" },
+    "problem":       { "type": "string",  "description": "HVAC issue description" },
+    "urgency":       { "type": "string",  "description": "emergency / today / this week / getting quotes" },
+    "callbackPhone": { "type": "string",  "description": "Best callback phone number" }
+  },
+  "required": ["callerName", "city", "problem", "callbackPhone"]
+}
+```
+
+### 3d. Enable call recording
+In the assistant settings, turn on **Record calls** → Vapi will include `recordingUrl` in the webhook.
+
+### 3e. Get a phone number
+In Vapi dashboard: **Phone Numbers > Buy Number** → pick a Texas area code.
+This is the number you'll put on your website.
 
 ---
 
-## Step 4 — Put the Twilio Number on Your Site
+## Step 4 — Connect Vapi to Your Script (5 min)
 
-Edit the homeowner-facing pages to display the Twilio business number so homeowners know to call it. Good spots:
-- The homeowner form confirmation/success screen
-- The homepage hero or "contact" section
-
----
-
-## Step 5 — Test It
-
-### Test SMS on contractor signup:
-1. Open `contractor-form.html` in a browser
-2. Fill in the form using **your own phone number**
-3. Submit — verify:
-   - Welcome text arrives at the contractor number
-   - Admin alert arrives at your ADMIN_PHONE
-
-### Test homeowner call flow:
-1. Call your Twilio number from any phone
-2. Press **1** (San Antonio) when prompted
-3. After the beep, record a test message
-4. Hang up — verify:
-   - Any contractor in the sheet with "San Antonio" in their service areas gets an SMS with the recording link
-   - Admin gets an alert SMS
-
-### Check the Sheet:
-- "Contractors" tab → signup rows appear
-- "Voicemails" tab → each call is logged with city, caller, duration, contractor count, and recording URL
+1. In Vapi dashboard, go to **Account > Webhooks** (or the assistant's **Advanced > Server URL**)
+2. Set the **Server URL** to your Google Apps Script Web App URL from Step 2
+3. Under **Custom Headers**, add:
+   - Key: `x-webhook-secret`
+   - Value: the same string you used for `VAPI_SECRET` in Script Properties
+4. Make sure **end-of-call-report** event is checked
 
 ---
 
-## Monthly Costs (Estimate)
+## Step 5 — Put the Vapi Number on Your Site
 
-| Item | Cost |
+Add the Vapi phone number to the homeowner-facing parts of the site:
+- Homepage hero section or CTA button
+- Homeowner form success/confirmation screen
+- Any "contact us" section
+
+---
+
+## Step 6 — Test Everything
+
+### Test contractor signup SMS:
+1. Open `contractor-form.html` in a browser, fill it with your own phone number
+2. Submit → you should get a welcome text and an admin alert
+
+### Test the AI call flow:
+1. Call your Vapi number
+2. Have a natural conversation — give a fake name, pick a city, describe a problem
+3. End the call
+4. Within 30 seconds, any contractor in that city's service area should get an SMS with your info and the recording link
+5. Check the "AI Calls" tab in Google Sheets — the call should be logged
+
+---
+
+## Google Sheets Tabs Created Automatically
+
+| Tab | Contents |
 |---|---|
-| Twilio phone number | ~$1/month |
-| SMS (per message) | ~$0.0075 |
-| Voice recording (per minute) | ~$0.005 |
-| 10 signups + 30 homeowner calls/month | ~$5–8/month |
+| Contractors | Every contractor signup |
+| Homeowners | Homeowners who submitted the web form |
+| AI Calls | Every Vapi call — name, city, problem, recording URL, contractors notified |

@@ -4,129 +4,98 @@
 // as a Web App (Execute as: Me, Access: Anyone).
 //
 // Required Script Properties (Project Settings > Script Properties):
-//   TWILIO_SID    — Twilio Account SID
+//   TWILIO_SID    — Twilio Account SID (for SMS only)
 //   TWILIO_TOKEN  — Twilio Auth Token
 //   TWILIO_FROM   — Your Twilio phone number, e.g. +12105551234
-//   ADMIN_PHONE   — Owner's cell for new-signup alerts, e.g. +12105559999
+//   ADMIN_PHONE   — Owner's cell for alerts, e.g. +12105559999
 //   SHEET_ID      — Google Sheets spreadsheet ID (from the URL)
-//   THIS_URL      — This script's published Web App URL (for Twilio callbacks)
+//   VAPI_SECRET   — Secret token you create; paste the same value in Vapi's
+//                   webhook "Custom Header" as x-webhook-secret
 // ============================================================
 
 // ── Entry Points ────────────────────────────────────────────
 
 function doPost(e) {
   try {
-    const action = e.parameter.action || '';
+    const raw  = e.postData.contents;
+    const data = JSON.parse(raw);
 
-    // Twilio: homeowner selected their city, now record their problem
-    if (action === 'gather-city') return handleGatherCity(e);
+    // Vapi sends all events wrapped in a "message" object
+    const msg = data.message || data;
 
-    // Twilio: homeowner finished recording, send it to matched contractors
-    if (action === 'voicemail-done') return handleVoicemailDone(e);
+    if (msg.type === 'end-of-call-report') {
+      if (!verifyVapiSecret(e)) return jsonResponse({ status: 'unauthorized' });
+      return handleVapiCall(msg);
+    }
 
-    // Standard form submission from the website
-    const data = JSON.parse(e.postData.contents);
+    // Website form submission
     return handleFormSubmission(data);
   } catch (err) {
     return jsonResponse({ status: 'error', message: err.message });
   }
 }
 
-// ── Incoming Call: Homeowner Calls the Business Number ──────
-// Twilio calls this (GET) when a homeowner dials the site's phone number.
-// Ask them to pick their city so we can route to the right contractor(s).
-function doGet(e) {
-  const thisUrl = getProperty('THIS_URL');
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Gather numDigits="1" action="${thisUrl}?action=gather-city" method="POST" timeout="10">
-    <Say voice="Polly.Joanna">
-      Thank you for calling HVAC Flow Solutions. To connect you with the right contractor,
-      please press the number for your city.
-      Press 1 for San Antonio.
-      Press 2 for Houston.
-      Press 3 for Dallas.
-      Press 4 for Austin.
-      Press 5 for Fort Worth.
-      Press 6 for El Paso.
-    </Say>
-  </Gather>
-  <Say>We did not receive your selection. Please call back and try again. Goodbye.</Say>
-</Response>`;
-  return ContentService.createTextOutput(twiml).setMimeType(ContentService.MimeType.XML);
-}
+// ── Vapi End-of-Call Webhook ─────────────────────────────────
+// Fires automatically when a homeowner call ends.
+// Vapi passes the transcript, recording URL, and any structured
+// data the AI collected during the conversation.
 
-// ── Step 2: City selected — start recording the homeowner's problem ─
+function handleVapiCall(msg) {
+  const call     = msg.call || {};
+  const analysis = msg.analysis || {};
+  const gathered = analysis.structuredData || {};
 
-function handleGatherCity(e) {
-  const digit   = e.parameter.Digits || '';
-  const thisUrl = getProperty('THIS_URL');
-  const city    = digitToCity(digit);
+  const callerNumber  = (call.customer || {}).number || '';
+  const recordingUrl  = msg.recordingUrl || '';
+  const transcript    = msg.transcript   || '';
+  const summary       = analysis.summary || msg.summary || '';
+  const duration      = msg.durationSeconds || 0;
 
-  if (!city) {
-    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say>Invalid selection. Please call back and try again.</Say>
-</Response>`;
-    return ContentService.createTextOutput(twiml).setMimeType(ContentService.MimeType.XML);
-  }
+  // Fields the Vapi AI assistant is configured to collect
+  const callerName    = gathered.callerName    || 'Homeowner';
+  const city          = gathered.city          || '';
+  const problem       = gathered.problem       || 'See transcript';
+  const callbackPhone = gathered.callbackPhone || callerNumber;
+  const urgency       = gathered.urgency       || '';
 
-  const callbackUrl = `${thisUrl}?action=voicemail-done&city=${encodeURIComponent(city)}&caller=${encodeURIComponent(e.parameter.Caller || '')}`;
+  const contractors = city ? findContractorsByCity(city) : [];
 
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="Polly.Joanna">
-    Great. After the beep, please describe your HVAC problem in detail — what is happening,
-    how long it has been going on, and the best number to reach you.
-    Press any key or stay silent for 3 seconds when you are finished.
-  </Say>
-  <Record maxLength="120" playBeep="true" action="${callbackUrl}" method="POST" timeout="3"/>
-  <Say>We did not receive a recording. Please call back and try again.</Say>
-</Response>`;
-  return ContentService.createTextOutput(twiml).setMimeType(ContentService.MimeType.XML);
-}
-
-// ── Step 3: Recording done — send to matched contractors ────
-
-function handleVoicemailDone(e) {
-  const city         = decodeURIComponent(e.parameter.city    || '');
-  const callerNumber = decodeURIComponent(e.parameter.caller  || e.parameter.Caller || '');
-  const recordingUrl = e.parameter.RecordingUrl || '';
-  const duration     = e.parameter.RecordingDuration || '0';
-
-  if (!recordingUrl) return jsonResponse({ status: 'skipped' });
-
-  const contractors = findContractorsByCity(city);
-  const mp3Link     = recordingUrl + '.mp3';
+  const urgencyLine = urgency ? `Urgency: ${urgency}\n` : '';
 
   contractors.forEach(c => {
     sendSMS(
       c.phone,
-      `NEW LEAD — ${city}\n` +
-      `A homeowner just described their HVAC problem. Listen here:\n${mp3Link}\n` +
-      `Call them back: ${callerNumber || 'number not captured'}`
+      `NEW LEAD${city ? ' — ' + city : ''}\n` +
+      `Name: ${callerName}\n` +
+      `Phone: ${callbackPhone}\n` +
+      `${urgencyLine}` +
+      `Issue: ${problem}\n` +
+      (recordingUrl ? `Recording: ${recordingUrl}\n` : '') +
+      `Reply STOP to opt out.`
     );
   });
 
-  // Always alert admin too
   sendSMS(
     getProperty('ADMIN_PHONE'),
-    `HOMEOWNER VOICEMAIL — ${city} (${duration}s)\n` +
-    `Caller: ${callerNumber}\n` +
-    `Recording: ${mp3Link}\n` +
+    `VAPI LEAD CALL${city ? ' — ' + city : ''} (${duration}s)\n` +
+    `Caller: ${callerName} ${callerNumber}\n` +
+    `Callback: ${callbackPhone}\n` +
+    `${urgencyLine}` +
+    `Issue: ${problem}\n` +
+    (recordingUrl ? `Recording: ${recordingUrl}\n` : '') +
     `Sent to ${contractors.length} contractor(s).`
   );
 
-  logVoicemail(city, callerNumber, recordingUrl, duration, contractors.length);
+  logVapiCall({ callerName, callerNumber, callbackPhone, city, problem, urgency, duration, recordingUrl, summary, contractorCount: contractors.length });
 
-  // Thank-you message back to caller
-  return ContentService.createTextOutput(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="Polly.Joanna">
-    Thank you. Your message has been sent to an HVAC contractor in ${city}.
-    You will receive a call back shortly. Goodbye.
-  </Say>
-</Response>`).setMimeType(ContentService.MimeType.XML);
+  return jsonResponse({ status: 'ok' });
+}
+
+function verifyVapiSecret(e) {
+  const secret = getProperty('VAPI_SECRET');
+  if (!secret) return true; // skip check if not configured yet
+  const header = e.parameter['x-webhook-secret'] || '';
+  return header === secret;
 }
 
 // ── Contractor Matching ──────────────────────────────────────
@@ -138,18 +107,13 @@ function findContractorsByCity(city) {
     if (!sheet || sheet.getLastRow() < 2) return [];
 
     const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-    // Column indexes (0-based): 0=submittedAt 1=first 2=last 3=company 4=phone 5=email 6=zip 7=years 8=serviceAreas 9=package
+    // Columns (0-based): 0=submittedAt 1=first 2=last 3=company 4=phone 5=email 6=zip 7=years 8=serviceAreas 9=package
     return rows
       .filter(r => r[4] && r[8] && r[8].toString().toLowerCase().includes(city.toLowerCase()))
       .map(r => ({ firstName: r[1], lastName: r[2], company: r[3], phone: r[4] }));
   } catch (err) {
     return [];
   }
-}
-
-function digitToCity(digit) {
-  const map = { '1': 'San Antonio', '2': 'Houston', '3': 'Dallas', '4': 'Austin', '5': 'Fort Worth', '6': 'El Paso' };
-  return map[digit] || '';
 }
 
 // ── Form Submission Handler ──────────────────────────────────
@@ -187,7 +151,7 @@ function notifyContractorSignup(data) {
     data.phone,
     `Welcome to HVAC Flow Solutions, ${data.firstName}! ` +
     `Your ${data.package} package is confirmed. When homeowners in ${data.serviceAreas} ` +
-    `call our business line, you will receive their recorded message with a call-back number. Questions? Reply here.`
+    `call our AI line, you will receive their name, number, issue, and a recording instantly. Questions? Reply here.`
   );
 
   sendSMS(
@@ -203,16 +167,17 @@ function notifyContractorSignup(data) {
 
 // ── Logging ──────────────────────────────────────────────────
 
-function logVoicemail(city, caller, recordingUrl, duration, contractorCount) {
+function logVapiCall(d) {
   try {
     const ss    = SpreadsheetApp.openById(getProperty('SHEET_ID'));
-    const sheet = getOrCreateSheet(ss, 'Voicemails');
+    const sheet = getOrCreateSheet(ss, 'AI Calls');
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['Timestamp', 'City', 'Caller', 'Duration (s)', 'Contractors Notified', 'Recording URL']);
+      sheet.appendRow(['Timestamp', 'Caller Name', 'Caller #', 'Callback #', 'City', 'Urgency', 'Duration (s)', 'Contractors Notified', 'Problem', 'Recording URL', 'Summary']);
     }
     sheet.appendRow([
       new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }),
-      city, caller, duration, contractorCount, recordingUrl + '.mp3'
+      d.callerName, d.callerNumber, d.callbackPhone, d.city, d.urgency,
+      d.duration, d.contractorCount, d.problem, d.recordingUrl, d.summary
     ]);
   } catch (err) {
     // Non-fatal
