@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /thanks.html
+Disallow: /contractor-form.html
+Disallow: /homeowner-form.html
+
+Sitemap: https://boosthvacleads.com/sitemap.xml
