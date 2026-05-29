@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8H5MND1Y6W"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-8H5MND1Y6W');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Contractor Trial Agreement — HVAC Flow Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #1a1a1a;
+    --surface2: #222;
+    --border: #333;
+    --border2: #3a3a3a;
+    --orange: #ff6b2b;
+    --orange-dim: rgba(255,107,43,0.12);
+    --orange-glow: rgba(255,107,43,0.25);
+    --text: #f5f1eb;
+    --muted: #999;
+    --muted2: #666;
+    --green: #3ddc84;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,107,43,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,107,43,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(255,107,43,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── ACCESS GATE ── */
+  #access-gate {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .gate-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 48px 40px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .gate-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--orange), transparent);
+  }
+
+  .gate-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255,107,43,0.1);
+    border: 1px solid rgba(255,107,43,0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 28px;
+  }
+
+  .gate-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .gate-sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  .gate-contact {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    color: #aaa;
+  }
+
+  .gate-contact a {
+    color: var(--orange);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .gate-contact a:hover { text-decoration: underline; }
+
+  .gate-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .gate-logo-icon {
+    width: 36px; height: 36px;
+    background: var(--orange);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 17px;
+    color: #fff;
+  }
+
+  .gate-logo-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: #aaa;
+    text-transform: uppercase;
+    text-align: left;
+    line-height: 1.3;
+  }
+
+  .gate-logo-text strong {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  /* ── MAIN FORM (hidden until access verified) ── */
+  #main-content { display: none; }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+  }
+
+  .header { margin-bottom: 56px; animation: fadeUp 0.7s ease both; }
+
+  .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: var(--orange);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: #fff;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #aaa;
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+
+  .logo-text strong { display: block; color: var(--text); font-size: 13px; letter-spacing: 0.1em; }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 72px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    margin-bottom: 16px;
+  }
+
+  h1 em { color: var(--orange); font-style: normal; }
+
+  .header-sub { font-size: 15px; color: #aaa; max-width: 480px; line-height: 1.7; }
+
+  .trial-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin: 28px 0 0;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  .trial-badge::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--orange-glow), transparent);
+  }
+
+  .trial-price { text-align: center; }
+  .trial-price .amount { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: var(--orange); line-height: 1; }
+  .trial-price .label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: #aaa; text-transform: uppercase; }
+  .trial-divider { width: 1px; height: 48px; background: var(--border2); }
+  .trial-details { font-size: 14px; color: #bbb; line-height: 1.8; }
+  .trial-details strong { color: var(--text); font-weight: 500; }
+
+  .section-divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 48px 0 32px;
+    animation: fadeUp 0.7s 0.15s ease both;
+  }
+  .section-divider span {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; color: var(--orange);
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  form { animation: fadeUp 0.7s 0.2s ease both; }
+
+  .form-section { margin-bottom: 40px; }
+  .form-section-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 0.06em; color: var(--text); margin-bottom: 4px; }
+  .form-section-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field-grid.single { grid-template-columns: 1fr; }
+
+  @media (max-width: 540px) { .field-grid { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; color: #aaa; text-transform: uppercase;
+  }
+  label .req { color: var(--orange); margin-left: 3px; }
+
+  input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+    background: #1e1e1e;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 13px 16px;
+    color: #f5f1eb;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    width: 100%;
+    -webkit-appearance: none;
+  }
+
+  input::placeholder, textarea::placeholder { color: #555; }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px var(--orange-dim);
+    background: var(--surface2);
+  }
+
+  input.error, textarea.error, select.error {
+    border-color: #ff4444;
+    box-shadow: 0 0 0 3px rgba(255,68,68,0.1);
+  }
+
+  textarea { resize: vertical; min-height: 96px; line-height: 1.6; }
+
+  select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+  }
+
+  select option { background: #1a1a1a; }
+
+  .error-msg { font-size: 12px; color: #ff6666; margin-top: 2px; display: none; }
+  .field.has-error .error-msg { display: block; }
+
+  .checkbox-group { display: flex; flex-direction: column; gap: 12px; }
+  .checkbox-item { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+  .checkbox-item input[type="checkbox"] { display: none; }
+
+  .checkbox-box {
+    width: 20px; height: 20px;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    background: var(--surface);
+    flex-shrink: 0; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; cursor: pointer;
+  }
+
+  .checkbox-item input:checked + .checkbox-box { background: var(--orange); border-color: var(--orange); }
+  .checkbox-item input:checked + .checkbox-box::after {
+    content: '';
+    width: 10px; height: 6px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translate(1px, -1px);
+    display: block;
+  }
+
+  .checkbox-label { font-size: 14px; color: #d0d0d0; line-height: 1.5; cursor: pointer; user-select: none; }
+  .checkbox-label strong { color: var(--text); font-weight: 500; }
+
+  .terms-box {
+    background: #1a1a1a; border: 1px solid #383838;
+    border-radius: 10px; padding: 24px; margin-bottom: 24px;
+    font-size: 13px; color: #b0b0b0; line-height: 1.8;
+    max-height: 220px; overflow-y: auto;
+  }
+  .terms-box::-webkit-scrollbar { width: 4px; }
+  .terms-box::-webkit-scrollbar-track { background: var(--border); border-radius: 2px; }
+  .terms-box::-webkit-scrollbar-thumb { background: var(--muted2); border-radius: 2px; }
+  .terms-box h4 { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--orange); text-transform: uppercase; margin: 16px 0 6px; }
+  .terms-box h4:first-child { margin-top: 0; }
+  .terms-box p { margin-bottom: 8px; }
+  .terms-box ul { padding-left: 16px; margin-bottom: 8px; }
+  .terms-box ul li { margin-bottom: 4px; }
+
+  .signature-area {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 20px; margin-bottom: 24px;
+  }
+  .sig-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: #aaa; text-transform: uppercase; margin-bottom: 10px; }
+
+  canvas#sigCanvas {
+    width: 100%; height: 130px;
+    background: var(--surface2);
+    border: 1px dashed var(--border2);
+    border-radius: 6px; display: block;
+    cursor: crosshair; touch-action: none;
+  }
+
+  .sig-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .sig-hint { font-size: 12px; color: #aaa; font-style: italic; }
+  .sig-clear {
+    background: none; border: 1px solid var(--border2);
+    color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.1em; padding: 6px 14px;
+    border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+  }
+  .sig-clear:hover { color: var(--text); border-color: #444; }
+
+  .submit-row { display: flex; align-items: center; gap: 16px; margin-top: 40px; flex-wrap: wrap; }
+
+  .btn-submit {
+    background: var(--orange); color: #fff; border: none;
+    border-radius: 10px; padding: 16px 40px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+    letter-spacing: 0.08em; cursor: pointer;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .btn-submit:hover { background: #ff7d42; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,107,43,0.35); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit.loading { pointer-events: none; opacity: 0.8; }
+
+  .submit-note { font-size: 12px; color: #aaa; line-height: 1.5; }
+
+  .success-screen {
+    display: none; text-align: center;
+    padding: 80px 24px; animation: fadeUp 0.6s ease both;
+  }
+  .success-icon {
+    width: 72px; height: 72px;
+    background: rgba(61,220,132,0.1); border: 1px solid rgba(61,220,132,0.3);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px; font-size: 32px;
+  }
+  .success-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 0.04em; margin-bottom: 12px; color: var(--green); }
+  .success-screen p { color: #aaa; font-size: 15px; max-width: 400px; margin: 0 auto; line-height: 1.7; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-footer {
+    margin-top: 60px; padding-top: 32px;
+    border-top: 1px solid var(--border);
+    text-align: center; font-size: 12px; color: #888;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+  .form-footer a { color: var(--orange); text-decoration: none; }
+
+  .step-indicator { display: flex; gap: 6px; margin-bottom: 40px; animation: fadeUp 0.6s 0.05s ease both; }
+  .step-dot { height: 3px; border-radius: 2px; background: var(--border2); flex: 1; transition: background 0.3s; }
+  .step-dot.active { background: var(--orange); }
+</style>
+</head>
+<body>
+
+<!-- ── ACCESS GATE (shown when no valid token) ── -->
+<div id="access-gate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <div class="gate-logo-icon">HFS</div>
+      <div class="gate-logo-text">
+        <strong>HVAC Flow Solutions</strong>
+        boosthvacleads.com
+      </div>
+    </div>
+    <div class="gate-icon">🔒</div>
+    <div class="gate-title">Private Form</div>
+    <p class="gate-sub">This form is only available to contractors who have been personally invited by HVAC Flow Solutions.</p>
+    <div class="gate-contact">
+      Interested in our trial lead package?<br>
+      Reach out at <a href="mailto:hvacflowsolutions@gmail.com">hvacflowsolutions@gmail.com</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT (shown when token is valid) ── -->
+<div id="main-content">
+<div class="page">
+
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-icon">HFS</div>
+      <div class="logo-text">
+        <strong>HVAC Flow Solutions</strong>
+        boosthvacleads.com
+      </div>
+    </div>
+    <h1>CONTRACTOR<br><em>TRIAL</em><br>AGREEMENT</h1>
+    <p class="header-sub">Complete this form to get started with your trial lead package. Takes less than 3 minutes.</p>
+  </div>
+
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
+  </div>
+
+  <form id="trialForm" novalidate>
+
+    <div class="form-section">
+      <div class="form-section-title">Business Information</div>
+      <div class="form-section-sub">Tell us about your HVAC company</div>
+      <div class="field-grid">
+        <div class="field full" id="f-bizname">
+          <label>Business Name <span class="req">*</span></label>
+          <input type="text" id="bizname" placeholder="ABC Heating & Cooling" autocomplete="organization">
+          <span class="error-msg">Please enter your business name</span>
+        </div>
+        <div class="field" id="f-firstname">
+          <label>Your First Name <span class="req">*</span></label>
+          <input type="text" id="firstname" placeholder="John" autocomplete="given-name">
+          <span class="error-msg">Required</span>
+        </div>
+        <div class="field" id="f-lastname">
+          <label>Your Last Name <span class="req">*</span></label>
+          <input type="text" id="lastname" placeholder="Smith" autocomplete="family-name">
+          <span class="error-msg">Required</span>
+        </div>
+        <div class="field" id="f-phone">
+          <label>Phone Number <span class="req">*</span></label>
+          <input type="tel" id="phone" placeholder="(555) 000-0000" autocomplete="tel">
+          <span class="error-msg">Please enter a valid phone number</span>
+        </div>
+        <div class="field" id="f-email">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" id="email" placeholder="john@abcheating.com" autocomplete="email">
+          <span class="error-msg">Please enter a valid email</span>
+        </div>
+        <div class="field" id="f-website">
+          <label>Website (optional)</label>
+          <input type="text" id="website" placeholder="www.abcheating.com">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider"><span>Service Details</span></div>
+
+    <div class="form-section">
+      <div class="form-section-title">Service Area & Preferences</div>
+      <div class="form-section-sub">Where do you want leads, and what jobs do you prefer?</div>
+      <div class="field-grid single">
+        <div class="field full" id="f-cities">
+          <label>Cities / Zip Codes You Serve <span class="req">*</span></label>
+          <textarea id="cities" placeholder="e.g. Houston, Katy, Sugar Land — or zip codes 77001, 77002..."></textarea>
+          <span class="error-msg">Please enter your service area</span>
+        </div>
+        <div class="field full" id="f-jobtypes">
+          <label>Job Types You Want <span class="req">*</span></label>
+          <div class="checkbox-group" style="margin-top:4px;">
+            <label class="checkbox-item">
+              <input type="checkbox" name="jobtype" value="repair">
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label"><strong>AC / Heating Repair</strong> — service calls, diagnostics</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="jobtype" value="replacement">
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label"><strong>System Replacement</strong> — full unit replacements</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="jobtype" value="install">
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label"><strong>New Installation</strong> — new construction or add-ons</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="jobtype" value="maintenance">
+              <span class="checkbox-box"></span>
+              <span class="checkbox-label"><strong>Maintenance / Tune-Ups</strong> — seasonal checkups</span>
+            </label>
+          </div>
+          <span class="error-msg" id="jobtype-error" style="display:none;">Please select at least one job type</span>
+        </div>
+        <div class="field full" id="f-leaddelivery">
+          <label>Preferred Lead Delivery Method <span class="req">*</span></label>
+          <select id="leaddelivery">
+            <option value="" disabled selected>Choose how you want leads delivered…</option>
+            <option value="text">Text message (SMS)</option>
+            <option value="email">Email</option>
+            <option value="both">Both text and email</option>
+          </select>
+          <span class="error-msg">Please select a delivery method</span>
+        </div>
+        <div class="field full">
+          <label>Anything else we should know? (optional)</label>
+          <textarea id="notes" placeholder="e.g. We specialize in commercial, prefer emergency calls, avoid certain areas..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider"><span>Terms & Agreement</span></div>
+
+    <div class="form-section">
+      <div class="form-section-title">Trial Terms</div>
+      <div class="form-section-sub">Please read and agree to the following before signing</div>
+      <div class="terms-box">
+        <h4>1. Trial Terms</h4>
+        <p>Trial Package: 5 leads delivered at a discounted rate of $25 (regularly $75). Trial period begins on the date this form is submitted. No automatic renewal — Contractor must actively choose to continue after the trial.</p>
+        <h4>2. What Counts as a Valid Lead</h4>
+        <p>A lead is valid when: the homeowner is located within the Contractor's designated service area; the homeowner has provided a real name and working contact info; the homeowner has expressed an active need for HVAC service; and the lead has not been previously delivered to this Contractor. Invalid leads must be reported within 48 hours and will be replaced at no charge.</p>
+        <h4>3. Lead Delivery</h4>
+        <p>Leads are delivered via the method selected above in real time. Contractor agrees to respond to leads within 2 hours during business hours. Provider does not guarantee a specific number of leads per day.</p>
+        <h4>4. Exclusivity</h4>
+        <p>Trial leads are exclusive — each lead is delivered to one contractor only and will not be sold to a competing contractor in the same area during the trial period.</p>
+        <h4>5. After the Trial</h4>
+        <p>Upon completion, Contractor may continue on the Starter Package ($75 for 5 leads), negotiate a custom plan, or opt out with no further obligation.</p>
+        <h4>6. Limitation of Liability</h4>
+        <p>Provider does not guarantee that leads will result in booked jobs or revenue. Provider's maximum liability is limited to a refund of the $25 trial amount paid.</p>
+        <h4>7. Confidentiality</h4>
+        <p>Both parties agree to keep lead data, pricing, and business terms confidential and not share them with third parties.</p>
+      </div>
+      <div class="checkbox-group" style="margin-bottom:24px;">
+        <label class="checkbox-item" id="f-agree1">
+          <input type="checkbox" id="agree1">
+          <span class="checkbox-box"></span>
+          <span class="checkbox-label">I have read and agree to the <strong>Trial Terms & Agreement</strong> above</span>
+        </label>
+        <label class="checkbox-item" id="f-agree3">
+          <input type="checkbox" id="agree3">
+          <span class="checkbox-box"></span>
+          <span class="checkbox-label">I confirm I am <strong>authorized to sign</strong> this agreement on behalf of my business</span>
+        </label>
+      </div>
+      <span class="error-msg" id="agree-error" style="display:none; margin-bottom:16px;">Please check all boxes above to continue</span>
+    </div>
+
+    <div class="section-divider"><span>Your Signature</span></div>
+
+    <div class="form-section">
+      <div class="form-section-title">Sign Below</div>
+      <div class="form-section-sub">Use your mouse or finger on mobile to sign</div>
+      <div class="signature-area">
+        <div class="sig-label">Contractor Signature <span style="color:var(--orange)">*</span></div>
+        <canvas id="sigCanvas"></canvas>
+        <div class="sig-actions">
+          <span class="sig-hint">Draw your signature above</span>
+          <button type="button" class="sig-clear" onclick="clearSig()">Clear</button>
+        </div>
+      </div>
+      <span class="error-msg" id="sig-error" style="display:none; margin-bottom:16px;">Please provide your signature</span>
+      <div class="submit-row">
+        <button type="submit" class="btn-submit" id="submitBtn">SUBMIT AGREEMENT</button>
+        <p class="submit-note">By submitting, you agree to the terms above.</p>
+      </div>
+    </div>
+
+  </form>
+
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✓</div>
+    <h2>YOU'RE IN.</h2>
+    <p>Your agreement has been submitted. We'll be in touch within 1 business day to get your leads set up.</p>
+    <p style="margin-top:16px; font-size:13px;">Questions? <a href="mailto:hvacflowsolutions@gmail.com" style="color:var(--orange);">hvacflowsolutions@gmail.com</a></p>
+  </div>
+
+  <div class="form-footer">
+    <p>© 2026 HVAC Flow Solutions &nbsp;·&nbsp; <a href="mailto:hvacflowsolutions@gmail.com">hvacflowsolutions@gmail.com</a></p>
+    <p style="margin-top:6px;">This form is private and by invitation only. Your information is kept confidential.</p>
+  </div>
+
+</div>
+</div><!-- end #main-content -->
+
+<script>
+  // ── ACCESS TOKEN CHECK ──
+  // Share this URL with contractors:
+  // https://boosthvacleads.com/contractor-trial.html?access=hfs-trial-2026
+  const VALID_TOKEN = 'hfs-trial-2026';
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('access') === VALID_TOKEN) {
+    document.getElementById('access-gate').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+  }
+
+  // ── Signature Canvas ──
+  const canvas = document.getElementById('sigCanvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let hasSig = false;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      ctx.strokeStyle = '#f0ece4';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const src = e.touches ? e.touches[0] : e;
+      return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+    }
+
+    canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; });
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; }, { passive: false });
+    canvas.addEventListener('touchend', () => drawing = false);
+
+    window.clearSig = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasSig = false;
+    };
+
+    // Step indicator
+    function updateSteps() {
+      const s1 = document.getElementById('bizname').value && document.getElementById('email').value;
+      const s2 = document.getElementById('cities').value;
+      const s3 = document.getElementById('agree1').checked && document.getElementById('agree3').checked;
+      const s4 = hasSig;
+      ['dot1','dot2','dot3','dot4'].forEach((id, i) => {
+        document.getElementById(id).classList.toggle('active', !![s1,s2,s3,s4][i]);
+      });
+    }
+
+    document.querySelectorAll('input, textarea, select').forEach(el => {
+      el.addEventListener('input', updateSteps);
+      el.addEventListener('change', updateSteps);
+    });
+    canvas.addEventListener('mousemove', updateSteps);
+    canvas.addEventListener('touchmove', updateSteps);
+
+    // Phone formatting
+    document.getElementById('phone').addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').substring(0, 10);
+      if (v.length >= 6) v = '(' + v.slice(0,3) + ') ' + v.slice(3,6) + '-' + v.slice(6);
+      else if (v.length >= 3) v = '(' + v.slice(0,3) + ') ' + v.slice(3);
+      this.value = v;
+    });
+
+    function validateField(id, condition) {
+      const wrapper = document.getElementById('f-' + id);
+      const el = document.getElementById(id);
+      if (!condition) { wrapper.classList.add('has-error'); el.classList.add('error'); return false; }
+      wrapper.classList.remove('has-error'); el.classList.remove('error'); return true;
+    }
+
+    document.getElementById('trialForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      let valid = true;
+
+      valid &= validateField('bizname', document.getElementById('bizname').value.trim());
+      valid &= validateField('firstname', document.getElementById('firstname').value.trim());
+      valid &= validateField('lastname', document.getElementById('lastname').value.trim());
+      valid &= validateField('phone', document.getElementById('phone').value.trim().length >= 10);
+      valid &= validateField('email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('email').value.trim()));
+      valid &= validateField('cities', document.getElementById('cities').value.trim());
+      valid &= validateField('leaddelivery', document.getElementById('leaddelivery').value);
+
+      const checkedJobs = document.querySelectorAll('input[name="jobtype"]:checked');
+      const jobErr = document.getElementById('jobtype-error');
+      if (checkedJobs.length === 0) { jobErr.style.display = 'block'; valid = false; }
+      else jobErr.style.display = 'none';
+
+      const agreeErr = document.getElementById('agree-error');
+      const allAgreed = document.getElementById('agree1').checked && document.getElementById('agree3').checked;
+      if (!allAgreed) { agreeErr.style.display = 'block'; valid = false; }
+      else agreeErr.style.display = 'none';
+
+      const sigErr = document.getElementById('sig-error');
+      if (!hasSig) { sigErr.style.display = 'block'; valid = false; }
+      else sigErr.style.display = 'none';
+
+      if (!valid) {
+        document.querySelector('.has-error, #jobtype-error[style*="block"], #agree-error[style*="block"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.textContent = 'SUBMITTING...';
+      btn.classList.add('loading');
+
+      setTimeout(() => {
+        document.getElementById('trialForm').style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+        document.querySelector('.step-indicator').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 1200);
+    });
+
+    document.querySelectorAll('input, textarea, select').forEach(el => {
+      el.addEventListener('input', () => {
+        el.classList.remove('error');
+        const wrapper = el.closest('.field');
+        if (wrapper) wrapper.classList.remove('has-error');
+      });
+    });
+  }
+</script>
+</body>
+</html>
