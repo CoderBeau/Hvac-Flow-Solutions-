@@ -479,7 +479,19 @@
       </div>
     </div>
     <h1>CONTRACTOR<br><em>TRIAL</em><br>AGREEMENT</h1>
-    <p class="header-sub">Complete this form to get started with your trial lead package. Takes less than 3 minutes.</p>
+    <p class="header-sub">Complete this form to activate your trial lead package. Takes less than 3 minutes.</p>
+    <div class="trial-badge">
+      <div class="trial-price">
+        <div class="amount">$25</div>
+        <div class="label">Trial Rate</div>
+      </div>
+      <div class="trial-divider"></div>
+      <div class="trial-details">
+        <strong>5 Exclusive Leads</strong> delivered in real time<br>
+        Regular price <strong>$75</strong> — 67% off<br>
+        No contracts • Pay per lead after trial
+      </div>
+    </div>
   </div>
 
   <div class="step-indicator">
@@ -608,6 +620,11 @@
           <span class="checkbox-box"></span>
           <span class="checkbox-label">I have read and agree to the <strong>Trial Terms & Agreement</strong> above</span>
         </label>
+        <label class="checkbox-item" id="f-agree2">
+          <input type="checkbox" id="agree2">
+          <span class="checkbox-box"></span>
+          <span class="checkbox-label">I understand that a <strong>payment of $25</strong> will be invoiced upon submission to activate my trial</span>
+        </label>
         <label class="checkbox-item" id="f-agree3">
           <input type="checkbox" id="agree3">
           <span class="checkbox-box"></span>
@@ -633,7 +650,7 @@
       <span class="error-msg" id="sig-error" style="display:none; margin-bottom:16px;">Please provide your signature</span>
       <div class="submit-row">
         <button type="submit" class="btn-submit" id="submitBtn">SUBMIT AGREEMENT</button>
-        <p class="submit-note">By submitting, you agree to the terms above.</p>
+        <p class="submit-note">By submitting, you agree to the terms above.<br>A PayPal invoice for $25 will be sent to your email.</p>
       </div>
     </div>
 
@@ -642,7 +659,7 @@
   <div class="success-screen" id="successScreen">
     <div class="success-icon">✓</div>
     <h2>YOU'RE IN.</h2>
-    <p>Your agreement has been submitted. We'll be in touch within 1 business day to get your leads set up.</p>
+    <p>Your trial agreement has been submitted. <strong>Check your email</strong> for a PayPal invoice for $25 to activate your 5 leads. We'll be in touch within 1 business day to get things going.</p>
     <p style="margin-top:16px; font-size:13px;">Questions? <a href="mailto:hvacflowsolutions@gmail.com" style="color:var(--orange);">hvacflowsolutions@gmail.com</a></p>
   </div>
 
@@ -710,7 +727,7 @@
     function updateSteps() {
       const s1 = document.getElementById('bizname').value && document.getElementById('email').value;
       const s2 = document.getElementById('cities').value;
-      const s3 = document.getElementById('agree1').checked && document.getElementById('agree3').checked;
+      const s3 = document.getElementById('agree1').checked && document.getElementById('agree2').checked && document.getElementById('agree3').checked;
       const s4 = hasSig;
       ['dot1','dot2','dot3','dot4'].forEach((id, i) => {
         document.getElementById(id).classList.toggle('active', !![s1,s2,s3,s4][i]);
@@ -757,7 +774,7 @@
       else jobErr.style.display = 'none';
 
       const agreeErr = document.getElementById('agree-error');
-      const allAgreed = document.getElementById('agree1').checked && document.getElementById('agree3').checked;
+      const allAgreed = document.getElementById('agree1').checked && document.getElementById('agree2').checked && document.getElementById('agree3').checked;
       if (!allAgreed) { agreeErr.style.display = 'block'; valid = false; }
       else agreeErr.style.display = 'none';
 
