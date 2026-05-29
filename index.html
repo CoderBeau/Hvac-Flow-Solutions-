@@ -99,16 +99,6 @@
       .pkg-grid { grid-template-columns:1fr 1fr; }
       .cb-grid { grid-template-columns:repeat(2,1fr); }
     }
-    /* ── Pricing tier cards ── */
-    .pg{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;align-items:start;}
-    @media(max-width:1023px){.pg{grid-template-columns:repeat(3,1fr);}}
-    @media(max-width:639px){.pg{grid-template-columns:1fr 1fr;}.pg-growth{grid-column:1/-1;}}
-    .pf{display:flex;align-items:center;gap:0.38rem;font-size:0.695rem;line-height:1.3;}
-    .pf::before{font-size:0.78rem;font-weight:700;flex-shrink:0;width:14px;text-align:center;}
-    .pf-yes{color:#1e293b;}.pf-yes::before{content:'✓';color:#16a34a;}
-    .pf-no{color:#c8d4e0;text-decoration:line-through;}.pf-no::before{content:'—';color:#c8d4e0;}
-    .pf-yes-w{color:#fff;}.pf-yes-w::before{content:'✓';color:#4ade80;}
-    .pf-no-w{color:rgba(255,255,255,0.32);text-decoration:line-through;}.pf-no-w::before{content:'—';color:rgba(255,255,255,0.28);}
   </style>
 </head>
 <body class="bg-zinc-50 text-zinc-900 overflow-x-hidden">
@@ -237,167 +227,14 @@
 <div id="contractor-content" class="hidden">
   <section id="pricing" class="py-12 md:py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4">
-
-      <!-- Section header -->
-      <div class="text-center mb-10">
-        <div style="display:inline-block;background:rgba(249,115,22,0.1);color:#f97316;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;padding:0.28rem 0.85rem;border-radius:100px;margin-bottom:0.7rem;">⚡ Exclusive Texas HVAC Leads</div>
-        <h2 class="text-3xl md:text-4xl font-bold mb-3">Pick Your Lead Package</h2>
-        <p style="color:#64748b;max-width:500px;margin:0 auto;font-size:0.93rem;line-height:1.65;">One contractor per lead — never shared. Scale up to unlock priority routing, custom territory, and a dedicated account manager.</p>
-      </div>
-
-      <!-- Pricing cards grid -->
-      <div class="pg">
-
-        <!-- ── TESTER ── -->
-        <div style="border:2px solid #0B1E3B;border-radius:18px;overflow:hidden;background:#fff;display:flex;flex-direction:column;">
-          <div style="background:#0B1E3B;padding:0.38rem 0;text-align:center;">
-            <span style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:#fff;">★ Full Trial Access</span>
-          </div>
-          <div style="padding:1.1rem 0.95rem;flex:1;display:flex;flex-direction:column;">
-            <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#0B1E3B;">Tester</div>
-            <div style="font-size:1.9rem;font-weight:900;color:#0B1E3B;font-family:'Montserrat',sans-serif;line-height:1;margin-top:0.2rem;">$75</div>
-            <div style="font-size:0.67rem;color:#94a3b8;margin-top:0.2rem;">5 leads · $15 each</div>
-            <div style="height:1px;background:#f1f5f9;margin:0.8rem 0;"></div>
-            <div style="display:flex;flex-direction:column;gap:0.42rem;flex:1;">
-              <div class="pf pf-yes">Exclusive leads</div>
-              <div class="pf pf-yes">Money-back guarantee</div>
-              <div class="pf pf-yes">Homeowner contact info</div>
-              <div class="pf pf-yes">3–7 day delivery</div>
-              <div class="pf pf-yes">Pause/cancel anytime</div>
-              <div class="pf pf-yes">Performance dashboard</div>
-              <div class="pf pf-yes">Priority lead routing</div>
-              <div class="pf pf-yes">Custom territory</div>
-              <div class="pf pf-yes">Account manager</div>
-              <div class="pf pf-yes">VIP 24hr support</div>
-              <div class="pf pf-yes">SMS follow-up</div>
-              <div class="pf pf-yes">Call recording</div>
-              <div class="pf pf-yes">AI voice agent</div>
-            </div>
-            <a href="#contractor-form" style="display:block;text-align:center;background:#0B1E3B;color:#fff;padding:0.68rem;border-radius:9px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.04em;text-decoration:none;margin-top:0.95rem;">Get Started →</a>
-          </div>
-        </div>
-
-        <!-- ── STARTER ── -->
-        <div style="border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;background:#fff;display:flex;flex-direction:column;">
-          <div style="padding:1.1rem 0.95rem;flex:1;display:flex;flex-direction:column;">
-            <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#0B1E3B;">Starter</div>
-            <div style="font-size:1.9rem;font-weight:900;color:#0B1E3B;font-family:'Montserrat',sans-serif;line-height:1;margin-top:0.2rem;">$150</div>
-            <div style="font-size:0.67rem;color:#94a3b8;margin-top:0.2rem;">10 leads · $15 each</div>
-            <div style="height:1px;background:#f1f5f9;margin:0.8rem 0;"></div>
-            <div style="display:flex;flex-direction:column;gap:0.42rem;flex:1;">
-              <div class="pf pf-yes">Exclusive leads</div>
-              <div class="pf pf-yes">Money-back guarantee</div>
-              <div class="pf pf-yes">Homeowner contact info</div>
-              <div class="pf pf-yes">3–7 day delivery</div>
-              <div class="pf pf-no">Pause/cancel anytime</div>
-              <div class="pf pf-no">Performance dashboard</div>
-              <div class="pf pf-no">Priority lead routing</div>
-              <div class="pf pf-no">Custom territory</div>
-              <div class="pf pf-no">Account manager</div>
-              <div class="pf pf-no">VIP 24hr support</div>
-              <div class="pf pf-no">SMS follow-up</div>
-              <div class="pf pf-no">Call recording</div>
-              <div class="pf pf-no">AI voice agent</div>
-            </div>
-            <a href="#contractor-form" style="display:block;text-align:center;background:#f8fafc;border:1.5px solid #e2e8f0;color:#0B1E3B;padding:0.68rem;border-radius:9px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.04em;text-decoration:none;margin-top:0.95rem;">Get Started →</a>
-          </div>
-        </div>
-
-        <!-- ── GROWTH (Featured) ── -->
-        <div class="pg-growth" style="border:2px solid transparent;border-radius:18px;overflow:hidden;background:linear-gradient(145deg,#f97316 0%,#dc2626 100%);box-shadow:0 16px 48px rgba(249,115,22,0.3);position:relative;display:flex;flex-direction:column;">
-          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fff;color:#f97316;font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.54rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.18rem 0.65rem;border-radius:100px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,0.12);">⭐ Most Popular</div>
-          <div style="padding:1.35rem 0.95rem 1.1rem;flex:1;display:flex;flex-direction:column;">
-            <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.72);">Growth</div>
-            <div style="font-size:1.9rem;font-weight:900;color:#fff;font-family:'Montserrat',sans-serif;line-height:1;margin-top:0.2rem;">$375</div>
-            <div style="font-size:0.67rem;color:rgba(255,255,255,0.62);margin-top:0.2rem;">25 leads · $15 each</div>
-            <div style="height:1px;background:rgba(255,255,255,0.2);margin:0.8rem 0;"></div>
-            <div style="display:flex;flex-direction:column;gap:0.42rem;flex:1;">
-              <div class="pf pf-yes-w">Exclusive leads</div>
-              <div class="pf pf-yes-w">Money-back guarantee</div>
-              <div class="pf pf-yes-w">Homeowner contact info</div>
-              <div class="pf pf-yes-w">3–7 day delivery</div>
-              <div class="pf pf-yes-w">Pause/cancel anytime</div>
-              <div class="pf pf-yes-w">Performance dashboard</div>
-              <div class="pf pf-no-w">Priority lead routing</div>
-              <div class="pf pf-no-w">Custom territory</div>
-              <div class="pf pf-no-w">Account manager</div>
-              <div class="pf pf-no-w">VIP 24hr support</div>
-              <div class="pf pf-yes-w">SMS follow-up</div>
-              <div class="pf pf-no-w">Call recording</div>
-              <div class="pf pf-no-w">AI voice agent</div>
-            </div>
-            <a href="#contractor-form" style="display:block;text-align:center;background:#fff;color:#f97316;padding:0.68rem;border-radius:9px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.75rem;letter-spacing:0.04em;text-decoration:none;margin-top:0.95rem;">Get Started →</a>
-          </div>
-        </div>
-
-        <!-- ── PRO PARTNER ── -->
-        <div style="border:1.5px solid #e2e8f0;border-radius:18px;overflow:hidden;background:#fff;display:flex;flex-direction:column;">
-          <div style="padding:1.1rem 0.95rem;flex:1;display:flex;flex-direction:column;">
-            <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#0B1E3B;">Pro Partner</div>
-            <div style="font-size:1.9rem;font-weight:900;color:#0B1E3B;font-family:'Montserrat',sans-serif;line-height:1;margin-top:0.2rem;">$700</div>
-            <div style="font-size:0.67rem;color:#94a3b8;margin-top:0.2rem;">50 leads · $14 each</div>
-            <div style="height:1px;background:#f1f5f9;margin:0.8rem 0;"></div>
-            <div style="display:flex;flex-direction:column;gap:0.42rem;flex:1;">
-              <div class="pf pf-yes">Exclusive leads</div>
-              <div class="pf pf-yes">Money-back guarantee</div>
-              <div class="pf pf-yes">Homeowner contact info</div>
-              <div class="pf pf-yes">3–7 day delivery</div>
-              <div class="pf pf-yes">Pause/cancel anytime</div>
-              <div class="pf pf-yes">Performance dashboard</div>
-              <div class="pf pf-yes">Priority lead routing</div>
-              <div class="pf pf-yes">Custom territory</div>
-              <div class="pf pf-no">Account manager</div>
-              <div class="pf pf-no">VIP 24hr support</div>
-              <div class="pf pf-yes">SMS follow-up</div>
-              <div class="pf pf-yes">Call recording</div>
-              <div class="pf pf-no">AI voice agent</div>
-            </div>
-            <a href="#contractor-form" style="display:block;text-align:center;background:#f8fafc;border:1.5px solid #e2e8f0;color:#0B1E3B;padding:0.68rem;border-radius:9px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.75rem;letter-spacing:0.04em;text-decoration:none;margin-top:0.95rem;">Get Started →</a>
-          </div>
-        </div>
-
-        <!-- ── ELITE ── -->
-        <div style="border:2px solid #0B1E3B;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#0B1E3B 0%,#1a3358 100%);display:flex;flex-direction:column;">
-          <div style="background:rgba(245,166,35,0.12);padding:0.38rem 0;text-align:center;border-bottom:1px solid rgba(245,166,35,0.18);">
-            <span style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:#F5A623;">👑 All Perks Included</span>
-          </div>
-          <div style="padding:1.1rem 0.95rem;flex:1;display:flex;flex-direction:column;">
-            <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Elite</div>
-            <div style="font-size:1.9rem;font-weight:900;color:#fff;font-family:'Montserrat',sans-serif;line-height:1;margin-top:0.2rem;">$1,300</div>
-            <div style="font-size:0.67rem;color:rgba(255,255,255,0.4);margin-top:0.2rem;">100 leads · $13 each</div>
-            <div style="height:1px;background:rgba(255,255,255,0.1);margin:0.8rem 0;"></div>
-            <div style="display:flex;flex-direction:column;gap:0.42rem;flex:1;">
-              <div class="pf pf-yes-w">Exclusive leads</div>
-              <div class="pf pf-yes-w">Money-back guarantee</div>
-              <div class="pf pf-yes-w">Homeowner contact info</div>
-              <div class="pf pf-yes-w">3–7 day delivery</div>
-              <div class="pf pf-yes-w">Pause/cancel anytime</div>
-              <div class="pf pf-yes-w">Performance dashboard</div>
-              <div class="pf pf-yes-w">Priority lead routing</div>
-              <div class="pf pf-yes-w">Custom territory</div>
-              <div class="pf pf-yes-w">Account manager</div>
-              <div class="pf pf-yes-w">VIP 24hr support</div>
-              <div class="pf pf-yes-w">SMS follow-up</div>
-              <div class="pf pf-yes-w">Call recording</div>
-              <div class="pf pf-yes-w">AI voice agent</div>
-            </div>
-            <a href="#contractor-form" style="display:block;text-align:center;background:#F5A623;color:#0B1E3B;padding:0.68rem;border-radius:9px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.75rem;letter-spacing:0.04em;text-decoration:none;margin-top:0.95rem;">Get Started →</a>
-          </div>
-        </div>
-
-      </div><!-- end .pg -->
-
-      <p style="text-align:center;font-size:0.73rem;color:#94a3b8;margin-top:1.1rem;">All plans are one-time purchases · No subscription required · Prices in USD</p>
-
-      <!-- Monthly plans CTA -->
-      <div style="margin-top:2rem;text-align:center;">
-        <div style="display:inline-flex;align-items:center;gap:1rem;background:#0B1E3B;border:1px solid #1e3a5f;border-radius:14px;padding:1rem 1.5rem;">
-          <div style="text-align:left;">
-            <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.75rem;letter-spacing:0.06em;text-transform:uppercase;color:#fff;">Prefer Monthly Plans?</div>
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.5);margin-top:0.15rem;">Starter $397 · Growth $697 · Pro $997 per month</div>
-          </div>
-          <a href="/monthly-pricing.html" style="display:inline-block;background:#f97316;color:#fff;font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.72rem;letter-spacing:0.05em;text-transform:uppercase;padding:0.6rem 1.1rem;border-radius:8px;text-decoration:none;white-space:nowrap;">View Monthly Plans →</a>
-        </div>
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Exclusive Texas HVAC Leads</h2>
+      <p class="text-center text-zinc-600 mb-10">100% exclusive • Most delivered in 3–7 business days • Money-back on invalid leads</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Tester</h3><p class="text-4xl font-bold text-orange-600 my-3">$75</p><p class="text-xs md:text-sm text-zinc-500 mb-6">5 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Starter</h3><p class="text-4xl font-bold text-orange-600 my-3">$150</p><p class="text-xs md:text-sm text-zinc-500 mb-6">10 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-3xl p-6 text-center shadow-2xl relative scale-105"><div class="absolute -top-5 left-1/2 -translate-x-1/2 bg-white text-orange-600 px-5 py-1 rounded-full text-xs font-bold">MOST POPULAR</div><h3 class="text-xl font-bold">Growth</h3><p class="text-4xl font-bold my-3">$375</p><p class="text-xs md:text-sm opacity-90 mb-6">25 Exclusive Leads</p><a href="#contractor-form" class="block bg-white text-zinc-900 py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Pro Partner</h3><p class="text-4xl font-bold text-orange-600 my-3">$700</p><p class="text-xs md:text-sm text-zinc-500 mb-6">50 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
+        <div class="bg-white border border-zinc-200 hover:border-orange-400 rounded-3xl p-6 text-center transition-all"><h3 class="text-xl font-bold">Elite</h3><p class="text-4xl font-bold text-orange-600 my-3">$1,300</p><p class="text-xs md:text-sm text-zinc-500 mb-6">100 Exclusive Leads</p><a href="#contractor-form" class="block bg-zinc-900 text-white py-3.5 rounded-2xl font-semibold text-sm">Get Started</a></div>
       </div>
     </div>
   </section>
