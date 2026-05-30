@@ -426,35 +426,6 @@
   .success-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 0.04em; margin-bottom: 12px; color: var(--green); }
   .success-screen p { color: #aaa; font-size: 15px; max-width: 400px; margin: 0 auto; line-height: 1.7; }
 
-  .paypal-pay-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 28px auto 0;
-    padding: 16px 36px;
-    background: #ffc439;
-    color: #003087;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: all 0.2s;
-    box-shadow: 0 8px 24px rgba(255,196,57,0.25);
-  }
-  .paypal-pay-btn:hover {
-    background: #ffd44d;
-    transform: translateY(-1px);
-    box-shadow: 0 10px 28px rgba(255,196,57,0.35);
-  }
-  .paypal-pay-icon {
-    font-weight: 800;
-    font-size: 18px;
-    color: #003087;
-  }
-
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -690,11 +661,8 @@
     <h2>YOU'RE IN.</h2>
     <p>Your trial agreement has been submitted. Complete your <strong>$25 payment</strong> below to activate your 5 exclusive leads. We'll be in touch within 1 business day to get things going.</p>
 
-    <a href="https://www.paypal.com/invoice/p/#H28D94RFP9F4BXVB" target="_blank" rel="noopener" class="paypal-pay-btn">
-      <span class="paypal-pay-icon">🅿</span>
-      <span>Pay $25 Now with PayPal</span>
-    </a>
-    <p style="margin-top:14px; font-size:12px; color:#888;">Secure checkout via PayPal — opens in a new tab.<br>A copy of this invoice has also been sent to your email.</p>
+    <div id="paypal-container-WQUF4X73V742A" style="margin-top:28px;max-width:300px;margin-left:auto;margin-right:auto;"></div>
+    <p style="margin-top:14px; font-size:12px; color:#888;">Secure checkout via PayPal</p>
 
     <p style="margin-top:20px; font-size:13px;">Questions? <a href="mailto:hvacflowsolutions@gmail.com" style="color:var(--orange);">hvacflowsolutions@gmail.com</a></p>
   </div>
@@ -832,6 +800,7 @@
         document.getElementById('successScreen').style.display = 'block';
         document.querySelector('.step-indicator').style.display = 'none';
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        renderPayPalButton();
       }, 1200);
     });
 
@@ -842,6 +811,15 @@
         if (wrapper) wrapper.classList.remove('has-error');
       });
     });
+  }
+</script>
+<!-- PayPal SDK -->
+<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
+<script>
+  function renderPayPalButton() {
+    paypal.HostedButtons({
+      hostedButtonId: "WQUF4X73V742A",
+    }).render("#paypal-container-WQUF4X73V742A");
   }
 </script>
 </body>
