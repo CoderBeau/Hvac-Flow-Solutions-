@@ -148,3 +148,17 @@ Add the Vapi phone number to the homeowner-facing parts of the site:
 | Contractors | Every contractor signup |
 | Homeowners | Homeowners who submitted the web form |
 | AI Calls | Every Vapi call — name, city, problem, recording URL, contractors notified |
+| Trials | Every contractor trial signup from the private trial form |
+
+### Trials Tab
+
+The private trial form (`contractor-trial.html`) writes a row to the **Trials** tab on each submission. Columns:
+
+`Client ID · Status · Start Date · End Date · Business Name · First · Last · Phone · Email · Website · Service Area · Job Types · Lead Delivery · Notes · Signed · Submitted At`
+
+- **Client ID** is auto-generated and sequential per year, e.g. `HFS-2026-0001`, `HFS-2026-0002`…
+- **Start Date** is the submission date; **End Date** is 14 days later.
+- To change the trial length, edit `TRIAL_LENGTH_DAYS` near the top of the trial section in `contractor-automation.gs`.
+- You also get an admin SMS on each trial signup with the new Client ID and trial dates.
+
+> **Important:** After updating `contractor-automation.gs` in the Apps Script editor, you must **re-deploy** (Deploy → Manage deployments → Edit → New version) for the Trials handler to go live.

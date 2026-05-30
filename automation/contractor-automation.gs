@@ -119,7 +119,14 @@ function findContractorsByCity(city) {
 // ── Form Submission Handler ──────────────────────────────────
 
 function handleFormSubmission(data) {
-  const ss    = SpreadsheetApp.openById(getProperty('SHEET_ID'));
+  const ss = SpreadsheetApp.openById(getProperty('SHEET_ID'));
+
+  if (data.type === 'Trial') {
+    const result = appendTrialRow(ss, data);
+    notifyTrialSignup(data, result.clientId, result.startDate, result.endDate);
+    return jsonResponse({ status: 'ok', clientId: result.clientId, startDate: result.startDate, endDate: result.endDate });
+  }
+
   const sheet = getOrCreateSheet(ss, data.type === 'Contractor' ? 'Contractors' : 'Homeowners');
 
   if (data.type === 'Contractor') {
@@ -130,6 +137,88 @@ function handleFormSubmission(data) {
   }
 
   return jsonResponse({ status: 'ok' });
+}
+
+// ── Trial Signups ────────────────────────────────────────────
+// Each trial gets an auto-generated Client ID, a start date, and
+// an end date 14 days later. A lock prevents duplicate IDs when
+// two contractors submit at the same moment.
+
+var TRIAL_LENGTH_DAYS = 14;
+
+function appendTrialRow(ss, d) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const sheet = getOrCreateSheet(ss, 'Trials');
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        'Client ID', 'Status', 'Start Date', 'End Date',
+        'Business Name', 'First', 'Last', 'Phone', 'Email', 'Website',
+        'Service Area', 'Job Types', 'Lead Delivery', 'Notes',
+        'Signed', 'Submitted At'
+      ]);
+      sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
+      sheet.setFrozenRows(1);
+    }
+
+    const tz       = 'America/Chicago';
+    const now      = new Date();
+    const end      = new Date(now.getTime() + TRIAL_LENGTH_DAYS * 24 * 60 * 60 * 1000);
+    const fmt      = dt => Utilities.formatDate(dt, tz, 'MM/dd/yyyy');
+    const clientId = generateClientId(sheet);
+
+    sheet.appendRow([
+      clientId,
+      'Active',
+      fmt(now),
+      fmt(end),
+      d.bizname  || '',
+      d.firstName|| '',
+      d.lastName || '',
+      d.phone    || '',
+      d.email    || '',
+      d.website  || '',
+      d.cities   || '',
+      d.jobTypes || '',
+      d.leadDelivery || '',
+      d.notes    || '',
+      d.signed ? 'Yes' : 'No',
+      d.submittedAt || now.toLocaleString('en-US', { timeZone: tz })
+    ]);
+
+    return { clientId: clientId, startDate: fmt(now), endDate: fmt(end) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Sequential, readable IDs like HFS-2026-0001 that reset each year.
+function generateClientId(sheet) {
+  const year = Utilities.formatDate(new Date(), 'America/Chicago', 'yyyy');
+  let maxNum = 0;
+  if (sheet.getLastRow() > 1) {
+    const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
+    ids.forEach(function (row) {
+      const m = String(row[0]).match(new RegExp('^HFS-' + year + '-(\\d+)$'));
+      if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
+    });
+  }
+  const next = ('0000' + (maxNum + 1)).slice(-4);
+  return 'HFS-' + year + '-' + next;
+}
+
+function notifyTrialSignup(d, clientId, startDate, endDate) {
+  sendSMS(
+    getProperty('ADMIN_PHONE'),
+    `NEW TRIAL SIGNUP\n` +
+    `ID: ${clientId}\n` +
+    `Business: ${d.bizname}\n` +
+    `Name: ${d.firstName} ${d.lastName}\n` +
+    `Phone: ${d.phone}\n` +
+    `Area: ${d.cities}\n` +
+    `Trial: ${startDate} → ${endDate}`
+  );
 }
 
 function appendContractorRow(sheet, d) {

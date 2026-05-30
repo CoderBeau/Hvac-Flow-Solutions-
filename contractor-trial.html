@@ -676,6 +676,9 @@
 </div><!-- end #main-content -->
 
 <script>
+  // Google Apps Script Web App endpoint (same backend as the main site)
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbxP0ZKfvfOg9YsDJkhHchR4iZRYVIu3I05F34tBaloCxfn0GGXaXA44lVgXT9tARkg/exec";
+
   // ── ACCESS TOKEN CHECK ──
   // Share this URL with contractors:
   // https://boosthvacleads.com/contractor-trial.html?access=hfs-trial-2026
@@ -795,13 +798,39 @@
       btn.textContent = 'SUBMITTING...';
       btn.classList.add('loading');
 
-      setTimeout(() => {
+      const jobTypes = [...document.querySelectorAll('input[name="jobtype"]:checked')]
+        .map(el => el.value).join(', ');
+
+      const payload = {
+        type: 'Trial',
+        bizname:      document.getElementById('bizname').value.trim(),
+        firstName:    document.getElementById('firstname').value.trim(),
+        lastName:     document.getElementById('lastname').value.trim(),
+        phone:        document.getElementById('phone').value.trim(),
+        email:        document.getElementById('email').value.trim(),
+        website:      document.getElementById('website').value.trim(),
+        cities:       document.getElementById('cities').value.trim(),
+        jobTypes:     jobTypes,
+        leadDelivery: document.getElementById('leaddelivery').value,
+        notes:        document.getElementById('notes').value.trim(),
+        signed:       hasSig,
+        submittedAt:  new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
+      };
+
+      const showSuccess = () => {
         document.getElementById('trialForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
         document.querySelector('.step-indicator').style.display = 'none';
         window.scrollTo({ top: 0, behavior: 'smooth' });
         renderPayPalButton();
-      }, 1200);
+      };
+
+      fetch(SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(showSuccess).catch(showSuccess);
     });
 
     document.querySelectorAll('input, textarea, select').forEach(el => {
