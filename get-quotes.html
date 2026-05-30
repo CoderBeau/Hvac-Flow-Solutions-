@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8H5MND1Y6W"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-8H5MND1Y6W');
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Get HVAC Quotes | HVAC Flow Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0B1E3B;
+  --navy-light:#1a3358;
+  --red:#C8102E;
+  --red-hover:#a50d25;
+  --gold:#F5A623;
+  --white:#FFFFFF;
+  --border:#dce4ef;
+  --muted:#5a6a80;
+  --bg:#f4f6fa;
+}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);}
+body{padding:2rem 1rem 3rem;}
+
+/* Page header */
+.page-header{text-align:center;margin-bottom:2rem;}
+.logo{display:inline-flex;align-items:baseline;gap:0.35rem;margin-bottom:0.75rem;}
+.logo-hvac{font-family:'Montserrat',sans-serif;font-weight:900;font-size:1.5rem;letter-spacing:-0.02em;color:var(--navy);}
+.logo-sol{font-family:'Montserrat',sans-serif;font-weight:900;font-size:1.5rem;letter-spacing:-0.02em;color:var(--red);}
+.page-header h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(1.6rem,4vw,2.2rem);color:var(--navy);line-height:1.15;margin-bottom:0.4rem;}
+.page-header p{color:var(--muted);font-size:0.9rem;}
+.trust-row{display:flex;align-items:center;justify-content:center;gap:1.25rem;margin-top:0.85rem;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:600;font-family:'Montserrat',sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;}
+.trust-dot{width:5px;height:5px;border-radius:50%;background:var(--border);}
+
+/* Card */
+.card{background:var(--white);border-radius:18px;box-shadow:0 8px 40px rgba(11,30,59,0.1);overflow:hidden;max-width:600px;margin:0 auto;}
+
+/* Card header */
+.card-header{background:linear-gradient(135deg,var(--navy),var(--navy-light));padding:1.25rem 1.75rem;display:flex;align-items:center;gap:1rem;border-bottom:3px solid var(--red);}
+.ch-icon{width:42px;height:42px;background:rgba(200,16,46,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ch-icon svg{width:21px;height:21px;color:#ff4d6d;}
+.ch-title{font-family:'Montserrat',sans-serif;font-weight:700;font-size:1rem;color:#fff;}
+.ch-sub{font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:0.1rem;}
+.ch-badge{margin-left:auto;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:100px;padding:0.3rem 0.75rem;font-size:0.65rem;font-weight:700;font-family:'Montserrat',sans-serif;color:rgba(255,255,255,0.9);white-space:nowrap;letter-spacing:0.05em;text-transform:uppercase;}
+
+/* Form body */
+.card-body{padding:1.75rem 1.75rem 2rem;}
+
+/* Section label */
+.sec{font-family:'Montserrat',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#b0bbc8;border-bottom:1px solid #f1f5f9;padding-bottom:0.35rem;margin-bottom:0.85rem;margin-top:1.1rem;}
+.sec:first-child{margin-top:0;}
+
+/* Field grid */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+.ff{margin-bottom:0;}
+.ff-full{grid-column:1/-1;}
+
+/* Labels & inputs */
+.fl{display:block;font-size:0.64rem;font-weight:700;font-family:'Montserrat',sans-serif;letter-spacing:0.07em;text-transform:uppercase;color:var(--navy);margin-bottom:0.3rem;}
+.fl .req{color:var(--red);margin-left:2px;}
+.fi,.fse,.fta{width:100%;background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:0.6rem 0.85rem;color:#1a1a2e;font-family:'Inter',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.15s,box-shadow 0.15s;appearance:none;box-sizing:border-box;}
+.fi::placeholder,.fta::placeholder{color:#c0cad6;}
+.fi:focus,.fse:focus,.fta:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(11,30,59,0.08);}
+.fse{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%235a6a80' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.85rem center;padding-right:2rem;cursor:pointer;}
+.fta{resize:vertical;min-height:80px;line-height:1.55;}
+
+/* Urgency radio */
+.urg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.45rem;}
+.urg-opt{position:relative;}
+.urg-opt input{position:absolute;opacity:0;width:0;height:0;}
+.urg-lbl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.15rem;padding:0.55rem 0.25rem;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.urg-lbl .ui{font-size:1.1rem;}
+.urg-lbl .ut{font-size:0.6rem;font-weight:700;font-family:'Montserrat',sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em;line-height:1.2;}
+.urg-opt input:checked + .urg-lbl{border-color:var(--navy);background:var(--navy);}
+.urg-opt input:checked + .urg-lbl .ut{color:#fff;}
+
+/* Source chips */
+.src-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;}
+.src-opt{position:relative;}
+.src-opt input{position:absolute;opacity:0;width:0;height:0;}
+.src-lbl{display:flex;align-items:center;justify-content:center;padding:0.45rem 0.2rem;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;transition:all 0.15s;font-size:0.62rem;font-weight:700;font-family:'Montserrat',sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em;text-align:center;}
+.src-opt input:checked + .src-lbl{border-color:var(--navy);background:var(--navy);color:#fff;}
+
+/* Submit */
+.sub-btn{width:100%;padding:0.95rem 1.25rem;background:var(--red);color:#fff;border:none;border-radius:9px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.04em;cursor:pointer;transition:background 0.15s,transform 0.12s,box-shadow 0.15s;box-shadow:0 4px 18px rgba(200,16,46,0.28);display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:1.25rem;}
+.sub-btn:hover{background:var(--red-hover);transform:translateY(-1px);}
+.sub-btn:disabled{opacity:0.65;cursor:not-allowed;transform:none;}
+.fine-print{text-align:center;font-size:0.7rem;color:#b0bbc8;margin-top:0.65rem;line-height:1.5;}
+
+/* Error */
+.err-msg{background:#fff5f6;border:1px solid rgba(200,16,46,0.22);border-radius:8px;padding:0.6rem 0.85rem;font-size:0.8rem;color:var(--red);margin-bottom:0.85rem;display:none;}
+
+/* Spinner */
+.spn{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite;display:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Success */
+.success-view{display:none;text-align:center;padding:2.5rem 1.5rem;}
+.scc{width:68px;height:68px;background:linear-gradient(135deg,#15803d,#16a34a);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.1rem;box-shadow:0 8px 24px rgba(22,163,74,0.25);}
+.scc svg{width:30px;height:30px;color:#fff;}
+.success-view h2{font-family:'Montserrat',sans-serif;font-weight:900;font-size:1.6rem;color:var(--navy);margin-bottom:0.4rem;}
+.success-view p{color:var(--muted);font-size:0.88rem;line-height:1.65;}
+.add-another{margin-top:1.5rem;background:none;border:2px solid var(--navy);color:var(--navy);border-radius:9px;padding:0.7rem 1.5rem;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.04em;cursor:pointer;transition:all 0.15s;}
+.add-another:hover{background:var(--navy);color:#fff;}
+
+@media(max-width:500px){
+  .card-body{padding:1.25rem 1.1rem 1.5rem;}
+  .card-header{padding:1rem 1.1rem;}
+  .ch-badge{display:none;}
+  .fg{grid-template-columns:1fr;}
+  .ff-full{grid-column:auto;}
+  .src-grid{grid-template-columns:repeat(2,1fr);}
+  .urg-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo">
+    <span class="logo-hvac">HVAC FLOW</span>
+    <span class="logo-sol">SOLUTIONS</span>
+  </div>
+  <h1>Get Free HVAC Quotes</h1>
+  <p>Fill out the form below — we'll match you with up to 3 vetted local pros.</p>
+  <div class="trust-row">
+    <span class="trust-item">✓ 100% Free</span>
+    <span class="trust-dot"></span>
+    <span class="trust-item">⚡ Same-Day Options</span>
+    <span class="trust-dot"></span>
+    <span class="trust-item">🔒 No Spam</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="ch-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div>
+      <div class="ch-title">Homeowner Request</div>
+      <div class="ch-sub">Match with up to 3 vetted local HVAC pros</div>
+    </div>
+    <div class="ch-badge">Texas Only</div>
+  </div>
+
+  <div class="card-body">
+    <div id="err-msg" class="err-msg"></div>
+
+    <div id="form-view">
+      <div class="sec">Your Info</div>
+      <div class="fg">
+        <div class="ff"><label class="fl">First Name <span class="req">*</span></label><input class="fi" type="text" id="firstName" placeholder="Maria"/></div>
+        <div class="ff"><label class="fl">Last Name <span class="req">*</span></label><input class="fi" type="text" id="lastName" placeholder="Rodriguez"/></div>
+        <div class="ff"><label class="fl">Phone <span class="req">*</span></label><input class="fi" type="tel" id="phone" placeholder="(210) 555-0100"/></div>
+        <div class="ff"><label class="fl">Email <span class="req">*</span></label><input class="fi" type="email" id="email" placeholder="maria@email.com"/></div>
+        <div class="ff"><label class="fl">ZIP Code <span class="req">*</span></label><input class="fi" type="text" id="zip" placeholder="78201" maxlength="5"/></div>
+        <div class="ff"><label class="fl">City</label><input class="fi" type="text" id="city" placeholder="San Antonio"/></div>
+      </div>
+
+      <div class="sec">Service Details</div>
+      <div class="fg">
+        <div class="ff ff-full">
+          <label class="fl">Service Needed <span class="req">*</span></label>
+          <select class="fse" id="service">
+            <option value="" disabled selected>Select a service...</option>
+            <option>AC Repair</option>
+            <option>AC Replacement / New Unit</option>
+            <option>Heating Repair</option>
+            <option>Heating Replacement</option>
+            <option>Full System Installation</option>
+            <option>Maintenance / Tune-Up</option>
+            <option>Duct Cleaning / Repair</option>
+            <option>Not Sure – Need Inspection</option>
+          </select>
+        </div>
+        <div class="ff ff-full">
+          <label class="fl">How Urgent? <span class="req">*</span></label>
+          <div class="urg-grid">
+            <div class="urg-opt"><input type="radio" name="urgency" id="u1" value="Emergency – Today"/><label class="urg-lbl" for="u1"><span class="ui">🔥</span><span class="ut">Emergency</span></label></div>
+            <div class="urg-opt"><input type="radio" name="urgency" id="u2" value="This Week" checked/><label class="urg-lbl" for="u2"><span class="ui">📅</span><span class="ut">This Week</span></label></div>
+            <div class="urg-opt"><input type="radio" name="urgency" id="u3" value="Just Getting Quotes"/><label class="urg-lbl" for="u3"><span class="ui">💬</span><span class="ut">Just Quotes</span></label></div>
+          </div>
+        </div>
+        <div class="ff ff-full">
+          <label class="fl">Additional Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#b0bbc8;font-size:0.68rem;">(optional)</span></label>
+          <textarea class="fta" id="notes" placeholder="e.g. Unit is 10 years old, stopped cooling yesterday..."></textarea>
+        </div>
+      </div>
+
+      <div class="sec">Lead Source</div>
+      <div class="src-grid" id="source-grid">
+        <div class="src-opt"><input type="radio" name="source" id="s1" value="Google"/><label class="src-lbl" for="s1">Google</label></div>
+        <div class="src-opt"><input type="radio" name="source" id="s2" value="Facebook"/><label class="src-lbl" for="s2">Facebook</label></div>
+        <div class="src-opt"><input type="radio" name="source" id="s3" value="Referral"/><label class="src-lbl" for="s3">Referral</label></div>
+        <div class="src-opt"><input type="radio" name="source" id="s4" value="Instagram"/><label class="src-lbl" for="s4">Instagram</label></div>
+        <div class="src-opt"><input type="radio" name="source" id="s5" value="Direct"/><label class="src-lbl" for="s5">Direct</label></div>
+        <div class="src-opt"><input type="radio" name="source" id="s6" value="Other"/><label class="src-lbl" for="s6">Other</label></div>
+      </div>
+
+      <button class="sub-btn" id="submitBtn" onclick="handleSubmit()">
+        <span id="btnText">Submit Lead</span>
+        <span id="btnArrow">→</span>
+        <span class="spn" id="spinner"></span>
+      </button>
+      <p class="fine-print">By submitting you agree to be contacted by up to 3 HVAC contractors. We never sell your data.</p>
+    </div>
+
+    <div class="success-view" id="success-view">
+      <div class="scc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h2>Lead Submitted!</h2>
+      <p>The homeowner's request has been received.<br>A local HVAC pro will follow up within 1–2 hours.</p>
+      <button class="add-another" onclick="resetForm()">+ Submit Another Lead</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbxP0ZKfvfOg9YsDJkhHchR4iZRYVIu3I05F34tBaloCxfn0GGXaXA44lVgXT9tARkg/exec";
+
+function handleSubmit() {
+  const err = document.getElementById('err-msg');
+  const g = id => document.getElementById(id).value.trim();
+  const urgency = document.querySelector('input[name="urgency"]:checked')?.value || '';
+  const source  = document.querySelector('input[name="source"]:checked')?.value  || 'Not specified';
+  const firstName=g('firstName'), lastName=g('lastName'), phone=g('phone'),
+        email=g('email'), zip=g('zip'), city=g('city'),
+        service=g('service'), notes=g('notes');
+
+  err.style.display = 'none';
+  if (!firstName||!lastName||!phone||!email||!zip||!service||!urgency) {
+    err.textContent = 'Please fill out all required fields.';
+    err.style.display = 'block'; return;
+  }
+  if (!/^\d{5}$/.test(zip)) {
+    err.textContent = 'Please enter a valid 5-digit ZIP code.';
+    err.style.display = 'block'; return;
+  }
+  if (!/\S+@\S+\.\S+/.test(email)) {
+    err.textContent = 'Please enter a valid email address.';
+    err.style.display = 'block'; return;
+  }
+
+  const btn=document.getElementById('submitBtn'), bt=document.getElementById('btnText'),
+        ba=document.getElementById('btnArrow'), sp=document.getElementById('spinner');
+  btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
+
+  fetch(SHEET_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'Homeowner', firstName, lastName, phone, email,
+      zip, city, service, urgency, notes, source,
+      submittedAt: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
+    })
+  }).then(() => {
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+  }).catch(() => {
+    err.textContent = 'Something went wrong. Please try again.';
+    err.style.display = 'block';
+    btn.disabled=false; bt.textContent='Submit Lead'; ba.style.display='inline'; sp.style.display='none';
+  });
+}
+
+function resetForm() {
+  document.getElementById('form-view').style.display = 'block';
+  document.getElementById('success-view').style.display = 'none';
+  document.getElementById('err-msg').style.display = 'none';
+  ['firstName','lastName','phone','email','zip','city','notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('service').selectedIndex = 0;
+  document.getElementById('u2').checked = true;
+  document.querySelectorAll('input[name="source"]').forEach(el => el.checked = false);
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=false;
+  document.getElementById('btnText').textContent='Submit Lead';
+  document.getElementById('btnArrow').style.display='inline';
+  document.getElementById('spinner').style.display='none';
+}
+
+document.getElementById('phone').addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g,'').substring(0,10);
+  if (v.length>=6) v=`(${v.slice(0,3)}) ${v.slice(3,6)}-${v.slice(6)}`;
+  else if (v.length>=3) v=`(${v.slice(0,3)}) ${v.slice(3)}`;
+  e.target.value = v;
+});
+document.getElementById('zip').addEventListener('input', function(e) {
+  e.target.value = e.target.value.replace(/\D/g,'').substring(0,5);
+});
+</script>
+</body>
+</html>
