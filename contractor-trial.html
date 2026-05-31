@@ -813,7 +813,7 @@
         jobTypes:     jobTypes,
         leadDelivery: document.getElementById('leaddelivery').value,
         notes:        document.getElementById('notes').value.trim(),
-        signed:       hasSig,
+        signed:       hasSig ? canvas.toDataURL('image/png') : '',
         submittedAt:  new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
       };
 
