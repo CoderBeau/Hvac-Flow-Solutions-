@@ -684,8 +684,9 @@
   // https://boosthvacleads.com/contractor-trial.html?access=hfs-trial-2026
   const VALID_TOKEN = 'hfs-trial-2026';
   const params = new URLSearchParams(window.location.search);
+  const hashToken = (window.location.hash || '').replace('#', '').replace('access=', '');
 
-  if (params.get('access') === VALID_TOKEN) {
+  if (params.get('access') === VALID_TOKEN || hashToken === VALID_TOKEN) {
     document.getElementById('access-gate').style.display = 'none';
     document.getElementById('main-content').style.display = 'block';
   }
