@@ -138,7 +138,7 @@
       <span class="animate-pulse text-xl">🔥</span>
       <span id="live-counter" class="font-medium">31 Texas homeowners matched today</span>
     </div>
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
+    <div id="hero-cta" class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
       <a href="#homeowner-form" onclick="document.getElementById('hw-first').focus();return true;"
          class="inline-flex items-center gap-2 bg-[#C8102E] hover:bg-[#a50d25] text-white font-bold px-8 py-4 rounded-2xl text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
          style="font-family:'Montserrat',sans-serif;letter-spacing:0.02em;">
@@ -505,6 +505,7 @@ function switchTab(tab) {
   const ht  = document.getElementById('hero-title');
   const hs  = document.getElementById('hero-subtitle');
   const stickyBar = document.getElementById('sticky-call-bar');
+  const heroCta = document.getElementById('hero-cta');
   if (tab === 0) {
     hw.classList.remove('hidden'); ct.classList.add('hidden');
     th.classList.add('tab-active'); tc.classList.remove('tab-active'); tc.classList.add('text-zinc-500');
@@ -512,6 +513,7 @@ function switchTab(tab) {
     ht.innerHTML = "Broken AC in Texas Heat?<br>Get Local Pros Fighting for Your Job";
     hs.textContent = "San Antonio • Dallas • Austin • Houston • El Paso";
     stickyBar.style.display = '';
+    heroCta.style.display = '';
   } else {
     hw.classList.add('hidden'); ct.classList.remove('hidden');
     th.classList.remove('tab-active'); tc.classList.add('tab-active'); tc.classList.remove('text-zinc-500');
@@ -519,6 +521,7 @@ function switchTab(tab) {
     ht.innerHTML = "Stop Wasting Money on Ads.<br>Buy Exclusive Texas Leads That Close";
     hs.textContent = "1 buyer per lead • Most delivered in 3–7 days";
     stickyBar.style.display = 'none';
+    heroCta.style.display = 'none';
   }
 }
 
