@@ -1,146 +1,230 @@
 // ============================================================
-// HVAC Flow Solutions — Unified Automation Script
-// Paste this into your Google Apps Script editor and deploy
-// as a Web App (Execute as: Me, Access: Anyone).
+// HVAC Flow Solutions — Complete Automation Script
+// Paste this ENTIRE file into your Google Apps Script editor,
+// then Deploy > Manage deployments > Edit > New version > Deploy.
 //
-// Script Properties (Project Settings > Script Properties):
-//   SHEET_ID      — Google Sheets ID (from your sheet URL)
-//   ADMIN_EMAIL   — Your email for all lead/signup notifications
-//   TWILIO_SID    — Twilio Account SID (used only for Vapi contractor SMS)
-//   TWILIO_TOKEN  — Twilio Auth Token
-//   TWILIO_FROM   — Your Twilio number, e.g. +12105551234
-//   VAPI_SECRET   — Secret token matching Vapi webhook custom header
+// Handles:
+//   • Get Quotes (homeowner) leads  -> "Get Quotes" tab + email
+//   • Contractor signups            -> "Contractors" tab + email + PayPal link
+//   • Contractor trial signups      -> "Trials" tab + email + signature image
 // ============================================================
 
 var TRIAL_LENGTH_DAYS = 14;
+var ADMIN_EMAIL = 'hvacflowsolutions@gmail.com';
 
 // ── Entry Point ──────────────────────────────────────────────
-
 function doPost(e) {
   try {
-    const raw  = e.postData.contents;
-    const data = JSON.parse(raw);
-    const msg  = data.message || data;
+    const data = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    if (msg.type === 'end-of-call-report') {
-      if (!verifyVapiSecret(e)) return jsonResponse({ status: 'unauthorized' });
-      return handleVapiCall(msg);
+    if (data.type === 'Homeowner') {
+      writeHomeowner(ss, data);
+      sendEmailAlert('Homeowner', data);
+    } else if (data.type === 'Contractor') {
+      writeContractor(ss, data);
+      sendEmailAlert('Contractor', data);
+      sendContractorPaymentLink(data);
+    } else if (data.type === 'Trial') {
+      const result = appendTrialRow(ss, data);
+      emailTrialSignup(data, result.clientId, result.startDate, result.endDate);
     }
 
-    return handleFormSubmission(data);
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'success' }))
+      .setMimeType(ContentService.MimeType.JSON);
+
   } catch (err) {
-    return jsonResponse({ status: 'error', message: err.message });
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-// ── Form Submission Router ───────────────────────────────────
+// ── Get Quotes (Homeowner) writer ────────────────────────────
+function writeHomeowner(ss, data) {
+  let sheet = ss.getSheetByName('Get Quotes');
+  if (!sheet) sheet = ss.insertSheet('Get Quotes');
 
-function handleFormSubmission(data) {
-  const ss = SpreadsheetApp.openById(getProperty('SHEET_ID'));
-
-  if (data.type === 'Trial') {
-    const result = appendTrialRow(ss, data);
-    emailTrialSignup(data, result.clientId, result.startDate, result.endDate);
-    return jsonResponse({ status: 'ok', clientId: result.clientId, startDate: result.startDate, endDate: result.endDate });
-  }
-
-  if (data.type === 'Contractor') {
-    const sheet = getOrCreateSheet(ss, 'Contractors');
-    appendContractorRow(sheet, data);
-    emailContractorSignup(data);
-    return jsonResponse({ status: 'ok' });
-  }
-
-  if (data.type === 'Homeowner') {
-    const sheet = getOrCreateSheet(ss, 'Homeowners');
-    appendHomeownerRow(sheet, data);
-    emailHomeownerLead(data);
-    return jsonResponse({ status: 'ok' });
-  }
-
-  return jsonResponse({ status: 'ok' });
-}
-
-// ── Contractor Signup ────────────────────────────────────────
-
-function appendContractorRow(sheet, d) {
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Submitted At', 'First', 'Last', 'Company', 'Phone', 'Email', 'ZIP', 'Years', 'Service Areas', 'Package']);
-    sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
+    sheet.appendRow([
+      'Timestamp', 'First Name', 'Last Name', 'Phone', 'Email',
+      'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes'
+    ]);
+    const headerRange = sheet.getRange(1, 1, 1, 12);
+    headerRange.setBackground('#0B1E3B');
+    headerRange.setFontColor('#FFFFFF');
+    headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
+    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280]
+      .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   }
-  sheet.appendRow([d.submittedAt, d.firstName, d.lastName, d.company, d.phone, d.email, d.zip, d.years, d.serviceAreas, d.package]);
+
+  sheet.appendRow([
+    data.submittedAt || new Date().toLocaleString(),
+    data.firstName   || '',
+    data.lastName    || '',
+    data.phone       || '',
+    data.email       || '',
+    data.zip         || '',
+    data.city        || '',
+    data.service     || '',
+    data.urgency     || '',
+    data.source      || 'Organic / Direct',
+    data.campaign    || '',
+    data.notes       || data.description || ''
+  ]);
 }
 
-function emailContractorSignup(d) {
-  MailApp.sendEmail({
-    to: getProperty('ADMIN_EMAIL'),
-    subject: 'New Contractor Signup — ' + d.firstName + ' ' + d.lastName,
-    body:
-      'NEW CONTRACTOR SIGNUP\n\n' +
-      'Name: '              + (d.firstName    || '') + ' ' + (d.lastName || '') + '\n' +
-      'Company: '           + (d.company      || '') + '\n' +
-      'Package: '           + (d.package      || '') + '\n' +
-      'Phone: '             + (d.phone        || '') + '\n' +
-      'Email: '             + (d.email        || '') + '\n' +
-      'Service Areas: '     + (d.serviceAreas || '') + '\n' +
-      'ZIP: '               + (d.zip          || '') + '\n' +
-      'Years in Business: ' + (d.years        || '') + '\n' +
-      'Submitted: '         + (d.submittedAt  || '')
-  });
-}
+// ── Contractor writer ────────────────────────────────────────
+function writeContractor(ss, data) {
+  let sheet = ss.getSheetByName('Contractors');
+  if (!sheet) sheet = ss.insertSheet('Contractors');
 
-// ── Homeowner Lead ───────────────────────────────────────────
-
-function appendHomeownerRow(sheet, d) {
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Submitted At', 'First', 'Last', 'Phone', 'Email', 'ZIP', 'City', 'Service', 'Urgency']);
-    sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+    sheet.appendRow([
+      'Timestamp', 'First Name', 'Last Name', 'Company', 'Phone',
+      'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected'
+    ]);
+    const headerRange = sheet.getRange(1, 1, 1, 10);
+    headerRange.setBackground('#0B1E3B');
+    headerRange.setFontColor('#FFFFFF');
+    headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
+    [160, 100, 100, 200, 130, 200, 70, 130, 220, 220]
+      .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   }
-  sheet.appendRow([d.submittedAt, d.firstName, d.lastName, d.phone, d.email, d.zip, d.city, d.service, d.urgency]);
+
+  sheet.appendRow([
+    data.submittedAt  || new Date().toLocaleString(),
+    data.firstName    || '',
+    data.lastName     || '',
+    data.company      || '',
+    data.phone        || '',
+    data.email        || '',
+    data.zip          || '',
+    data.years        || '',
+    data.serviceAreas || '',
+    data.package      || ''
+  ]);
 }
 
-function emailHomeownerLead(d) {
-  MailApp.sendEmail({
-    to: getProperty('ADMIN_EMAIL'),
-    subject: 'New Homeowner Lead — ' + (d.firstName || '') + ' ' + (d.lastName || '') + (d.city ? ' (' + d.city + ')' : ''),
-    body:
-      'NEW HOMEOWNER LEAD\n\n' +
-      'Name: '           + (d.firstName || '') + ' ' + (d.lastName || '') + '\n' +
-      'Phone: '          + (d.phone     || '') + '\n' +
-      'Email: '          + (d.email     || '') + '\n' +
-      'City: '           + (d.city      || '') + '\n' +
-      'ZIP: '            + (d.zip       || '') + '\n' +
-      'Service Needed: ' + (d.service   || '') + '\n' +
-      'Urgency: '        + (d.urgency   || '') + '\n' +
-      'Submitted: '      + (d.submittedAt || '')
-  });
+// ── Email alerts (Homeowner + Contractor) ────────────────────
+function sendEmailAlert(type, data) {
+  let subject, body;
+
+  if (type === 'Homeowner') {
+    subject = '🔥 New Quote Request – ' + (data.service || '') + ' in ' + (data.city || data.zip || '');
+    body =
+      'New homeowner quote request just came in!\n\n' +
+      'Name: '     + data.firstName + ' ' + data.lastName + '\n' +
+      'Phone: '    + data.phone + '\n' +
+      'Email: '    + data.email + '\n' +
+      'ZIP: '      + data.zip + '\n' +
+      'City: '     + (data.city || '') + '\n' +
+      'Service: '  + data.service + '\n' +
+      'Urgency: '  + data.urgency + '\n' +
+      'Source: '   + (data.source   || 'Organic / Direct') + '\n' +
+      'Campaign: ' + (data.campaign || 'N/A') + '\n' +
+      'Notes: '    + (data.notes || data.description || 'N/A') + '\n' +
+      'Submitted: '+ data.submittedAt;
+  } else {
+    subject = '⚡ New Contractor Application – ' + (data.company || '');
+    body =
+      'New contractor application just came in!\n\n' +
+      'Name: '              + data.firstName + ' ' + data.lastName + '\n' +
+      'Company: '           + data.company + '\n' +
+      'Phone: '             + data.phone + '\n' +
+      'Email: '             + data.email + '\n' +
+      'ZIP: '               + data.zip + '\n' +
+      'Years in Business: ' + data.years + '\n' +
+      'Service Areas: '     + data.serviceAreas + '\n' +
+      'Package: '           + data.package + '\n' +
+      'Submitted: '         + data.submittedAt;
+  }
+
+  MailApp.sendEmail(ADMIN_EMAIL, subject, body);
+}
+
+// ── Contractor payment link email ────────────────────────────
+function sendContractorPaymentLink(data) {
+  var pkg = data.package || '';
+
+  var packageLinks = {
+    'Tester':      'https://www.paypal.com/ncp/payment/9VHMU8UYMVXXC',
+    'Starter':     'https://www.paypal.com/ncp/payment/Y55WAFWV7DTHW',
+    'Growth':      'https://www.paypal.com/ncp/payment/W6TP29DWKKVNN',
+    'Pro Partner': 'https://www.paypal.com/ncp/payment/JLB9BGEGV6VKJ',
+    'Elite':       'https://www.paypal.com/ncp/payment/X57YNYLKM8W7Y'
+  };
+  var packageAmounts = {
+    'Tester':      '$75',
+    'Starter':     '$150',
+    'Growth':      '$375',
+    'Pro Partner': '$700',
+    'Elite':       '$1,300'
+  };
+
+  var paypalLink = '', amount = '';
+  for (var name in packageLinks) {
+    if (pkg.indexOf(name) !== -1) {
+      paypalLink = packageLinks[name];
+      amount = packageAmounts[name];
+      break;
+    }
+  }
+
+  var subject = 'Your HVAC Flow Solutions Application - Complete Payment to Activate';
+  var body = 'Hi ' + data.firstName + ',\n\n'
+    + 'Thank you for applying to receive exclusive Texas HVAC leads through HVAC Flow Solutions!\n\n'
+    + 'Your application has been received. To activate your account and start receiving leads, '
+    + 'please complete your payment using the link below:\n\n'
+    + 'Package: ' + pkg + '\n'
+    + 'Amount Due: ' + amount + '\n\n'
+    + 'Pay Now: ' + paypalLink + '\n\n'
+    + 'Once payment is confirmed your leads will begin arriving within 3-7 business days.\n\n'
+    + 'What happens next:\n'
+    + '1. Click the payment link above\n'
+    + '2. Complete payment via PayPal\n'
+    + '3. Leads start flowing within 3-7 business days\n\n'
+    + 'Questions? Reply to this email.\n\n'
+    + '- HVAC Flow Solutions Team\n'
+    + 'boosthvacleads.com';
+
+  MailApp.sendEmail(data.email, subject, body);
 }
 
 // ── Trial Signup ─────────────────────────────────────────────
-
 function appendTrialRow(ss, d) {
-  const lock = LockService.getScriptLock();
+  var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    const sheet = getOrCreateSheet(ss, 'Trials');
+    var sheet = ss.getSheetByName('Trials') || ss.insertSheet('Trials');
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
         'Client ID', 'Status', 'Start Date', 'End Date',
         'Business Name', 'First', 'Last', 'Phone', 'Email', 'Website',
-        'Service Area', 'Job Types', 'Lead Delivery', 'Notes', 'Signed', 'Submitted At'
+        'Service Area', 'Job Types', 'Lead Delivery', 'Notes', 'Signature', 'Submitted At'
       ]);
       sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
       sheet.setFrozenRows(1);
+      sheet.setColumnWidth(15, 200);
     }
 
-    const tz       = 'America/Chicago';
-    const now      = new Date();
-    const end      = new Date(now.getTime() + TRIAL_LENGTH_DAYS * 24 * 60 * 60 * 1000);
-    const fmt      = function(dt) { return Utilities.formatDate(dt, tz, 'MM/dd/yyyy'); };
-    const clientId = generateClientId(sheet);
+    var tz       = 'America/Chicago';
+    var now      = new Date();
+    var end      = new Date(now.getTime() + TRIAL_LENGTH_DAYS * 24 * 60 * 60 * 1000);
+    var fmt      = function(dt) { return Utilities.formatDate(dt, tz, 'MM/dd/yyyy'); };
+    var clientId = generateTrialClientId(sheet);
 
+    var sigValue = 'No signature';
+    var sigUrl   = '';
+    if (d.signed && typeof d.signed === 'string' && d.signed.indexOf('data:image') === 0) {
+      sigUrl   = saveSignatureToDrive(d.signed, clientId);
+      sigValue = sigUrl;
+    }
+
+    var newRow = sheet.getLastRow() + 1;
     sheet.appendRow([
       clientId, 'Active', fmt(now), fmt(end),
       d.bizname      || '',
@@ -153,9 +237,14 @@ function appendTrialRow(ss, d) {
       d.jobTypes     || '',
       d.leadDelivery || '',
       d.notes        || '',
-      d.signed ? 'Yes' : 'No',
+      sigValue,
       d.submittedAt  || now.toLocaleString('en-US', { timeZone: tz })
     ]);
+
+    if (sigUrl) {
+      sheet.getRange(newRow, 15).setFormula('=IMAGE("' + sigUrl + '")');
+      sheet.setRowHeight(newRow, 100);
+    }
 
     return { clientId: clientId, startDate: fmt(now), endDate: fmt(end) };
   } finally {
@@ -163,22 +252,41 @@ function appendTrialRow(ss, d) {
   }
 }
 
-function generateClientId(sheet) {
-  const year = Utilities.formatDate(new Date(), 'America/Chicago', 'yyyy');
+function generateTrialClientId(sheet) {
+  var year   = Utilities.formatDate(new Date(), 'America/Chicago', 'yyyy');
   var maxNum = 0;
   if (sheet.getLastRow() > 1) {
-    const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
+    var ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
     ids.forEach(function(row) {
-      const m = String(row[0]).match(new RegExp('^HFS-' + year + '-(\\d+)$'));
+      var m = String(row[0]).match(new RegExp('^HFS-' + year + '-(\\d+)$'));
       if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
     });
   }
   return 'HFS-' + year + '-' + ('0000' + (maxNum + 1)).slice(-4);
 }
 
+function saveSignatureToDrive(base64DataUrl, clientId) {
+  try {
+    var base64 = base64DataUrl.split(',')[1];
+    var blob = Utilities.newBlob(
+      Utilities.base64Decode(base64),
+      'image/png',
+      'sig-' + clientId + '.png'
+    );
+    var folderName = 'HVAC Flow - Signatures';
+    var folders = DriveApp.getFoldersByName(folderName);
+    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return 'https://drive.google.com/uc?export=view&id=' + file.getId();
+  } catch(err) {
+    return 'Signature error: ' + err.message;
+  }
+}
+
 function emailTrialSignup(d, clientId, startDate, endDate) {
   MailApp.sendEmail({
-    to: getProperty('ADMIN_EMAIL'),
+    to: ADMIN_EMAIL,
     subject: 'New Trial Signup — ' + (d.bizname || d.firstName) + ' [' + clientId + ']',
     body:
       'NEW CONTRACTOR TRIAL SIGNUP\n\n' +
@@ -192,144 +300,33 @@ function emailTrialSignup(d, clientId, startDate, endDate) {
       'Service Area: '     + (d.cities       || '') + '\n' +
       'Job Types: '        + (d.jobTypes     || '') + '\n' +
       'Lead Delivery: '    + (d.leadDelivery || '') + '\n' +
-      'Signed Agreement: ' + (d.signed ? 'Yes' : 'No') + '\n' +
       'Notes: '            + (d.notes        || 'None') + '\n' +
       'Submitted: '        + (d.submittedAt  || '')
   });
 }
 
-// ── Vapi End-of-Call Webhook ─────────────────────────────────
-// Fires when a homeowner call ends. Texts matched contractors
-// via Twilio and emails you a summary.
-
-function handleVapiCall(msg) {
-  const call     = msg.call     || {};
-  const analysis = msg.analysis || {};
-  const gathered = analysis.structuredData || {};
-
-  const callerNumber  = (call.customer || {}).number || '';
-  const recordingUrl  = msg.recordingUrl || '';
-  const summary       = analysis.summary || msg.summary || '';
-  const duration      = msg.durationSeconds || 0;
-
-  const callerName    = gathered.callerName    || 'Homeowner';
-  const city          = gathered.city          || '';
-  const problem       = gathered.problem       || 'See transcript';
-  const callbackPhone = gathered.callbackPhone || callerNumber;
-  const urgency       = gathered.urgency       || '';
-
-  const contractors = city ? findContractorsByCity(city) : [];
-  const urgencyLine = urgency ? 'Urgency: ' + urgency + '\n' : '';
-
-  contractors.forEach(function(c) {
-    sendSMS(
-      c.phone,
-      'NEW LEAD' + (city ? ' — ' + city : '') + '\n' +
-      'Name: '  + callerName    + '\n' +
-      'Phone: ' + callbackPhone + '\n' +
-      urgencyLine +
-      'Issue: ' + problem + '\n' +
-      (recordingUrl ? 'Recording: ' + recordingUrl + '\n' : '') +
-      'Reply STOP to opt out.'
-    );
+// ── Test helpers (run manually from the editor) ──────────────
+function testHomeowner() {
+  writeHomeowner(SpreadsheetApp.getActiveSpreadsheet(), {
+    type: 'Homeowner', firstName: 'Maria', lastName: 'Rodriguez',
+    phone: '(210) 555-0100', email: 'hvacflowsolutions@gmail.com',
+    zip: '78201', city: 'San Antonio', service: 'AC Repair',
+    urgency: 'Emergency – Today', source: 'facebook / cpc', campaign: 'summer-ac',
+    notes: 'Test lead', submittedAt: new Date().toLocaleString()
   });
+  Logger.log('Test homeowner done - check the Get Quotes tab');
+}
 
-  MailApp.sendEmail({
-    to: getProperty('ADMIN_EMAIL'),
-    subject: 'Vapi Lead Call — ' + callerName + (city ? ' (' + city + ')' : ''),
-    body:
-      'VAPI AI LEAD CALL\n\n' +
-      'Caller: '               + callerName    + ' ' + callerNumber + '\n' +
-      'Callback: '             + callbackPhone + '\n' +
-      'City: '                 + city          + '\n' +
-      urgencyLine +
-      'Issue: '                + problem       + '\n' +
-      'Duration: '             + duration      + 's\n' +
-      (recordingUrl ? 'Recording: ' + recordingUrl + '\n' : '') +
-      'Contractors Notified: ' + contractors.length + '\n\n' +
-      'Summary: '              + summary
+function testTrial() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var result = appendTrialRow(ss, {
+    type: 'Trial', bizname: 'Lone Star Heating & Air',
+    firstName: 'Carlos', lastName: 'Mendez', phone: '(210) 555-0300',
+    email: 'hvacflowsolutions@gmail.com', website: 'lonestarhvac.com',
+    cities: 'San Antonio, New Braunfels', jobTypes: 'AC Repair, Installs',
+    leadDelivery: 'SMS + Email', notes: 'Test trial', signed: true,
+    submittedAt: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
   });
-
-  logVapiCall({
-    callerName: callerName, callerNumber: callerNumber, callbackPhone: callbackPhone,
-    city: city, problem: problem, urgency: urgency, duration: duration,
-    recordingUrl: recordingUrl, summary: summary, contractorCount: contractors.length
-  });
-
-  return jsonResponse({ status: 'ok' });
-}
-
-function verifyVapiSecret(e) {
-  const secret = getProperty('VAPI_SECRET');
-  if (!secret) return true;
-  const header = e.parameter['x-webhook-secret'] || '';
-  return header === secret;
-}
-
-// ── Contractor Matching (for Vapi) ───────────────────────────
-
-function findContractorsByCity(city) {
-  try {
-    const ss    = SpreadsheetApp.openById(getProperty('SHEET_ID'));
-    const sheet = ss.getSheetByName('Contractors');
-    if (!sheet || sheet.getLastRow() < 2) return [];
-    const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-    return rows
-      .filter(function(r) { return r[4] && r[8] && r[8].toString().toLowerCase().includes(city.toLowerCase()); })
-      .map(function(r)    { return { firstName: r[1], lastName: r[2], company: r[3], phone: r[4] }; });
-  } catch (err) {
-    return [];
-  }
-}
-
-// ── Vapi Call Logger ─────────────────────────────────────────
-
-function logVapiCall(d) {
-  try {
-    const ss    = SpreadsheetApp.openById(getProperty('SHEET_ID'));
-    const sheet = getOrCreateSheet(ss, 'AI Calls');
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['Timestamp', 'Caller Name', 'Caller #', 'Callback #', 'City', 'Urgency', 'Duration (s)', 'Contractors Notified', 'Problem', 'Recording URL', 'Summary']);
-      sheet.getRange(1, 1, 1, 11).setFontWeight('bold');
-      sheet.setFrozenRows(1);
-    }
-    sheet.appendRow([
-      new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }),
-      d.callerName, d.callerNumber, d.callbackPhone, d.city, d.urgency,
-      d.duration, d.contractorCount, d.problem, d.recordingUrl, d.summary
-    ]);
-  } catch (err) {
-    // non-fatal
-  }
-}
-
-// ── Twilio SMS (Vapi contractor alerts only) ─────────────────
-
-function sendSMS(to, body) {
-  const sid   = getProperty('TWILIO_SID');
-  const token = getProperty('TWILIO_TOKEN');
-  const from  = getProperty('TWILIO_FROM');
-  const url   = 'https://api.twilio.com/2010-04-01/Accounts/' + sid + '/Messages.json';
-  UrlFetchApp.fetch(url, {
-    method:  'post',
-    headers: { Authorization: 'Basic ' + Utilities.base64Encode(sid + ':' + token) },
-    payload: { To: to, From: from, Body: body },
-    muteHttpExceptions: true
-  });
-}
-
-// ── Utilities ────────────────────────────────────────────────
-
-function getProperty(key) {
-  return PropertiesService.getScriptProperties().getProperty(key) || '';
-}
-
-function getOrCreateSheet(ss, name) {
-  return ss.getSheetByName(name) || ss.insertSheet(name);
-}
-
-function jsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+  emailTrialSignup({ bizname: 'Lone Star Heating & Air', firstName: 'Carlos' }, result.clientId, result.startDate, result.endDate);
+  Logger.log('Test trial done — Client ID: ' + result.clientId);
 }
