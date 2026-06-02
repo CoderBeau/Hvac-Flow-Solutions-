@@ -504,18 +504,21 @@ function switchTab(tab) {
   const hero = document.getElementById('hero');
   const ht  = document.getElementById('hero-title');
   const hs  = document.getElementById('hero-subtitle');
+  const stickyBar = document.getElementById('sticky-call-bar');
   if (tab === 0) {
     hw.classList.remove('hidden'); ct.classList.add('hidden');
     th.classList.add('tab-active'); tc.classList.remove('tab-active'); tc.classList.add('text-zinc-500');
     hero.style.backgroundImage = "linear-gradient(135deg,#0B1E3B 0%,#0d2244 60%,#0f172a 100%)";
     ht.innerHTML = "Broken AC in Texas Heat?<br>Get Local Pros Fighting for Your Job";
     hs.textContent = "San Antonio • Dallas • Austin • Houston • El Paso";
+    stickyBar.style.display = '';
   } else {
     hw.classList.add('hidden'); ct.classList.remove('hidden');
     th.classList.remove('tab-active'); tc.classList.add('tab-active'); tc.classList.remove('text-zinc-500');
     hero.style.backgroundImage = "linear-gradient(135deg,#0f172a 0%,#1a1625 50%,#0B1E3B 100%)";
     ht.innerHTML = "Stop Wasting Money on Ads.<br>Buy Exclusive Texas Leads That Close";
     hs.textContent = "1 buyer per lead • Most delivered in 3–7 days";
+    stickyBar.style.display = 'none';
   }
 }
 
