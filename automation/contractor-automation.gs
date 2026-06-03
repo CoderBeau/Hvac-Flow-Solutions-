@@ -12,6 +12,11 @@
 var TRIAL_LENGTH_DAYS = 14;
 var ADMIN_EMAIL = 'hvacflowsolutions@gmail.com';
 
+// Contractor(s) who should receive homeowner leads by email.
+// Add one or more email addresses here, separated by commas.
+// Example: 'pro1@hvac.com, pro2@hvac.com'
+var CONTRACTOR_LEAD_EMAILS = '';
+
 // ── Entry Point ──────────────────────────────────────────────
 function doPost(e) {
   try {
@@ -21,6 +26,7 @@ function doPost(e) {
     if (data.type === 'Homeowner') {
       writeHomeowner(ss, data);
       sendEmailAlert('Homeowner', data);
+      forwardLeadToContractor(data);
     } else if (data.type === 'Contractor') {
       writeContractor(ss, data);
       sendEmailAlert('Contractor', data);
@@ -144,6 +150,31 @@ function sendEmailAlert(type, data) {
   }
 
   MailApp.sendEmail(ADMIN_EMAIL, subject, body);
+}
+
+// ── Forward homeowner lead to contractor(s) ──────────────────
+function forwardLeadToContractor(data) {
+  if (!CONTRACTOR_LEAD_EMAILS) return;  // no contractor set, skip
+
+  var source = data.source || 'Website';
+  var subject = 'New HVAC Lead – ' + (data.service || 'Service Request') +
+                ' in ' + (data.city || data.zip || 'Texas');
+
+  var body =
+    'You have a new HVAC lead from HVAC Flow Solutions!\n\n' +
+    'Name: '     + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
+    'Phone: '    + (data.phone || '') + '\n' +
+    'Email: '    + (data.email || '') + '\n' +
+    'ZIP: '      + (data.zip || '') + '\n' +
+    'City: '     + (data.city || '') + '\n' +
+    'Service: '  + (data.service || '') + '\n' +
+    'Urgency: '  + (data.urgency || '') + '\n' +
+    'Notes: '    + (data.notes || data.description || 'None') + '\n' +
+    'Lead Source: ' + source + '\n\n' +
+    'Call or text this homeowner as soon as possible to win the job.\n\n' +
+    '- HVAC Flow Solutions';
+
+  MailApp.sendEmail(CONTRACTOR_LEAD_EMAILS, subject, body);
 }
 
 // ── Contractor payment link email ────────────────────────────
