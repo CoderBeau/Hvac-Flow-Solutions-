@@ -7,15 +7,14 @@
 //   • Get Quotes (homeowner) leads  -> "Get Quotes" tab + email
 //   • Contractor signups            -> "Contractors" tab + email + PayPal link
 //   • Contractor trial signups      -> "Trials" tab + email + signature image
+//   • Lead routing                  -> Round-robin to San Antonio contractors
 // ============================================================
 
 var TRIAL_LENGTH_DAYS = 14;
 var ADMIN_EMAIL = 'hvacflowsolutions@gmail.com';
 
-// Contractor(s) who should receive homeowner leads by email.
-// Add one or more email addresses here, separated by commas.
-// Example: 'pro1@hvac.com, pro2@hvac.com'
-var CONTRACTOR_LEAD_EMAILS = '';
+// Active city for lead routing. Change this when you expand to a new city.
+var ACTIVE_CITY = 'San Antonio';
 
 // ── Entry Point ──────────────────────────────────────────────
 function doPost(e) {
@@ -83,6 +82,8 @@ function writeHomeowner(ss, data) {
 }
 
 // ── Contractor writer ────────────────────────────────────────
+// Columns: Timestamp | First | Last | Company | Phone | Email |
+//          ZIP | Years | Service Areas | Package | Status | Leads Sent
 function writeContractor(ss, data) {
   let sheet = ss.getSheetByName('Contractors');
   if (!sheet) sheet = ss.insertSheet('Contractors');
@@ -90,14 +91,15 @@ function writeContractor(ss, data) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
       'Timestamp', 'First Name', 'Last Name', 'Company', 'Phone',
-      'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected'
+      'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected',
+      'Status', 'Leads Sent'
     ]);
-    const headerRange = sheet.getRange(1, 1, 1, 10);
+    const headerRange = sheet.getRange(1, 1, 1, 12);
     headerRange.setBackground('#0B1E3B');
     headerRange.setFontColor('#FFFFFF');
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
-    [160, 100, 100, 200, 130, 200, 70, 130, 220, 220]
+    [160, 100, 100, 200, 130, 200, 70, 130, 220, 220, 90, 90]
       .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   }
 
@@ -111,7 +113,9 @@ function writeContractor(ss, data) {
     data.zip          || '',
     data.years        || '',
     data.serviceAreas || '',
-    data.package      || ''
+    data.package      || '',
+    'Active',
+    0
   ]);
 }
 
@@ -152,12 +156,12 @@ function sendEmailAlert(type, data) {
   MailApp.sendEmail(ADMIN_EMAIL, subject, body);
 }
 
-// ── Forward homeowner lead to contractor(s) ──────────────────
+// ── Lead routing — round-robin for ACTIVE_CITY ───────────────
 function forwardLeadToContractor(data) {
-  // Use a manually-set email if provided; otherwise auto-pull the
-  // most recent contractor signup from the Contractors tab.
-  var recipient = CONTRACTOR_LEAD_EMAILS || getLatestContractorEmail();
-  if (!recipient) return;  // no contractor available, skip
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Contractors');
+  var contractor = pickContractor(sheet);
+  if (!contractor) return;  // no active contractors yet, skip
 
   var source = data.source || 'Website';
   var subject = 'New HVAC Lead – ' + (data.service || 'Service Request') +
@@ -165,28 +169,62 @@ function forwardLeadToContractor(data) {
 
   var body =
     'You have a new HVAC lead from HVAC Flow Solutions!\n\n' +
-    'Name: '     + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
-    'Phone: '    + (data.phone || '') + '\n' +
-    'Email: '    + (data.email || '') + '\n' +
-    'ZIP: '      + (data.zip || '') + '\n' +
-    'City: '     + (data.city || '') + '\n' +
-    'Service: '  + (data.service || '') + '\n' +
-    'Urgency: '  + (data.urgency || '') + '\n' +
-    'Notes: '    + (data.notes || data.description || 'None') + '\n' +
+    'Name: '        + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
+    'Phone: '       + (data.phone     || '') + '\n' +
+    'Email: '       + (data.email     || '') + '\n' +
+    'ZIP: '         + (data.zip       || '') + '\n' +
+    'City: '        + (data.city      || '') + '\n' +
+    'Service: '     + (data.service   || '') + '\n' +
+    'Urgency: '     + (data.urgency   || '') + '\n' +
+    'Notes: '       + (data.notes || data.description || 'None') + '\n' +
     'Lead Source: ' + source + '\n\n' +
     'Call or text this homeowner as soon as possible to win the job.\n\n' +
     '- HVAC Flow Solutions';
 
-  MailApp.sendEmail(recipient, subject, body);
+  MailApp.sendEmail(contractor.email, subject, body);
+  incrementLeadCount(sheet, contractor.row);
 }
 
-// Returns the email of the most recently signed-up contractor
-// from the Contractors tab (column 6 = Email). Empty string if none.
-function getLatestContractorEmail() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Contractors');
-  if (!sheet || sheet.getLastRow() < 2) return '';
-  // Last row, Email column (6th column)
-  return String(sheet.getRange(sheet.getLastRow(), 6).getValue()).trim();
+// Picks the active contractor in ACTIVE_CITY with the fewest leads sent.
+// Ties go to the contractor who signed up first (top of the sheet).
+// Treats blank Status as Active so existing rows enter rotation automatically.
+function pickContractor(sheet) {
+  if (!sheet || sheet.getLastRow() < 2) return null;
+
+  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 12).getValues();
+  var city  = ACTIVE_CITY.toLowerCase();
+
+  var candidates = [];
+  rows.forEach(function(row, i) {
+    var serviceAreas = String(row[8]).toLowerCase();   // col 9
+    var email        = String(row[5]).trim();           // col 6
+    var status       = String(row[10]).trim();          // col 11
+    var leadsCount   = parseInt(row[11], 10) || 0;     // col 12
+
+    var isActive   = (status === 'Active' || status === '');
+    var coversCity = (serviceAreas.indexOf(city) !== -1);
+
+    if (isActive && coversCity && email) {
+      candidates.push({ row: i + 2, email: email, leadsCount: leadsCount });
+    }
+  });
+
+  if (candidates.length === 0) return null;
+
+  var minLeads = candidates.reduce(function(min, c) {
+    return c.leadsCount < min ? c.leadsCount : min;
+  }, Infinity);
+
+  // First contractor with the minimum lead count wins
+  return candidates.filter(function(c) {
+    return c.leadsCount === minLeads;
+  })[0];
+}
+
+// Increments the Leads Sent counter in col 12 for the given sheet row.
+function incrementLeadCount(sheet, rowIndex) {
+  var cell = sheet.getRange(rowIndex, 12);
+  cell.setValue((parseInt(cell.getValue(), 10) || 0) + 1);
 }
 
 // ── Contractor payment link email ────────────────────────────
@@ -358,6 +396,16 @@ function testHomeowner() {
     notes: 'Test lead', submittedAt: new Date().toLocaleString()
   });
   Logger.log('Test homeowner done - check the Get Quotes tab');
+}
+
+function testLeadRouting() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Contractors');
+  var contractor = pickContractor(sheet);
+  if (!contractor) {
+    Logger.log('No active San Antonio contractors found. Sign one up first.');
+    return;
+  }
+  Logger.log('Next lead goes to: ' + contractor.email + ' (row ' + contractor.row + ', leads sent: ' + contractor.leadsCount + ')');
 }
 
 function testTrial() {
