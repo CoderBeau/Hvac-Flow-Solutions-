@@ -154,7 +154,10 @@ function sendEmailAlert(type, data) {
 
 // ── Forward homeowner lead to contractor(s) ──────────────────
 function forwardLeadToContractor(data) {
-  if (!CONTRACTOR_LEAD_EMAILS) return;  // no contractor set, skip
+  // Use a manually-set email if provided; otherwise auto-pull the
+  // most recent contractor signup from the Contractors tab.
+  var recipient = CONTRACTOR_LEAD_EMAILS || getLatestContractorEmail();
+  if (!recipient) return;  // no contractor available, skip
 
   var source = data.source || 'Website';
   var subject = 'New HVAC Lead – ' + (data.service || 'Service Request') +
@@ -174,7 +177,16 @@ function forwardLeadToContractor(data) {
     'Call or text this homeowner as soon as possible to win the job.\n\n' +
     '- HVAC Flow Solutions';
 
-  MailApp.sendEmail(CONTRACTOR_LEAD_EMAILS, subject, body);
+  MailApp.sendEmail(recipient, subject, body);
+}
+
+// Returns the email of the most recently signed-up contractor
+// from the Contractors tab (column 6 = Email). Empty string if none.
+function getLatestContractorEmail() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Contractors');
+  if (!sheet || sheet.getLastRow() < 2) return '';
+  // Last row, Email column (6th column)
+  return String(sheet.getRange(sheet.getLastRow(), 6).getValue()).trim();
 }
 
 // ── Contractor payment link email ────────────────────────────
