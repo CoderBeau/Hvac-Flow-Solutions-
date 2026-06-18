@@ -4,17 +4,37 @@
 // then Deploy > Manage deployments > Edit > New version > Deploy.
 //
 // Handles:
-//   • Get Quotes (homeowner) leads  -> "Get Quotes" tab + email
-//   • Contractor signups            -> "Contractors" tab + email + PayPal link
-//   • Contractor trial signups      -> "Trials" tab + email + signature image
-//   • Lead routing                  -> Round-robin to San Antonio contractors
+//   • Get Quotes (homeowner) leads  -> "Get Quotes" tab + email + instant SMS + 24h follow-up SMS
+//   • Contractor signups            -> "Contractors" tab + email + PayPal link + welcome SMS
+//   • Contractor trial signups      -> "Trials" tab + "Contractors" tab (Trial row) + email + SMS
+//   • Lead routing                  -> Round-robin to San Antonio contractors, by email + SMS
+//   • Lead caps                     -> Hard stop once a contractor hits their package's lead limit
+//   • Trial expiration              -> Auto-pauses leads 14 days after trial start
+//   • Manual control                -> "HVAC Admin" menu in the sheet to pause/resume any contractor
+//
+// Required Script Properties (Project Settings > Script Properties):
+//   TWILIO_SID    — Twilio Account SID (SMS is skipped silently until this is set)
+//   TWILIO_TOKEN  — Twilio Auth Token
+//   TWILIO_FROM   — Your Twilio phone number, e.g. +12105551234
+//   ADMIN_PHONE   — Owner's cell for alerts, e.g. +12105559999
 // ============================================================
 
 var TRIAL_LENGTH_DAYS = 14;
 var ADMIN_EMAIL = 'hvacflowsolutions@gmail.com';
+var HOMEOWNER_FOLLOWUP_HOURS = 24;
 
 // Active city for lead routing. Change this when you expand to a new city.
 var ACTIVE_CITY = 'San Antonio';
+
+// Lead limit per paid package. Once a contractor's "Leads Sent" count
+// reaches this number, routing automatically stops for them.
+var PACKAGE_LEAD_CAPS = {
+  'Tester':      5,
+  'Starter':     10,
+  'Growth':      25,
+  'Pro Partner': 50,
+  'Elite':       100
+};
 
 // ── Entry Point ──────────────────────────────────────────────
 function doPost(e) {
@@ -25,14 +45,17 @@ function doPost(e) {
     if (data.type === 'Homeowner') {
       writeHomeowner(ss, data);
       sendEmailAlert('Homeowner', data);
+      notifyHomeownerInstantSMS(data);
       forwardLeadToContractor(data);
     } else if (data.type === 'Contractor') {
       writeContractor(ss, data);
       sendEmailAlert('Contractor', data);
       sendContractorPaymentLink(data);
+      notifyContractorSignupSMS(data);
     } else if (data.type === 'Trial') {
       const result = appendTrialRow(ss, data);
       emailTrialSignup(data, result.clientId, result.startDate, result.endDate);
+      notifyTrialSignupSMS(data, result.clientId, result.startDate, result.endDate);
     }
 
     return ContentService
@@ -54,14 +77,14 @@ function writeHomeowner(ss, data) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
       'Timestamp', 'First Name', 'Last Name', 'Phone', 'Email',
-      'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes'
+      'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes', 'Follow-up Sent'
     ]);
-    const headerRange = sheet.getRange(1, 1, 1, 12);
+    const headerRange = sheet.getRange(1, 1, 1, 13);
     headerRange.setBackground('#0B1E3B');
     headerRange.setFontColor('#FFFFFF');
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
-    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280]
+    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280, 130]
       .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   }
 
@@ -77,31 +100,35 @@ function writeHomeowner(ss, data) {
     data.urgency     || '',
     data.source      || 'Organic / Direct',
     data.campaign    || '',
-    data.notes       || data.description || ''
+    data.notes       || data.description || '',
+    ''  // Follow-up Sent — filled in by sendHomeownerFollowUps()
   ]);
 }
 
 // ── Contractor writer ────────────────────────────────────────
-// Columns: Timestamp | First | Last | Company | Phone | Email |
-//          ZIP | Years | Service Areas | Package | Status | Leads Sent
+// Columns: Timestamp | First | Last | Company | Phone | Email | ZIP |
+//          Years | Service Areas | Package | Status | Leads Sent |
+//          Lead Cap | Trial End Date | Client ID
+function ensureContractorsHeaders(sheet) {
+  if (sheet.getLastRow() > 0) return;
+  sheet.appendRow([
+    'Timestamp', 'First Name', 'Last Name', 'Company', 'Phone',
+    'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected',
+    'Status', 'Leads Sent', 'Lead Cap', 'Trial End Date', 'Client ID'
+  ]);
+  const headerRange = sheet.getRange(1, 1, 1, 15);
+  headerRange.setBackground('#0B1E3B');
+  headerRange.setFontColor('#FFFFFF');
+  headerRange.setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  [160, 100, 100, 200, 130, 200, 70, 130, 220, 140, 100, 90, 80, 120, 110]
+    .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+}
+
 function writeContractor(ss, data) {
   let sheet = ss.getSheetByName('Contractors');
   if (!sheet) sheet = ss.insertSheet('Contractors');
-
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      'Timestamp', 'First Name', 'Last Name', 'Company', 'Phone',
-      'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected',
-      'Status', 'Leads Sent'
-    ]);
-    const headerRange = sheet.getRange(1, 1, 1, 12);
-    headerRange.setBackground('#0B1E3B');
-    headerRange.setFontColor('#FFFFFF');
-    headerRange.setFontWeight('bold');
-    sheet.setFrozenRows(1);
-    [160, 100, 100, 200, 130, 200, 70, 130, 220, 220, 90, 90]
-      .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
-  }
+  ensureContractorsHeaders(sheet);
 
   sheet.appendRow([
     data.submittedAt  || new Date().toLocaleString(),
@@ -115,8 +142,19 @@ function writeContractor(ss, data) {
     data.serviceAreas || '',
     data.package      || '',
     'Active',
-    0
+    0,
+    packageToLeadCap(data.package),
+    '',  // Trial End Date — not a trial signup
+    ''   // Client ID — not a trial signup
   ]);
+}
+
+function packageToLeadCap(pkg) {
+  pkg = pkg || '';
+  for (var name in PACKAGE_LEAD_CAPS) {
+    if (pkg.indexOf(name) !== -1) return PACKAGE_LEAD_CAPS[name];
+  }
+  return '';
 }
 
 // ── Email alerts (Homeowner + Contractor) ────────────────────
@@ -156,12 +194,85 @@ function sendEmailAlert(type, data) {
   MailApp.sendEmail(ADMIN_EMAIL, subject, body);
 }
 
+// ── SMS: Homeowner instant confirmation + 24h follow-up ──────
+function notifyHomeownerInstantSMS(data) {
+  if (!data.phone) return;
+  sendSMS(data.phone,
+    'Thanks ' + (data.firstName || '') + '! HVAC Flow Solutions got your ' +
+    (data.service || 'service') + ' request. A local licensed contractor will reach out shortly.'
+  );
+}
+
+function sendHomeownerFollowUps() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Get Quotes');
+  if (!sheet || sheet.getLastRow() < 2) return;
+
+  var lastCol = Math.max(sheet.getLastColumn(), 13);
+  var rows    = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+  var cutoffMs = HOMEOWNER_FOLLOWUP_HOURS * 60 * 60 * 1000;
+  var now = new Date();
+
+  rows.forEach(function(row, i) {
+    if (row[12]) return; // Follow-up Sent already set
+
+    var submittedAt = parseTimestamp(row[0]);
+    if (!submittedAt) return;
+
+    if (now.getTime() - submittedAt.getTime() >= cutoffMs) {
+      var phone     = row[3];
+      var firstName = row[1];
+      var service   = row[7];
+      if (phone) {
+        sendSMS(phone,
+          'Hi ' + (firstName || '') + ', this is HVAC Flow Solutions checking in on your ' +
+          (service || 'HVAC') + ' request. Did a contractor reach out yet? Reply and let us know if you still need help.'
+        );
+      }
+      sheet.getRange(i + 2, 13).setValue(now);
+    }
+  });
+}
+
+function parseTimestamp(value) {
+  if (value instanceof Date) return value;
+  var parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+// ── SMS: Contractor signup welcome + admin alert ─────────────
+function notifyContractorSignupSMS(data) {
+  if (data.phone) {
+    sendSMS(data.phone,
+      'Welcome to HVAC Flow Solutions, ' + data.firstName + '! Your ' + data.package +
+      ' application is received. Check your email for the payment link to activate lead delivery.'
+    );
+  }
+  sendSMS(getProperty('ADMIN_PHONE'),
+    'NEW CONTRACTOR SIGNUP: ' + data.firstName + ' ' + data.lastName + ' (' + data.company + ') - ' +
+    data.package + ' - ' + data.phone
+  );
+}
+
+// ── SMS: Trial signup welcome + admin alert ──────────────────
+function notifyTrialSignupSMS(d, clientId, startDate, endDate) {
+  if (d.phone) {
+    sendSMS(d.phone,
+      'Welcome to your HVAC Flow Solutions free trial, ' + (d.firstName || '') + '! Client ID ' + clientId +
+      '. Your trial runs ' + startDate + ' to ' + endDate + '. Leads will start arriving shortly.'
+    );
+  }
+  sendSMS(getProperty('ADMIN_PHONE'),
+    'NEW TRIAL SIGNUP: ' + (d.bizname || d.firstName) + ' [' + clientId + '] trial ' + startDate + '–' + endDate
+  );
+}
+
 // ── Lead routing — round-robin for ACTIVE_CITY ───────────────
 function forwardLeadToContractor(data) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Contractors');
   var contractor = pickContractor(sheet);
-  if (!contractor) return;  // no active contractors yet, skip
+  if (!contractor) return;  // no active contractors under cap, skip
 
   var source = data.source || 'Website';
   var subject = 'New HVAC Lead – ' + (data.service || 'Service Request') +
@@ -182,30 +293,48 @@ function forwardLeadToContractor(data) {
     '- HVAC Flow Solutions';
 
   MailApp.sendEmail(contractor.email, subject, body);
+
+  if (contractor.phone) {
+    sendSMS(contractor.phone,
+      'NEW LEAD – ' + (data.service || 'HVAC') + ' in ' + (data.city || data.zip || 'TX') + '\n' +
+      'Name: '    + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
+      'Phone: '   + (data.phone || '') + '\n' +
+      'Urgency: ' + (data.urgency || '') + '\n' +
+      'Call them back ASAP to win the job.'
+    );
+  }
+
   incrementLeadCount(sheet, contractor.row);
+  enforceLeadCap(sheet, contractor.row, contractor.leadCap);
 }
 
-// Picks the active contractor in ACTIVE_CITY with the fewest leads sent.
-// Ties go to the contractor who signed up first (top of the sheet).
-// Treats blank Status as Active so existing rows enter rotation automatically.
+// Picks the active contractor in ACTIVE_CITY with the fewest leads sent,
+// skipping anyone over their package's lead cap. Ties go to whoever
+// signed up first (top of the sheet). Blank Status counts as Active.
 function pickContractor(sheet) {
   if (!sheet || sheet.getLastRow() < 2) return null;
 
-  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 12).getValues();
+  var lastCol = Math.max(sheet.getLastColumn(), 15);
+  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   var city  = ACTIVE_CITY.toLowerCase();
 
   var candidates = [];
   rows.forEach(function(row, i) {
     var serviceAreas = String(row[8]).toLowerCase();   // col 9
-    var email        = String(row[5]).trim();           // col 6
-    var status       = String(row[10]).trim();          // col 11
-    var leadsCount   = parseInt(row[11], 10) || 0;     // col 12
+    var phone        = String(row[4]).trim();          // col 5
+    var email        = String(row[5]).trim();          // col 6
+    var status       = String(row[10]).trim();         // col 11
+    var leadsCount   = parseInt(row[11], 10) || 0;      // col 12
+    var leadCapRaw   = row[12];                          // col 13
+    var leadCap      = (leadCapRaw === '' || leadCapRaw === null || isNaN(parseInt(leadCapRaw, 10)))
+      ? null : parseInt(leadCapRaw, 10);
 
     var isActive   = (status === 'Active' || status === '');
     var coversCity = (serviceAreas.indexOf(city) !== -1);
+    var underCap   = (leadCap === null || leadsCount < leadCap);
 
-    if (isActive && coversCity && email) {
-      candidates.push({ row: i + 2, email: email, leadsCount: leadsCount });
+    if (isActive && coversCity && email && underCap) {
+      candidates.push({ row: i + 2, email: email, phone: phone, leadsCount: leadsCount, leadCap: leadCap });
     }
   });
 
@@ -215,7 +344,6 @@ function pickContractor(sheet) {
     return c.leadsCount < min ? c.leadsCount : min;
   }, Infinity);
 
-  // First contractor with the minimum lead count wins
   return candidates.filter(function(c) {
     return c.leadsCount === minLeads;
   })[0];
@@ -225,6 +353,32 @@ function pickContractor(sheet) {
 function incrementLeadCount(sheet, rowIndex) {
   var cell = sheet.getRange(rowIndex, 12);
   cell.setValue((parseInt(cell.getValue(), 10) || 0) + 1);
+}
+
+// Hard stop: once Leads Sent reaches the package's cap, pause routing
+// for that contractor and notify both the contractor and admin.
+function enforceLeadCap(sheet, rowIndex, leadCap) {
+  if (leadCap === null) return;
+
+  var leadsSent = parseInt(sheet.getRange(rowIndex, 12).getValue(), 10) || 0;
+  if (leadsSent < leadCap) return;
+
+  sheet.getRange(rowIndex, 11).setValue('Limit Reached');
+
+  var name  = sheet.getRange(rowIndex, 2).getValue();
+  var phone = sheet.getRange(rowIndex, 5).getValue();
+  var pkg   = sheet.getRange(rowIndex, 10).getValue();
+
+  if (phone) {
+    sendSMS(phone,
+      'You have used all ' + leadCap + ' leads in your ' + pkg + ' package. Lead delivery is paused ' +
+      'until you renew or upgrade. Reply to this text or contact us to choose a new package.'
+    );
+  }
+  sendSMS(getProperty('ADMIN_PHONE'),
+    'LEAD CAP REACHED: ' + name + ' (' + pkg + ') hit ' + leadCap + ' leads. Routing paused automatically. ' +
+    'Reach out about renewal or upgrade.'
+  );
 }
 
 // ── Contractor payment link email ────────────────────────────
@@ -275,149 +429,348 @@ function sendContractorPaymentLink(data) {
   MailApp.sendEmail(data.email, subject, body);
 }
 
-// ── Trial Signup ─────────────────────────────────────────────
+// ── Trial Signup ─────────────────────────────────────────
+
 function appendTrialRow(ss, d) {
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    var sheet = ss.getSheetByName('Trials') || ss.insertSheet('Trials');
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
-        'Client ID', 'Status', 'Start Date', 'End Date',
-        'Business Name', 'First', 'Last', 'Phone', 'Email', 'Website',
-        'Service Area', 'Job Types', 'Lead Delivery', 'Notes', 'Signature', 'Submitted At'
-      ]);
-      sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
-      sheet.setFrozenRows(1);
-      sheet.setColumnWidth(15, 200);
-    }
-
-    var tz       = 'America/Chicago';
-    var now      = new Date();
-    var end      = new Date(now.getTime() + TRIAL_LENGTH_DAYS * 24 * 60 * 60 * 1000);
-    var fmt      = function(dt) { return Utilities.formatDate(dt, tz, 'MM/dd/yyyy'); };
-    var clientId = generateTrialClientId(sheet);
-
-    var sigValue = 'No signature';
-    var sigUrl   = '';
-    if (d.signed && typeof d.signed === 'string' && d.signed.indexOf('data:image') === 0) {
-      sigUrl   = saveSignatureToDrive(d.signed, clientId);
-      sigValue = sigUrl;
-    }
-
-    var newRow = sheet.getLastRow() + 1;
-    sheet.appendRow([
-      clientId, 'Active', fmt(now), fmt(end),
-      d.bizname      || '',
-      d.firstName    || '',
-      d.lastName     || '',
-      d.phone        || '',
-      d.email        || '',
-      d.website      || '',
-      d.cities       || '',
-      d.jobTypes     || '',
-      d.leadDelivery || '',
-      d.notes        || '',
-      sigValue,
-      d.submittedAt  || now.toLocaleString('en-US', { timeZone: tz })
-    ]);
-
-    if (sigUrl) {
-      sheet.getRange(newRow, 15).setFormula('=IMAGE("' + sigUrl + '")');
-      sheet.setRowHeight(newRow, 100);
-    }
-
-    return { clientId: clientId, startDate: fmt(now), endDate: fmt(end) };
-  } finally {
-    lock.releaseLock();
+  var sheet = ss.getSheetByName('Trials') || ss.insertSheet('Trials');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Client ID','Status','Start Date','End Date','Business Name','First','Last',
+      'Phone','Email','Website','Service Area','Job Types','Lead Delivery','Notes','Signed','Submitted At']);
   }
+
+  var clientId = generateTrialClientId(sheet);
+  var start = new Date();
+  var end = new Date(start.getTime() + TRIAL_LENGTH_DAYS * 24 * 60 * 60 * 1000);
+
+  var signatureUrl = '';
+  if (d.signature) {
+    signatureUrl = saveSignatureToDrive(d.signature, clientId);
+  }
+
+  sheet.appendRow([
+    clientId,
+    'Active',
+    start.toLocaleDateString(),
+    end.toLocaleDateString(),
+    d.bizname   || '',
+    d.firstName || '',
+    d.lastName  || '',
+    d.phone     || '',
+    d.email     || '',
+    d.website   || '',
+    d.cities    || '',
+    d.jobtypes  || '',
+    d.leaddelivery || '',
+    d.notes     || '',
+    signatureUrl,
+    new Date().toLocaleString()
+  ]);
+
+  addTrialToContractors(ss, d, clientId, end);
+
+  return { clientId: clientId, startDate: start, endDate: end };
+}
+
+function addTrialToContractors(ss, d, clientId, endDate) {
+  var sheet = ss.getSheetByName('Contractors') || ss.insertSheet('Contractors');
+  ensureContractorsHeaders(sheet);
+  sheet.appendRow([
+    d.submittedAt || new Date().toLocaleString(),
+    d.firstName || '',
+    d.lastName  || '',
+    d.bizname   || '',
+    d.phone     || '',
+    d.email     || '',
+    '',
+    '',
+    d.cities    || '',
+    'Trial',
+    'Active',
+    0,
+    '',
+    endDate,
+    clientId
+  ]);
 }
 
 function generateTrialClientId(sheet) {
-  var year   = Utilities.formatDate(new Date(), 'America/Chicago', 'yyyy');
-  var maxNum = 0;
-  if (sheet.getLastRow() > 1) {
-    var ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
-    ids.forEach(function(row) {
-      var m = String(row[0]).match(new RegExp('^HFS-' + year + '-(\\d+)$'));
-      if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
-    });
+  var year = new Date().getFullYear();
+  var data = sheet.getDataRange().getValues();
+  var maxSeq = 0;
+  for (var i = 1; i < data.length; i++) {
+    var id = String(data[i][0] || '');
+    var match = id.match(/^HFS-(\d{4})-(\d{4})$/);
+    if (match && parseInt(match[1], 10) === year) {
+      var seq = parseInt(match[2], 10);
+      if (seq > maxSeq) maxSeq = seq;
+    }
   }
-  return 'HFS-' + year + '-' + ('0000' + (maxNum + 1)).slice(-4);
+  var next = maxSeq + 1;
+  return 'HFS-' + year + '-' + ('0000' + next).slice(-4);
 }
 
 function saveSignatureToDrive(base64DataUrl, clientId) {
   try {
-    var base64 = base64DataUrl.split(',')[1];
-    var blob = Utilities.newBlob(
-      Utilities.base64Decode(base64),
-      'image/png',
-      'sig-' + clientId + '.png'
-    );
-    var folderName = 'HVAC Flow - Signatures';
-    var folders = DriveApp.getFoldersByName(folderName);
-    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+    var match = base64DataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!match) return '';
+    var contentType = match[1];
+    var bytes = Utilities.base64Decode(match[2]);
+    var blob = Utilities.newBlob(bytes, contentType, clientId + '-signature.png');
+    var folder = DriveApp.getRootFolder();
+    var folders = DriveApp.getFoldersByName('HVAC Trial Signatures');
+    if (folders.hasNext()) {
+      folder = folders.next();
+    } else {
+      folder = DriveApp.createFolder('HVAC Trial Signatures');
+    }
     var file = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    return 'https://drive.google.com/uc?export=view&id=' + file.getId();
-  } catch(err) {
-    return 'Signature error: ' + err.message;
+    return file.getUrl();
+  } catch (err) {
+    return '';
   }
 }
 
 function emailTrialSignup(d, clientId, startDate, endDate) {
-  MailApp.sendEmail({
-    to: ADMIN_EMAIL,
-    subject: 'New Trial Signup — ' + (d.bizname || d.firstName) + ' [' + clientId + ']',
-    body:
-      'NEW CONTRACTOR TRIAL SIGNUP\n\n' +
-      'Client ID: '        + clientId  + '\n' +
-      'Trial Period: '     + startDate + ' → ' + endDate + '\n\n' +
-      'Business: '         + (d.bizname      || '') + '\n' +
-      'Name: '             + (d.firstName    || '') + ' ' + (d.lastName || '') + '\n' +
-      'Phone: '            + (d.phone        || '') + '\n' +
-      'Email: '            + (d.email        || '') + '\n' +
-      'Website: '          + (d.website      || 'N/A') + '\n' +
-      'Service Area: '     + (d.cities       || '') + '\n' +
-      'Job Types: '        + (d.jobTypes     || '') + '\n' +
-      'Lead Delivery: '    + (d.leadDelivery || '') + '\n' +
-      'Notes: '            + (d.notes        || 'None') + '\n' +
-      'Submitted: '        + (d.submittedAt  || '')
+  var subject = 'Trial Activated: ' + clientId + ' - ' + (d.bizname || d.firstName);
+  var body = 'New trial signup!\n\n'
+    + 'Client ID: ' + clientId + '\n'
+    + 'Business: ' + (d.bizname || '') + '\n'
+    + 'Contact: ' + (d.firstName || '') + ' ' + (d.lastName || '') + '\n'
+    + 'Phone: ' + (d.phone || '') + '\n'
+    + 'Email: ' + (d.email || '') + '\n'
+    + 'Service Areas: ' + (d.cities || '') + '\n'
+    + 'Job Types: ' + (d.jobtypes || '') + '\n'
+    + 'Lead Delivery: ' + (d.leaddelivery || '') + '\n'
+    + 'Trial Start: ' + startDate.toLocaleDateString() + '\n'
+    + 'Trial End: ' + endDate.toLocaleDateString() + '\n\n'
+    + 'Notes: ' + (d.notes || '');
+
+  MailApp.sendEmail(ADMIN_EMAIL, subject, body);
+
+  var welcomeSubject = 'Your HVAC Flow Solutions Trial Is Active - ' + clientId;
+  var welcomeBody = 'Hi ' + (d.firstName || '') + ',\n\n'
+    + 'Your 14-day free trial is now active!\n\n'
+    + 'Client ID: ' + clientId + '\n'
+    + 'Trial Start: ' + startDate.toLocaleDateString() + '\n'
+    + 'Trial End: ' + endDate.toLocaleDateString() + '\n\n'
+    + 'Leads matching your service areas will start arriving shortly. After your trial ends, '
+    + 'lead delivery will automatically pause unless you choose a paid package.\n\n'
+    + 'Questions? Reply to this email.\n\n'
+    + '- HVAC Flow Solutions Team';
+
+  if (d.email) {
+    MailApp.sendEmail(d.email, welcomeSubject, welcomeBody);
+  }
+}
+
+// ── Scheduled Maintenance ────────────────────────────────
+
+function runDailyMaintenance() {
+  checkTrialExpirations();
+}
+
+function checkTrialExpirations() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Contractors');
+  if (!sheet) return;
+
+  var data = sheet.getDataRange().getValues();
+  var today = new Date();
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var status = row[10];
+    var trialEnd = row[13];
+    if (status !== 'Active' || !trialEnd) continue;
+
+    var endDate = parseTimestamp(trialEnd);
+    if (!endDate || endDate >= today) continue;
+
+    var rowNum = i + 1;
+    sheet.getRange(rowNum, 11).setValue('Trial Expired');
+
+    var name = (row[1] || '') + ' ' + (row[3] || '');
+    sendSMS(row[4], 'Hi ' + (row[1] || '') + ', your HVAC Flow Solutions free trial has ended. '
+      + 'Lead delivery is now paused. Choose a paid package to keep receiving leads — reply to this text or check your email.');
+    sendSMS(getProperty('ADMIN_PHONE'), 'TRIAL EXPIRED: ' + name + ' (' + (row[14] || '') + '). Lead delivery paused.');
+  }
+}
+
+function installTriggers() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    var handler = triggers[i].getHandlerFunction();
+    if (handler === 'sendHomeownerFollowUps' || handler === 'runDailyMaintenance') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  ScriptApp.newTrigger('sendHomeownerFollowUps').timeBased().everyHours(1).create();
+  ScriptApp.newTrigger('runDailyMaintenance').timeBased().everyDays(1).atHour(8).create();
+
+  Logger.log('Triggers installed: sendHomeownerFollowUps (hourly), runDailyMaintenance (daily @ 8am).');
+}
+
+// ── Manual Admin Control ──────────────────────────────────
+// Adds a "HVAC Admin" menu to the sheet so you can pause or resume
+// lead delivery for any contractor at will — select their row on the
+// Contractors tab first, then click the menu option.
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('HVAC Admin')
+    .addItem('Pause Leads for Selected Row', 'pauseSelectedContractor')
+    .addItem('Resume Leads for Selected Row', 'activateSelectedContractor')
+    .addToUi();
+}
+
+function pauseSelectedContractor() {
+  setSelectedContractorStatus('Paused');
+}
+
+function activateSelectedContractor() {
+  setSelectedContractorStatus('Active');
+}
+
+function setSelectedContractorStatus(newStatus) {
+  var ui = SpreadsheetApp.getUi();
+  var sheet = SpreadsheetApp.getActiveSheet();
+
+  if (sheet.getName() !== 'Contractors') {
+    ui.alert('Select a row on the "Contractors" tab first.');
+    return;
+  }
+
+  var row = sheet.getActiveRange().getRow();
+  if (row < 2) {
+    ui.alert('Select a contractor row (not the header) first.');
+    return;
+  }
+
+  var name = sheet.getRange(row, 2).getValue() + ' ' + sheet.getRange(row, 3).getValue();
+  sheet.getRange(row, 11).setValue(newStatus);
+  ui.alert('Lead delivery for ' + name + ' is now: ' + newStatus);
+}
+
+// ── One-time Migration Helpers ────────────────────────────
+// Run these once from the Apps Script editor if you're upgrading
+// a sheet that already has data in the old 12-column format.
+
+function migrateContractorsSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Contractors');
+  if (!sheet || sheet.getLastRow() === 0) return;
+
+  var lastCol = sheet.getLastColumn();
+  if (lastCol >= 15) {
+    Logger.log('Contractors sheet already has 15 columns — nothing to migrate.');
+    return;
+  }
+
+  sheet.getRange(1, 13, 1, 15 - lastCol).setValues([
+    ['Lead Cap', 'Trial End Date', 'Client ID'].slice(0, 15 - lastCol)
+  ]);
+
+  var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+  for (var i = 0; i < data.length; i++) {
+    var pkg = data[i][9] || '';
+    var cap = packageToLeadCap(pkg);
+    sheet.getRange(i + 2, 13).setValue(cap);
+  }
+
+  Logger.log('Migrated Contractors sheet to 15 columns and backfilled Lead Cap.');
+}
+
+function migrateGetQuotesSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Get Quotes');
+  if (!sheet || sheet.getLastRow() === 0) return;
+
+  if (sheet.getLastColumn() >= 13) {
+    Logger.log('Get Quotes sheet already has 13 columns — nothing to migrate.');
+    return;
+  }
+
+  sheet.getRange(1, 13).setValue('Follow-up Sent');
+  Logger.log('Migrated Get Quotes sheet to 13 columns.');
+}
+
+// ── Twilio SMS ─────────────────────────────────────────────
+// Silently does nothing until TWILIO_SID / TWILIO_TOKEN / TWILIO_FROM
+// are set in Script Properties — safe to deploy before Twilio is set up.
+
+function sendSMS(to, body) {
+  var formatted = normalizePhone(to);
+  if (!formatted) return;
+
+  var sid   = getProperty('TWILIO_SID');
+  var token = getProperty('TWILIO_TOKEN');
+  var from  = getProperty('TWILIO_FROM');
+  if (!sid || !token || !from) return;
+
+  var url = 'https://api.twilio.com/2010-04-01/Accounts/' + sid + '/Messages.json';
+  UrlFetchApp.fetch(url, {
+    method: 'post',
+    headers: { Authorization: 'Basic ' + Utilities.base64Encode(sid + ':' + token) },
+    payload: { To: formatted, From: from, Body: body },
+    muteHttpExceptions: true
   });
 }
 
-// ── Test helpers (run manually from the editor) ──────────────
+function normalizePhone(raw) {
+  var digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length === 10) return '+1' + digits;
+  if (digits.length === 11 && digits.charAt(0) === '1') return '+' + digits;
+  return digits ? '+' + digits : '';
+}
+
+function getProperty(key) {
+  return PropertiesService.getScriptProperties().getProperty(key) || '';
+}
+
+// ── Test Helpers ───────────────────────────────────────────
+
+function testSMS() {
+  sendSMS(getProperty('ADMIN_PHONE'), 'Test SMS from HVAC Flow Solutions automation script.');
+  Logger.log('Test SMS sent (if Twilio properties are configured).');
+}
+
 function testHomeowner() {
-  writeHomeowner(SpreadsheetApp.getActiveSpreadsheet(), {
-    type: 'Homeowner', firstName: 'Maria', lastName: 'Rodriguez',
-    phone: '(210) 555-0100', email: 'hvacflowsolutions@gmail.com',
-    zip: '78201', city: 'San Antonio', service: 'AC Repair',
-    urgency: 'Emergency – Today', source: 'facebook / cpc', campaign: 'summer-ac',
-    notes: 'Test lead', submittedAt: new Date().toLocaleString()
-  });
-  Logger.log('Test homeowner done - check the Get Quotes tab');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var data = {
+    type: 'Homeowner',
+    firstName: 'Test', lastName: 'Homeowner',
+    phone: '2105551234', email: 'test@example.com',
+    zip: '78201', city: 'San Antonio',
+    service: 'AC Repair', urgency: 'Today',
+    source: 'Test', campaign: '', notes: 'Test lead'
+  };
+  writeHomeowner(ss, data);
+  sendEmailAlert('Homeowner', data);
+  notifyHomeownerInstantSMS(data);
+  forwardLeadToContractor(data);
+  Logger.log('testHomeowner complete.');
 }
 
 function testLeadRouting() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Contractors');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Contractors');
   var contractor = pickContractor(sheet);
-  if (!contractor) {
-    Logger.log('No active San Antonio contractors found. Sign one up first.');
-    return;
-  }
-  Logger.log('Next lead goes to: ' + contractor.email + ' (row ' + contractor.row + ', leads sent: ' + contractor.leadsCount + ')');
+  Logger.log(contractor ? JSON.stringify(contractor) : 'No eligible contractor found.');
 }
 
 function testTrial() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var result = appendTrialRow(ss, {
-    type: 'Trial', bizname: 'Lone Star Heating & Air',
-    firstName: 'Carlos', lastName: 'Mendez', phone: '(210) 555-0300',
-    email: 'hvacflowsolutions@gmail.com', website: 'lonestarhvac.com',
-    cities: 'San Antonio, New Braunfels', jobTypes: 'AC Repair, Installs',
-    leadDelivery: 'SMS + Email', notes: 'Test trial', signed: true,
-    submittedAt: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
-  });
-  emailTrialSignup({ bizname: 'Lone Star Heating & Air', firstName: 'Carlos' }, result.clientId, result.startDate, result.endDate);
-  Logger.log('Test trial done — Client ID: ' + result.clientId);
+  var data = {
+    type: 'Trial',
+    firstName: 'Test', lastName: 'Contractor',
+    bizname: 'Test HVAC Co', phone: '2105551234', email: 'test@example.com',
+    website: '', cities: 'San Antonio', jobtypes: 'Install, Repair',
+    leaddelivery: 'Email + SMS', notes: 'Test trial signup'
+  };
+  var result = appendTrialRow(ss, data);
+  emailTrialSignup(data, result.clientId, result.startDate, result.endDate);
+  notifyTrialSignupSMS(data, result.clientId, result.startDate, result.endDate);
+  Logger.log('testTrial complete: ' + result.clientId);
 }
