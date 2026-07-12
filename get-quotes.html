@@ -210,6 +210,12 @@ body.embedded{background:transparent;padding:0.25rem 0 1rem;}
         </div>
       </div>
 
+      <label style="display:flex;align-items:flex-start;gap:0.5rem;margin:0 0 0.85rem;cursor:pointer;">
+        <input type="checkbox" id="consent" style="margin-top:0.2rem;flex-shrink:0;width:16px;height:16px;accent-color:#C8102E;"/>
+        <span style="font-size:0.72rem;color:#5a6a80;line-height:1.5;text-align:left;">
+          I agree to be contacted by up to 3 HVAC contractors and HVAC Flow Solutions by phone call and text message at the number provided, including via automated systems. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. We never sell your data. See our <a href="/privacy.html" target="_blank" style="color:#C8102E;text-decoration:underline;">Privacy Policy</a> &amp; <a href="/terms.html" target="_blank" style="color:#C8102E;text-decoration:underline;">Terms</a>.
+        </span>
+      </label>
       <div class="submit-wrap">
         <button class="sub-btn" id="submitBtn" onclick="handleSubmit()">
           <span id="btnText">Get My Free Quotes</span>
@@ -217,7 +223,6 @@ body.embedded{background:transparent;padding:0.25rem 0 1rem;}
           <span class="spn" id="spinner"></span>
         </button>
       </div>
-      <p class="fine-print">By submitting you agree to be contacted by up to 3 HVAC contractors. We never sell your data.</p>
     </div>
 
     <div class="success-view" id="success-view">
@@ -272,6 +277,9 @@ function handleSubmit() {
   }
   if (!/\S+@\S+\.\S+/.test(email)) {
     err.textContent='Please enter a valid email address.'; err.style.display='block'; return;
+  }
+  if (!document.getElementById('consent').checked) {
+    err.textContent='Please check the box to agree to be contacted.'; err.style.display='block'; return;
   }
 
   const btn=document.getElementById('submitBtn'),
