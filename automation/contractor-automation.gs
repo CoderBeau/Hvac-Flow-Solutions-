@@ -8,7 +8,8 @@
 //   • Contractor signups            -> "Contractors" tab + email + PayPal link + welcome SMS
 //   • Contractor trial signups      -> "Trials" tab + "Contractors" tab (Trial row) + email + SMS
 //   • Lead routing                  -> Round-robin to San Antonio contractors, by email + SMS
-//   • Lead caps                     -> Hard stop once a contractor hits their package's lead limit
+//   • Lead caps                     -> Hard stop once a one-time pack hits its lead limit
+//   • Monthly memberships           -> Recurring tiers whose lead quota resets each billing cycle
 //   • Trial expiration              -> Auto-pauses leads 14 days after trial start
 //   • Manual control                -> "HVAC Admin" menu in the sheet to pause/resume any contractor
 //
@@ -34,6 +35,16 @@ var PACKAGE_LEAD_CAPS = {
   'Growth':      25,
   'Pro Partner': 50,
   'Elite':       100
+};
+
+// Monthly membership tiers. Unlike one-time packs (which stop permanently
+// once the cap is hit), a membership's "Leads Sent" resets to 0 each billing
+// cycle so the contractor gets their full monthly quota again.
+// Package names must contain these exact strings, e.g. "Growth Membership".
+var MEMBERSHIP_LEAD_CAPS = {
+  'Starter Membership': 15,
+  'Growth Membership':  30,
+  'Pro Membership':     9999   // effectively unlimited (40+ / mo)
 };
 
 // ── Entry Point ──────────────────────────────────────────────
@@ -114,14 +125,14 @@ function ensureContractorsHeaders(sheet) {
   sheet.appendRow([
     'Timestamp', 'First Name', 'Last Name', 'Company', 'Phone',
     'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected',
-    'Status', 'Leads Sent', 'Lead Cap', 'Trial End Date', 'Client ID'
+    'Status', 'Leads Sent', 'Lead Cap', 'Trial End Date', 'Client ID', 'Renews On'
   ]);
-  const headerRange = sheet.getRange(1, 1, 1, 15);
+  const headerRange = sheet.getRange(1, 1, 1, 16);
   headerRange.setBackground('#0B1E3B');
   headerRange.setFontColor('#FFFFFF');
   headerRange.setFontWeight('bold');
   sheet.setFrozenRows(1);
-  [160, 100, 100, 200, 130, 200, 70, 130, 220, 140, 100, 90, 80, 120, 110]
+  [160, 100, 100, 200, 130, 200, 70, 130, 220, 140, 100, 90, 80, 120, 110, 120]
     .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
 }
 
@@ -130,6 +141,7 @@ function writeContractor(ss, data) {
   if (!sheet) sheet = ss.insertSheet('Contractors');
   ensureContractorsHeaders(sheet);
 
+  var renewsOn = isMembership(data.package) ? addOneMonth(new Date()) : '';
   sheet.appendRow([
     data.submittedAt  || new Date().toLocaleString(),
     data.firstName    || '',
@@ -145,16 +157,37 @@ function writeContractor(ss, data) {
     0,
     packageToLeadCap(data.package),
     '',  // Trial End Date — not a trial signup
-    ''   // Client ID — not a trial signup
+    '',  // Client ID — not a trial signup
+    renewsOn   // Renews On — membership billing anniversary (blank for one-time packs)
   ]);
 }
 
 function packageToLeadCap(pkg) {
   pkg = pkg || '';
+  // Check membership tiers first (their names contain "Membership")
+  for (var m in MEMBERSHIP_LEAD_CAPS) {
+    if (pkg.indexOf(m) !== -1) return MEMBERSHIP_LEAD_CAPS[m];
+  }
   for (var name in PACKAGE_LEAD_CAPS) {
     if (pkg.indexOf(name) !== -1) return PACKAGE_LEAD_CAPS[name];
   }
   return '';
+}
+
+// True if the package string is a recurring monthly membership tier.
+function isMembership(pkg) {
+  pkg = pkg || '';
+  for (var m in MEMBERSHIP_LEAD_CAPS) {
+    if (pkg.indexOf(m) !== -1) return true;
+  }
+  return false;
+}
+
+// Returns a new Date one calendar month after the given date.
+function addOneMonth(date) {
+  var d = new Date(date.getTime());
+  d.setMonth(d.getMonth() + 1);
+  return d;
 }
 
 // ── Email alerts (Homeowner + Contractor) ────────────────────
@@ -368,16 +401,25 @@ function enforceLeadCap(sheet, rowIndex, leadCap) {
   var name  = sheet.getRange(rowIndex, 2).getValue();
   var phone = sheet.getRange(rowIndex, 5).getValue();
   var pkg   = sheet.getRange(rowIndex, 10).getValue();
+  var member = isMembership(pkg);
 
   if (phone) {
-    sendSMS(phone,
-      'You have used all ' + leadCap + ' leads in your ' + pkg + ' package. Lead delivery is paused ' +
-      'until you renew or upgrade. Reply to this text or contact us to choose a new package.'
-    );
+    if (member) {
+      var renews = parseTimestamp(sheet.getRange(rowIndex, 16).getValue());
+      sendSMS(phone,
+        'You have received all ' + leadCap + ' leads in your ' + pkg + ' this cycle. Your leads ' +
+        'automatically refresh' + (renews ? ' on ' + renews.toLocaleDateString() : ' on your next billing date') + '.'
+      );
+    } else {
+      sendSMS(phone,
+        'You have used all ' + leadCap + ' leads in your ' + pkg + ' package. Lead delivery is paused ' +
+        'until you renew or upgrade. Reply to this text or contact us to choose a new package.'
+      );
+    }
   }
   sendSMS(getProperty('ADMIN_PHONE'),
     'LEAD CAP REACHED: ' + name + ' (' + pkg + ') hit ' + leadCap + ' leads. Routing paused automatically. ' +
-    'Reach out about renewal or upgrade.'
+    (member ? 'Membership resets next billing cycle.' : 'Reach out about renewal or upgrade.')
   );
 }
 
@@ -489,7 +531,8 @@ function addTrialToContractors(ss, d, clientId, endDate) {
     0,
     '',
     endDate,
-    clientId
+    clientId,
+    ''   // Renews On — trials are not monthly memberships
   ]);
 }
 
@@ -554,8 +597,9 @@ function emailTrialSignup(d, clientId, startDate, endDate) {
     + 'Client ID: ' + clientId + '\n'
     + 'Trial Start: ' + startDate.toLocaleDateString() + '\n'
     + 'Trial End: ' + endDate.toLocaleDateString() + '\n\n'
-    + 'Leads matching your service areas will start arriving shortly. After your trial ends, '
-    + 'lead delivery will automatically pause unless you choose a paid package.\n\n'
+    + 'Leads matching your service areas will start arriving shortly. After your 14 days, '
+    + 'lead delivery pauses automatically unless you move to a monthly membership '
+    + '(Starter, Growth, or Pro) to keep the exclusive leads coming every month.\n\n'
     + 'Questions? Reply to this email.\n\n'
     + '- HVAC Flow Solutions Team';
 
@@ -568,6 +612,53 @@ function emailTrialSignup(d, clientId, startDate, endDate) {
 
 function runDailyMaintenance() {
   checkTrialExpirations();
+  resetMonthlyMemberships();
+}
+
+// Resets each monthly member's "Leads Sent" to 0 when their billing
+// anniversary passes, reactivates them if they were paused for hitting
+// the monthly cap, and rolls the renewal date forward one month.
+function resetMonthlyMemberships() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Contractors');
+  if (!sheet || sheet.getLastRow() < 2) return;
+
+  var lastCol = Math.max(sheet.getLastColumn(), 16);
+  var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+  var today = new Date();
+
+  for (var i = 0; i < data.length; i++) {
+    var row      = data[i];
+    var pkg      = row[9];    // col 10 Package
+    var renewsOn = row[15];   // col 16 Renews On
+    if (!isMembership(pkg) || !renewsOn) continue;
+
+    var renewDate = parseTimestamp(renewsOn);
+    if (!renewDate || renewDate > today) continue;
+
+    var rowNum = i + 2;
+
+    // Refresh the monthly quota
+    sheet.getRange(rowNum, 12).setValue(0);   // Leads Sent -> 0
+
+    // Reactivate if they were paused for hitting the monthly cap
+    if (String(row[10]).trim() === 'Limit Reached') {
+      sheet.getRange(rowNum, 11).setValue('Active');
+    }
+
+    // Roll the renewal date forward past today
+    var next = renewDate;
+    while (next <= today) next = addOneMonth(next);
+    sheet.getRange(rowNum, 16).setValue(next);
+
+    // Let the contractor know their leads are flowing again
+    if (row[4]) {
+      sendSMS(row[4],
+        'Good news ' + (row[1] || '') + '! Your HVAC Flow Solutions monthly leads have refreshed. ' +
+        'New exclusive leads are on the way.'
+      );
+    }
+  }
 }
 
 function checkTrialExpirations() {
@@ -592,7 +683,7 @@ function checkTrialExpirations() {
 
     var name = (row[1] || '') + ' ' + (row[3] || '');
     sendSMS(row[4], 'Hi ' + (row[1] || '') + ', your HVAC Flow Solutions free trial has ended. '
-      + 'Lead delivery is now paused. Choose a paid package to keep receiving leads — reply to this text or check your email.');
+      + 'Lead delivery is now paused. Start a monthly membership to keep the exclusive leads coming - reply to this text or check your email.');
     sendSMS(getProperty('ADMIN_PHONE'), 'TRIAL EXPIRED: ' + name + ' (' + (row[14] || '') + '). Lead delivery paused.');
   }
 }
@@ -662,24 +753,28 @@ function migrateContractorsSheet() {
   var sheet = ss.getSheetByName('Contractors');
   if (!sheet || sheet.getLastRow() === 0) return;
 
-  var lastCol = sheet.getLastColumn();
-  if (lastCol >= 15) {
-    Logger.log('Contractors sheet already has 15 columns — nothing to migrate.');
-    return;
+  // Ensure the header names for columns 11-16 are present (set only if blank,
+  // so existing headers are never clobbered).
+  var headerNames = {
+    11: 'Status', 12: 'Leads Sent', 13: 'Lead Cap',
+    14: 'Trial End Date', 15: 'Client ID', 16: 'Renews On'
+  };
+  for (var c in headerNames) {
+    var cell = sheet.getRange(1, parseInt(c, 10));
+    if (!cell.getValue()) cell.setValue(headerNames[c]);
   }
 
-  sheet.getRange(1, 13, 1, 15 - lastCol).setValues([
-    ['Lead Cap', 'Trial End Date', 'Client ID'].slice(0, 15 - lastCol)
-  ]);
-
-  var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
-  for (var i = 0; i < data.length; i++) {
-    var pkg = data[i][9] || '';
-    var cap = packageToLeadCap(pkg);
-    sheet.getRange(i + 2, 13).setValue(cap);
+  // Backfill Lead Cap (and Renews On for any existing memberships) from package.
+  if (sheet.getLastRow() > 1) {
+    var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 16).getValues();
+    for (var i = 0; i < rows.length; i++) {
+      var pkg = rows[i][9] || '';
+      if (!rows[i][12]) sheet.getRange(i + 2, 13).setValue(packageToLeadCap(pkg));      // Lead Cap
+      if (isMembership(pkg) && !rows[i][15]) sheet.getRange(i + 2, 16).setValue(addOneMonth(new Date())); // Renews On
+    }
   }
 
-  Logger.log('Migrated Contractors sheet to 15 columns and backfilled Lead Cap.');
+  Logger.log('Contractors sheet migrated to 16 columns and backfilled Lead Cap / Renews On.');
 }
 
 function migrateGetQuotesSheet() {
