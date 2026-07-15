@@ -242,7 +242,8 @@ function notifyHomeownerInstantSMS(data) {
   if (data.smsConsent !== 'Yes') return;   // only text homeowners who opted in
   sendSMS(data.phone,
     'Thanks ' + (data.firstName || '') + '! HVAC Flow Solutions got your ' +
-    (data.service || 'service') + ' request. A local licensed contractor will reach out shortly.'
+    (data.service || 'service') + ' request. A local licensed contractor will reach out shortly. ' +
+    'Msg & data rates may apply. Reply STOP to opt out, HELP for help.'
   );
 }
 
@@ -270,7 +271,8 @@ function sendHomeownerFollowUps() {
       if (phone) {
         sendSMS(phone,
           'Hi ' + (firstName || '') + ', this is HVAC Flow Solutions checking in on your ' +
-          (service || 'HVAC') + ' request. Did a contractor reach out yet? Reply and let us know if you still need help.'
+          (service || 'HVAC') + ' request. Did a contractor reach out yet? Reply and let us know if you still need help. ' +
+          'Reply STOP to opt out.'
         );
       }
       sheet.getRange(i + 2, 13).setValue(now);
@@ -289,7 +291,8 @@ function notifyContractorSignupSMS(data) {
   if (data.phone && data.smsConsent === 'Yes') {   // only text contractors who opted in
     sendSMS(data.phone,
       'Welcome to HVAC Flow Solutions, ' + data.firstName + '! Your ' + data.package +
-      ' application is received. Check your email for the payment link to activate lead delivery.'
+      ' application is received. Check your email for the payment link to activate lead delivery. ' +
+      'Reply STOP to opt out, HELP for help.'
     );
   }
   sendSMS(getProperty('ADMIN_PHONE'),
@@ -303,7 +306,8 @@ function notifyTrialSignupSMS(d, clientId, startDate, endDate) {
   if (d.phone && smsFromDelivery(d.leaddelivery) === 'Yes') {   // only if they chose Text/Both delivery
     sendSMS(d.phone,
       'Welcome to your HVAC Flow Solutions free trial, ' + (d.firstName || '') + '! Client ID ' + clientId +
-      '. Your trial runs ' + startDate + ' to ' + endDate + '. Leads will start arriving shortly.'
+      '. Your trial runs ' + startDate + ' to ' + endDate + '. Leads will start arriving shortly. ' +
+      'Reply STOP to opt out, HELP for help.'
     );
   }
   sendSMS(getProperty('ADMIN_PHONE'),
@@ -344,7 +348,7 @@ function forwardLeadToContractor(data) {
       'Name: '    + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
       'Phone: '   + (data.phone || '') + '\n' +
       'Urgency: ' + (data.urgency || '') + '\n' +
-      'Call them back ASAP to win the job.'
+      'Call them back ASAP to win the job. Reply STOP to opt out.'
     );
   }
 
@@ -421,12 +425,13 @@ function enforceLeadCap(sheet, rowIndex, leadCap) {
       var renews = parseTimestamp(sheet.getRange(rowIndex, 16).getValue());
       sendSMS(phone,
         'You have received all ' + leadCap + ' leads in your ' + pkg + ' this cycle. Your leads ' +
-        'automatically refresh' + (renews ? ' on ' + renews.toLocaleDateString() : ' on your next billing date') + '.'
+        'automatically refresh' + (renews ? ' on ' + renews.toLocaleDateString() : ' on your next billing date') + '. ' +
+        'Reply STOP to opt out.'
       );
     } else {
       sendSMS(phone,
         'You have used all ' + leadCap + ' leads in your ' + pkg + ' package. Lead delivery is paused ' +
-        'until you renew or upgrade. Reply to this text or contact us to choose a new package.'
+        'until you renew or upgrade. Reply to this text or contact us to choose a new package. Reply STOP to opt out.'
       );
     }
   }
@@ -669,7 +674,7 @@ function resetMonthlyMemberships() {
     if (row[4] && String(row[16]).trim() === 'Yes') {
       sendSMS(row[4],
         'Good news ' + (row[1] || '') + '! Your HVAC Flow Solutions monthly leads have refreshed. ' +
-        'New exclusive leads are on the way.'
+        'New exclusive leads are on the way. Reply STOP to opt out, HELP for help.'
       );
     }
   }
@@ -698,7 +703,7 @@ function checkTrialExpirations() {
     var name = (row[1] || '') + ' ' + (row[3] || '');
     if (String(row[16]).trim() === 'Yes') {   // only text if they opted in
       sendSMS(row[4], 'Hi ' + (row[1] || '') + ', your HVAC Flow Solutions free trial has ended. '
-        + 'Lead delivery is now paused. Start a monthly membership to keep the exclusive leads coming - reply to this text or check your email.');
+        + 'Lead delivery is now paused. Start a monthly membership to keep the exclusive leads coming - reply to this text or check your email. Reply STOP to opt out.');
     }
     sendSMS(getProperty('ADMIN_PHONE'), 'TRIAL EXPIRED: ' + name + ' (' + (row[14] || '') + '). Lead delivery paused.');
   }
