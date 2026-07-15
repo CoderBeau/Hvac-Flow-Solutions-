@@ -316,7 +316,7 @@
               <label style="display:flex;align-items:flex-start;gap:0.5rem;margin:0.75rem 0 0.25rem;cursor:pointer;">
                 <input type="checkbox" id="hw-consent" style="margin-top:0.2rem;flex-shrink:0;width:16px;height:16px;accent-color:#C8102E;"/>
                 <span style="font-size:0.72rem;color:#5a6a80;line-height:1.5;text-align:left;">
-                  I agree to be contacted by up to 3 HVAC contractors and HVAC Flow Solutions by phone call and text message at the number provided, including via automated systems. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. We never sell your data. See our <a href="/privacy.html" target="_blank" style="color:#C8102E;text-decoration:underline;">Privacy Policy</a> &amp; <a href="/terms.html" target="_blank" style="color:#C8102E;text-decoration:underline;">Terms</a>.
+                  <strong style="color:#5a6a80;">Optional:</strong> Yes, text me updates about my request from HVAC Flow Solutions. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to use our service.
                 </span>
               </label>
               <button class="sub-btn mt-3" id="hw-btn" onclick="submitHomeowner()">
@@ -324,6 +324,7 @@
                 <span id="hw-ba">→</span>
                 <span class="spn" id="hw-sp"></span>
               </button>
+              <p class="text-center text-zinc-400 text-xs mt-2">By submitting, you agree to our <a href="/privacy.html" target="_blank" class="underline">Privacy Policy</a> and <a href="/terms.html" target="_blank" class="underline">Terms</a>, and that HVAC Flow Solutions and up to 3 local HVAC pros may contact you by phone and email about your request. We never sell your data.</p>
             </div>
             <div class="success-screen" id="hw-success">
               <div class="scc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
@@ -740,7 +741,7 @@
             <label style="display:flex;align-items:flex-start;gap:0.5rem;margin:0.25rem 0 0.85rem;cursor:pointer;">
               <input type="checkbox" id="ct-consent" style="margin-top:0.2rem;flex-shrink:0;width:16px;height:16px;accent-color:#C8102E;"/>
               <span style="font-size:0.72rem;color:#5a6a80;line-height:1.5;text-align:left;">
-                I agree to receive text messages and phone calls from HVAC Flow Solutions at the number provided, including via automated systems, about my application and leads. Consent is not a condition of purchase. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. See our <a href="/privacy.html" target="_blank" style="color:#C8102E;text-decoration:underline;">Privacy Policy</a> &amp; <a href="/terms.html" target="_blank" style="color:#C8102E;text-decoration:underline;">Terms</a>.
+                <strong style="color:#5a6a80;">Optional:</strong> Yes, text me updates from HVAC Flow Solutions about my application and leads. Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not required to apply or use our service.
               </span>
             </label>
             <button class="sub-btn" id="ct-btn" onclick="submitContractor()">
@@ -748,7 +749,7 @@
               <span id="ct-ba">→</span>
               <span class="spn" id="ct-sp"></span>
             </button>
-            <p class="text-center text-zinc-400 text-xs mt-2">After submitting complete your payment to activate your account. Leads start in 3-7 business days.</p>
+            <p class="text-center text-zinc-400 text-xs mt-2">By submitting, you agree to our <a href="/privacy.html" target="_blank" class="underline">Privacy Policy</a> and <a href="/terms.html" target="_blank" class="underline">Terms</a>. After submitting, complete your payment to activate your account. Leads start in 3-7 business days.</p>
           </div>
 
           <div class="success-screen" id="ct-success">
@@ -814,13 +815,14 @@ function submitHomeowner() {
   }
   if (!/^\d{5}$/.test(zip)) { err.textContent='Please enter a valid 5-digit ZIP.'; err.style.display='block'; return; }
   if (!/\S+@\S+\.\S+/.test(email)) { err.textContent='Please enter a valid email.'; err.style.display='block'; return; }
-  if (!document.getElementById('hw-consent').checked) { err.textContent='Please check the box to agree to be contacted.'; err.style.display='block'; return; }
+  const smsConsent = document.getElementById('hw-consent').checked ? 'Yes' : 'No';
   const btn=document.getElementById('hw-btn'), bt=document.getElementById('hw-bt'),
         ba=document.getElementById('hw-ba'), sp=document.getElementById('hw-sp');
   btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
   fetch(SHEET_URL, {
     method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ type:'Homeowner', firstName, lastName, phone, email, zip, city, service, urgency,
+      smsConsent,
       submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}) })
   }).then(() => {
     document.getElementById('hw-form').style.display = 'none';
@@ -846,14 +848,14 @@ function submitContractor() {
   if (!areas) { err.textContent='Please select at least one service area.'; err.style.display='block'; return; }
   if (!pkg)   { err.textContent='Please select a lead package.'; err.style.display='block'; return; }
   if (!/^\d{5}$/.test(zip)) { err.textContent='Please enter a valid 5-digit ZIP.'; err.style.display='block'; return; }
-  if (!document.getElementById('ct-consent').checked) { err.textContent='Please check the box to agree to be contacted.'; err.style.display='block'; return; }
+  const smsConsent = document.getElementById('ct-consent').checked ? 'Yes' : 'No';
   const btn=document.getElementById('ct-btn'), bt=document.getElementById('ct-bt'),
         ba=document.getElementById('ct-ba'), sp=document.getElementById('ct-sp');
   btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
   fetch(SHEET_URL, {
     method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ type:'Contractor', firstName, lastName, company, phone, email, zip, years,
-      serviceAreas: areas, package: pkg,
+      serviceAreas: areas, package: pkg, smsConsent,
       submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}) })
   }).then(() => {
     document.getElementById('ct-form').style.display = 'none';

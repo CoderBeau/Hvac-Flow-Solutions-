@@ -88,14 +88,14 @@ function writeHomeowner(ss, data) {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
       'Timestamp', 'First Name', 'Last Name', 'Phone', 'Email',
-      'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes', 'Follow-up Sent'
+      'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes', 'Follow-up Sent', 'SMS Consent'
     ]);
-    const headerRange = sheet.getRange(1, 1, 1, 13);
+    const headerRange = sheet.getRange(1, 1, 1, 14);
     headerRange.setBackground('#0B1E3B');
     headerRange.setFontColor('#FFFFFF');
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
-    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280, 130]
+    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280, 130, 110]
       .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   }
 
@@ -112,7 +112,8 @@ function writeHomeowner(ss, data) {
     data.source      || 'Organic / Direct',
     data.campaign    || '',
     data.notes       || data.description || '',
-    ''  // Follow-up Sent — filled in by sendHomeownerFollowUps()
+    '',                        // Follow-up Sent — filled in by sendHomeownerFollowUps()
+    data.smsConsent || 'No'    // SMS Consent — 'Yes' only if they opted in
   ]);
 }
 
@@ -125,15 +126,22 @@ function ensureContractorsHeaders(sheet) {
   sheet.appendRow([
     'Timestamp', 'First Name', 'Last Name', 'Company', 'Phone',
     'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected',
-    'Status', 'Leads Sent', 'Lead Cap', 'Trial End Date', 'Client ID', 'Renews On'
+    'Status', 'Leads Sent', 'Lead Cap', 'Trial End Date', 'Client ID', 'Renews On', 'SMS Consent'
   ]);
-  const headerRange = sheet.getRange(1, 1, 1, 16);
+  const headerRange = sheet.getRange(1, 1, 1, 17);
   headerRange.setBackground('#0B1E3B');
   headerRange.setFontColor('#FFFFFF');
   headerRange.setFontWeight('bold');
   sheet.setFrozenRows(1);
-  [160, 100, 100, 200, 130, 200, 70, 130, 220, 140, 100, 90, 80, 120, 110, 120]
+  [160, 100, 100, 200, 130, 200, 70, 130, 220, 140, 100, 90, 80, 120, 110, 120, 110]
     .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+}
+
+// Derives SMS consent from a trial contractor's chosen lead-delivery method
+// (they explicitly picked Text / SMS / Both), returning 'Yes' or 'No'.
+function smsFromDelivery(pref) {
+  pref = String(pref || '').toLowerCase();
+  return (pref.indexOf('text') !== -1 || pref.indexOf('sms') !== -1 || pref.indexOf('both') !== -1) ? 'Yes' : 'No';
 }
 
 function writeContractor(ss, data) {
@@ -158,7 +166,8 @@ function writeContractor(ss, data) {
     packageToLeadCap(data.package),
     '',  // Trial End Date — not a trial signup
     '',  // Client ID — not a trial signup
-    renewsOn   // Renews On — membership billing anniversary (blank for one-time packs)
+    renewsOn,                 // Renews On — membership billing anniversary (blank for one-time packs)
+    data.smsConsent || 'No'   // SMS Consent — 'Yes' only if they opted in
   ]);
 }
 
@@ -230,6 +239,7 @@ function sendEmailAlert(type, data) {
 // ── SMS: Homeowner instant confirmation + 24h follow-up ──────
 function notifyHomeownerInstantSMS(data) {
   if (!data.phone) return;
+  if (data.smsConsent !== 'Yes') return;   // only text homeowners who opted in
   sendSMS(data.phone,
     'Thanks ' + (data.firstName || '') + '! HVAC Flow Solutions got your ' +
     (data.service || 'service') + ' request. A local licensed contractor will reach out shortly.'
@@ -241,13 +251,14 @@ function sendHomeownerFollowUps() {
   var sheet = ss.getSheetByName('Get Quotes');
   if (!sheet || sheet.getLastRow() < 2) return;
 
-  var lastCol = Math.max(sheet.getLastColumn(), 13);
+  var lastCol = Math.max(sheet.getLastColumn(), 14);
   var rows    = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   var cutoffMs = HOMEOWNER_FOLLOWUP_HOURS * 60 * 60 * 1000;
   var now = new Date();
 
   rows.forEach(function(row, i) {
-    if (row[12]) return; // Follow-up Sent already set
+    if (row[12]) return;              // Follow-up Sent already set
+    if (row[13] !== 'Yes') return;    // no SMS consent — never text this homeowner
 
     var submittedAt = parseTimestamp(row[0]);
     if (!submittedAt) return;
@@ -275,7 +286,7 @@ function parseTimestamp(value) {
 
 // ── SMS: Contractor signup welcome + admin alert ─────────────
 function notifyContractorSignupSMS(data) {
-  if (data.phone) {
+  if (data.phone && data.smsConsent === 'Yes') {   // only text contractors who opted in
     sendSMS(data.phone,
       'Welcome to HVAC Flow Solutions, ' + data.firstName + '! Your ' + data.package +
       ' application is received. Check your email for the payment link to activate lead delivery.'
@@ -289,7 +300,7 @@ function notifyContractorSignupSMS(data) {
 
 // ── SMS: Trial signup welcome + admin alert ──────────────────
 function notifyTrialSignupSMS(d, clientId, startDate, endDate) {
-  if (d.phone) {
+  if (d.phone && smsFromDelivery(d.leaddelivery) === 'Yes') {   // only if they chose Text/Both delivery
     sendSMS(d.phone,
       'Welcome to your HVAC Flow Solutions free trial, ' + (d.firstName || '') + '! Client ID ' + clientId +
       '. Your trial runs ' + startDate + ' to ' + endDate + '. Leads will start arriving shortly.'
@@ -327,7 +338,7 @@ function forwardLeadToContractor(data) {
 
   MailApp.sendEmail(contractor.email, subject, body);
 
-  if (contractor.phone) {
+  if (contractor.phone && contractor.smsConsent === 'Yes') {
     sendSMS(contractor.phone,
       'NEW LEAD – ' + (data.service || 'HVAC') + ' in ' + (data.city || data.zip || 'TX') + '\n' +
       'Name: '    + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
@@ -347,7 +358,7 @@ function forwardLeadToContractor(data) {
 function pickContractor(sheet) {
   if (!sheet || sheet.getLastRow() < 2) return null;
 
-  var lastCol = Math.max(sheet.getLastColumn(), 15);
+  var lastCol = Math.max(sheet.getLastColumn(), 17);
   var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   var city  = ACTIVE_CITY.toLowerCase();
 
@@ -359,6 +370,7 @@ function pickContractor(sheet) {
     var status       = String(row[10]).trim();         // col 11
     var leadsCount   = parseInt(row[11], 10) || 0;      // col 12
     var leadCapRaw   = row[12];                          // col 13
+    var smsConsent   = String(row[16]).trim();          // col 17
     var leadCap      = (leadCapRaw === '' || leadCapRaw === null || isNaN(parseInt(leadCapRaw, 10)))
       ? null : parseInt(leadCapRaw, 10);
 
@@ -367,7 +379,7 @@ function pickContractor(sheet) {
     var underCap   = (leadCap === null || leadsCount < leadCap);
 
     if (isActive && coversCity && email && underCap) {
-      candidates.push({ row: i + 2, email: email, phone: phone, leadsCount: leadsCount, leadCap: leadCap });
+      candidates.push({ row: i + 2, email: email, phone: phone, leadsCount: leadsCount, leadCap: leadCap, smsConsent: smsConsent });
     }
   });
 
@@ -402,8 +414,9 @@ function enforceLeadCap(sheet, rowIndex, leadCap) {
   var phone = sheet.getRange(rowIndex, 5).getValue();
   var pkg   = sheet.getRange(rowIndex, 10).getValue();
   var member = isMembership(pkg);
+  var smsOk  = String(sheet.getRange(rowIndex, 17).getValue()).trim() === 'Yes';
 
-  if (phone) {
+  if (phone && smsOk) {
     if (member) {
       var renews = parseTimestamp(sheet.getRange(rowIndex, 16).getValue());
       sendSMS(phone,
@@ -532,7 +545,8 @@ function addTrialToContractors(ss, d, clientId, endDate) {
     '',
     endDate,
     clientId,
-    ''   // Renews On — trials are not monthly memberships
+    '',                                // Renews On — trials are not monthly memberships
+    smsFromDelivery(d.leaddelivery)    // SMS Consent — from their Text/Email/Both choice
   ]);
 }
 
@@ -623,7 +637,7 @@ function resetMonthlyMemberships() {
   var sheet = ss.getSheetByName('Contractors');
   if (!sheet || sheet.getLastRow() < 2) return;
 
-  var lastCol = Math.max(sheet.getLastColumn(), 16);
+  var lastCol = Math.max(sheet.getLastColumn(), 17);
   var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   var today = new Date();
 
@@ -651,8 +665,8 @@ function resetMonthlyMemberships() {
     while (next <= today) next = addOneMonth(next);
     sheet.getRange(rowNum, 16).setValue(next);
 
-    // Let the contractor know their leads are flowing again
-    if (row[4]) {
+    // Let the contractor know their leads are flowing again (if they opted into SMS)
+    if (row[4] && String(row[16]).trim() === 'Yes') {
       sendSMS(row[4],
         'Good news ' + (row[1] || '') + '! Your HVAC Flow Solutions monthly leads have refreshed. ' +
         'New exclusive leads are on the way.'
@@ -682,8 +696,10 @@ function checkTrialExpirations() {
     sheet.getRange(rowNum, 11).setValue('Trial Expired');
 
     var name = (row[1] || '') + ' ' + (row[3] || '');
-    sendSMS(row[4], 'Hi ' + (row[1] || '') + ', your HVAC Flow Solutions free trial has ended. '
-      + 'Lead delivery is now paused. Start a monthly membership to keep the exclusive leads coming - reply to this text or check your email.');
+    if (String(row[16]).trim() === 'Yes') {   // only text if they opted in
+      sendSMS(row[4], 'Hi ' + (row[1] || '') + ', your HVAC Flow Solutions free trial has ended. '
+        + 'Lead delivery is now paused. Start a monthly membership to keep the exclusive leads coming - reply to this text or check your email.');
+    }
     sendSMS(getProperty('ADMIN_PHONE'), 'TRIAL EXPIRED: ' + name + ' (' + (row[14] || '') + '). Lead delivery paused.');
   }
 }
@@ -757,24 +773,25 @@ function migrateContractorsSheet() {
   // so existing headers are never clobbered).
   var headerNames = {
     11: 'Status', 12: 'Leads Sent', 13: 'Lead Cap',
-    14: 'Trial End Date', 15: 'Client ID', 16: 'Renews On'
+    14: 'Trial End Date', 15: 'Client ID', 16: 'Renews On', 17: 'SMS Consent'
   };
   for (var c in headerNames) {
     var cell = sheet.getRange(1, parseInt(c, 10));
     if (!cell.getValue()) cell.setValue(headerNames[c]);
   }
 
-  // Backfill Lead Cap (and Renews On for any existing memberships) from package.
+  // Backfill Lead Cap, Renews On (memberships), and SMS Consent from existing data.
   if (sheet.getLastRow() > 1) {
-    var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 16).getValues();
+    var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 17).getValues();
     for (var i = 0; i < rows.length; i++) {
       var pkg = rows[i][9] || '';
       if (!rows[i][12]) sheet.getRange(i + 2, 13).setValue(packageToLeadCap(pkg));      // Lead Cap
       if (isMembership(pkg) && !rows[i][15]) sheet.getRange(i + 2, 16).setValue(addOneMonth(new Date())); // Renews On
+      if (!rows[i][16]) sheet.getRange(i + 2, 17).setValue('No');                       // SMS Consent (default No for old rows)
     }
   }
 
-  Logger.log('Contractors sheet migrated to 16 columns and backfilled Lead Cap / Renews On.');
+  Logger.log('Contractors sheet migrated to 17 columns and backfilled Lead Cap / Renews On / SMS Consent.');
 }
 
 function migrateGetQuotesSheet() {
@@ -782,13 +799,14 @@ function migrateGetQuotesSheet() {
   var sheet = ss.getSheetByName('Get Quotes');
   if (!sheet || sheet.getLastRow() === 0) return;
 
-  if (sheet.getLastColumn() >= 13) {
-    Logger.log('Get Quotes sheet already has 13 columns — nothing to migrate.');
+  if (sheet.getLastColumn() >= 14) {
+    Logger.log('Get Quotes sheet already has 14 columns — nothing to migrate.');
     return;
   }
 
-  sheet.getRange(1, 13).setValue('Follow-up Sent');
-  Logger.log('Migrated Get Quotes sheet to 13 columns.');
+  if (!sheet.getRange(1, 13).getValue()) sheet.getRange(1, 13).setValue('Follow-up Sent');
+  sheet.getRange(1, 14).setValue('SMS Consent');
+  Logger.log('Migrated Get Quotes sheet to 14 columns (added SMS Consent).');
 }
 
 // ── Twilio SMS ─────────────────────────────────────────────
@@ -839,7 +857,8 @@ function testHomeowner() {
     phone: '2105551234', email: 'test@example.com',
     zip: '78201', city: 'San Antonio',
     service: 'AC Repair', urgency: 'Today',
-    source: 'Test', campaign: '', notes: 'Test lead'
+    source: 'Test', campaign: '', notes: 'Test lead',
+    smsConsent: 'Yes'
   };
   writeHomeowner(ss, data);
   sendEmailAlert('Homeowner', data);
