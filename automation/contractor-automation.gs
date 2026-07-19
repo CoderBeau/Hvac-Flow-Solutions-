@@ -12,12 +12,16 @@
 //   • Monthly memberships           -> Recurring tiers whose lead quota resets each billing cycle
 //   • Trial expiration              -> Auto-pauses leads 14 days after trial start
 //   • Manual control                -> "HVAC Admin" menu in the sheet to pause/resume any contractor
+//   • Lead quality scoring          -> Good/Bad/Review verdict on every lead via the "Keywords" tab
+//   • Dashboard API                 -> doGet() JSON feed for dashboard.html (requires DASHBOARD_KEY)
 //
 // Required Script Properties (Project Settings > Script Properties):
-//   TWILIO_SID    — Twilio Account SID (SMS is skipped silently until this is set)
-//   TWILIO_TOKEN  — Twilio Auth Token
-//   TWILIO_FROM   — Your Twilio phone number, e.g. +12105551234
-//   ADMIN_PHONE   — Owner's cell for alerts, e.g. +12105559999
+//   TWILIO_SID     — Twilio Account SID (SMS is skipped silently until this is set)
+//   TWILIO_TOKEN   — Twilio Auth Token
+//   TWILIO_FROM    — Your Twilio phone number, e.g. +12105551234
+//   ADMIN_PHONE    — Owner's cell for alerts, e.g. +12105559999
+//   DASHBOARD_KEY  — Long random password for dashboard.html (the dashboard
+//                    API stays locked until this is set)
 // ============================================================
 
 var TRIAL_LENGTH_DAYS = 14;
@@ -47,6 +51,44 @@ var MEMBERSHIP_LEAD_CAPS = {
   'Pro Membership':     9999   // effectively unlimited (40+ / mo)
 };
 
+// ── Lead Quality Scoring ─────────────────────────────────────
+// Every homeowner lead is scored against the Good/Bad keyword lists
+// (editable on the "Keywords" tab of the sheet, or from dashboard.html).
+// Score >= GOOD_THRESHOLD -> Good, score < BAD_THRESHOLD -> Bad,
+// anything in between -> Review.
+//
+// Bad leads are still recorded (so nothing is ever lost) but are NOT
+// routed to contractors — they don't burn anyone's lead cap. You can
+// overturn any verdict from the dashboard; marking a Bad lead Good
+// routes it immediately.
+var GOOD_KEYWORD_POINTS = 10;
+var BAD_KEYWORD_POINTS  = -15;
+var GOOD_THRESHOLD      = 10;
+var BAD_THRESHOLD       = 0;
+
+// Seeded into the "Keywords" tab the first time the script runs.
+// After that, the sheet (not this list) is the source of truth.
+var DEFAULT_GOOD_KEYWORDS = [
+  'replace', 'replacement', 'install', 'new unit', 'new system', 'new ac',
+  'not cooling', 'no cold air', 'not working', 'stopped working', 'broken',
+  'blowing warm', 'blowing hot', 'no heat', 'not heating', 'wont turn on',
+  'leak', 'leaking', 'frozen', 'iced up', 'emergency', 'asap', 'right away',
+  'quote', 'estimate', 'repair', 'installation', 'furnace', 'heat pump', 'mini split',
+  'ductless', 'compressor', 'refrigerant', 'freon', 'thermostat',
+  'tune up', 'maintenance', 'duct'
+];
+var DEFAULT_BAD_KEYWORDS = [
+  'job opening', 'hiring', 'looking for work', 'apply', 'resume',
+  'employment', 'career', 'home warranty', 'warranty claim', 'warranty company',
+  'free service', 'for free', 'no charge', 'sell you', 'selling leads',
+  'buy leads', 'marketing services', 'seo', 'web design', 'website design',
+  'backlink', 'guest post', 'promote your', 'sponsor', 'wholesale',
+  'parts only', 'just a part', 'do it yourself', 'diy', 'just curious',
+  'just looking', 'price check', 'school project', 'homework',
+  'test lead', 'test submission', 'testing the form',
+  'crypto', 'bitcoin', 'loan', 'casino'
+];
+
 // ── Entry Point ──────────────────────────────────────────────
 function doPost(e) {
   try {
@@ -54,10 +96,20 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
     if (data.type === 'Homeowner') {
-      writeHomeowner(ss, data);
-      sendEmailAlert('Homeowner', data);
+      var verdict = scoreLead(data, getKeywords(ss));
+      writeHomeowner(ss, data, verdict);
+      sendEmailAlert('Homeowner', data, verdict);
       notifyHomeownerInstantSMS(data);
-      forwardLeadToContractor(data);
+      // Bad leads are recorded but never routed — they don't burn a
+      // contractor's lead cap. Reclassify from the dashboard to route.
+      if (verdict.quality !== 'Bad') {
+        var routed = forwardLeadToContractor(data);
+        if (routed) {
+          var gqSheet = ss.getSheetByName('Get Quotes');
+          gqSheet.getRange(gqSheet.getLastRow(), 18)
+                 .setValue(routed.company || routed.email);
+        }
+      }
     } else if (data.type === 'Contractor') {
       writeContractor(ss, data);
       sendEmailAlert('Contractor', data);
@@ -80,24 +132,199 @@ function doPost(e) {
   }
 }
 
+// ── Dashboard API (used by dashboard.html) ───────────────────
+// All requests require ?key=<DASHBOARD_KEY>. Set DASHBOARD_KEY in
+// Script Properties to a long random password — the API refuses every
+// request until it's set.
+//
+// Actions:
+//   dashboard            -> full JSON snapshot (leads, contractors, keywords)
+//   setQuality           -> &row=N&quality=Good|Bad|Review (Good routes the lead if it wasn't routed yet)
+//   setContractorStatus  -> &row=N&status=Active|Paused
+//   addKeyword           -> &kind=good|bad&word=...
+//   removeKeyword        -> &kind=good|bad&word=...
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+
+  var key = getProperty('DASHBOARD_KEY');
+  if (!key) return jsonOut({ status: 'error', message: 'Dashboard is locked. Set DASHBOARD_KEY in Script Properties first.' });
+  if (p.key !== key) return jsonOut({ status: 'error', message: 'Invalid dashboard key.' });
+
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var action = p.action || 'dashboard';
+
+    if (action === 'dashboard')           return jsonOut(getDashboardData(ss));
+    if (action === 'setQuality')          return jsonOut(apiSetQuality(ss, p));
+    if (action === 'setContractorStatus') return jsonOut(apiSetContractorStatus(ss, p));
+    if (action === 'addKeyword')          return jsonOut(apiAddKeyword(ss, p));
+    if (action === 'removeKeyword')       return jsonOut(apiRemoveKeyword(ss, p));
+
+    return jsonOut({ status: 'error', message: 'Unknown action: ' + action });
+  } catch (err) {
+    return jsonOut({ status: 'error', message: err.message });
+  }
+}
+
+function jsonOut(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getDashboardData(ss) {
+  var leads = [];
+  var gq = ss.getSheetByName('Get Quotes');
+  if (gq && gq.getLastRow() > 1) {
+    var lastCol = Math.max(gq.getLastColumn(), 18);
+    gq.getRange(2, 1, gq.getLastRow() - 1, lastCol).getValues().forEach(function(r, i) {
+      leads.push({
+        row: i + 2,
+        timestamp: String(r[0]),
+        firstName: r[1], lastName: r[2], phone: String(r[3]), email: r[4],
+        zip: String(r[5]), city: r[6], service: r[7], urgency: r[8],
+        source: r[9], campaign: r[10], notes: r[11],
+        followUpSent: r[12] ? String(r[12]) : '',
+        smsConsent: r[13],
+        quality: r[14] || '', score: r[15], matched: r[16] || '',
+        routedTo: r[17] || ''
+      });
+    });
+  }
+
+  var contractors = [];
+  var cs = ss.getSheetByName('Contractors');
+  if (cs && cs.getLastRow() > 1) {
+    var cCol = Math.max(cs.getLastColumn(), 17);
+    cs.getRange(2, 1, cs.getLastRow() - 1, cCol).getValues().forEach(function(r, i) {
+      contractors.push({
+        row: i + 2,
+        timestamp: String(r[0]),
+        firstName: r[1], lastName: r[2], company: r[3],
+        phone: String(r[4]), email: r[5], zip: String(r[6]),
+        years: String(r[7]), serviceAreas: r[8], pkg: r[9],
+        status: r[10] || 'Active',
+        leadsSent: parseInt(r[11], 10) || 0,
+        leadCap: (r[12] === '' || r[12] === null) ? null : parseInt(r[12], 10),
+        trialEnd: r[13] ? String(r[13]) : '',
+        clientId: r[14] || '',
+        renewsOn: r[15] ? String(r[15]) : '',
+        smsConsent: r[16] || 'No'
+      });
+    });
+  }
+
+  return {
+    status: 'success',
+    generatedAt: new Date().toISOString(),
+    activeCity: ACTIVE_CITY,
+    keywords: getKeywords(ss),
+    leads: leads,
+    contractors: contractors
+  };
+}
+
+function apiSetQuality(ss, p) {
+  var sheet = ss.getSheetByName('Get Quotes');
+  var row = parseInt(p.row, 10);
+  var quality = p.quality;
+  if (!sheet || isNaN(row) || row < 2 || row > sheet.getLastRow()) throw new Error('Invalid lead row.');
+  if (['Good', 'Bad', 'Review'].indexOf(quality) === -1) throw new Error('Invalid quality value.');
+
+  sheet.getRange(row, 15).setValue(quality);
+
+  // Overturning to Good routes the lead now — unless it already went out.
+  var routedTo = String(sheet.getRange(row, 18).getValue() || '');
+  if (quality === 'Good' && !routedTo) {
+    var r = sheet.getRange(row, 1, 1, 18).getValues()[0];
+    var routed = forwardLeadToContractor({
+      firstName: r[1], lastName: r[2], phone: r[3], email: r[4],
+      zip: r[5], city: r[6], service: r[7], urgency: r[8],
+      source: r[9], notes: r[11]
+    });
+    if (routed) {
+      routedTo = routed.company || routed.email;
+      sheet.getRange(row, 18).setValue(routedTo);
+    }
+  }
+
+  return { status: 'success', row: row, quality: quality, routedTo: routedTo };
+}
+
+function apiSetContractorStatus(ss, p) {
+  var sheet = ss.getSheetByName('Contractors');
+  var row = parseInt(p.row, 10);
+  if (!sheet || isNaN(row) || row < 2 || row > sheet.getLastRow()) throw new Error('Invalid contractor row.');
+  if (['Active', 'Paused'].indexOf(p.status) === -1) throw new Error('Invalid status value.');
+
+  sheet.getRange(row, 11).setValue(p.status);
+  return { status: 'success', row: row, contractorStatus: p.status };
+}
+
+function apiAddKeyword(ss, p) {
+  var word = String(p.word || '').trim().toLowerCase();
+  var kind = p.kind === 'good' ? 'good' : p.kind === 'bad' ? 'bad' : null;
+  if (!word) throw new Error('Missing keyword.');
+  if (!kind) throw new Error('Keyword kind must be good or bad.');
+
+  var sheet = ensureKeywordsSheet(ss);
+  var col = kind === 'good' ? 1 : 2;
+  var existing = getKeywords(ss)[kind].map(function(k) { return k.toLowerCase(); });
+  if (existing.indexOf(word) !== -1) return { status: 'success', message: 'Already in the list.' };
+
+  // First empty cell in that column (below the header).
+  var colValues = sheet.getRange(2, col, Math.max(sheet.getLastRow() - 1, 1), 1).getValues();
+  var target = sheet.getLastRow() + 1;
+  for (var i = 0; i < colValues.length; i++) {
+    if (!String(colValues[i][0] || '').trim()) { target = i + 2; break; }
+  }
+  sheet.getRange(target, col).setValue(word);
+  return { status: 'success', kind: kind, word: word };
+}
+
+function apiRemoveKeyword(ss, p) {
+  var word = String(p.word || '').trim().toLowerCase();
+  var kind = p.kind === 'good' ? 'good' : p.kind === 'bad' ? 'bad' : null;
+  if (!word || !kind) throw new Error('Missing keyword or kind.');
+
+  var sheet = ensureKeywordsSheet(ss);
+  var col = kind === 'good' ? 1 : 2;
+  if (sheet.getLastRow() < 2) return { status: 'success' };
+
+  var colRange = sheet.getRange(2, col, sheet.getLastRow() - 1, 1);
+  var colValues = colRange.getValues();
+  for (var i = 0; i < colValues.length; i++) {
+    if (String(colValues[i][0] || '').trim().toLowerCase() === word) {
+      sheet.getRange(i + 2, col).setValue('');
+    }
+  }
+  return { status: 'success', kind: kind, word: word };
+}
+
 // ── Get Quotes (Homeowner) writer ────────────────────────────
-function writeHomeowner(ss, data) {
+// Columns: Timestamp | First | Last | Phone | Email | ZIP | City | Service |
+//          Urgency | Source | Campaign | Notes | Follow-up Sent | SMS Consent |
+//          Lead Quality | Quality Score | Matched Keywords | Routed To
+function writeHomeowner(ss, data, verdict) {
   let sheet = ss.getSheetByName('Get Quotes');
   if (!sheet) sheet = ss.insertSheet('Get Quotes');
 
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
       'Timestamp', 'First Name', 'Last Name', 'Phone', 'Email',
-      'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes', 'Follow-up Sent', 'SMS Consent'
+      'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes', 'Follow-up Sent', 'SMS Consent',
+      'Lead Quality', 'Quality Score', 'Matched Keywords', 'Routed To'
     ]);
-    const headerRange = sheet.getRange(1, 1, 1, 14);
+    const headerRange = sheet.getRange(1, 1, 1, 18);
     headerRange.setBackground('#0B1E3B');
     headerRange.setFontColor('#FFFFFF');
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
-    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280, 130, 110]
+    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280, 130, 110, 100, 90, 220, 160]
       .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   }
+
+  if (!verdict) verdict = scoreLead(data, getKeywords(ss));
 
   sheet.appendRow([
     data.submittedAt || new Date().toLocaleString(),
@@ -113,8 +340,113 @@ function writeHomeowner(ss, data) {
     data.campaign    || '',
     data.notes       || data.description || '',
     '',                        // Follow-up Sent — filled in by sendHomeownerFollowUps()
-    data.smsConsent || 'No'    // SMS Consent — 'Yes' only if they opted in
+    data.smsConsent || 'No',   // SMS Consent — 'Yes' only if they opted in
+    verdict.quality,
+    verdict.score,
+    formatMatchedKeywords(verdict),
+    ''                         // Routed To — filled in after routing
   ]);
+}
+
+// ── Lead scoring engine ──────────────────────────────────────
+// Scans the service + notes text for good/bad keywords, then applies a
+// few signal rules (urgency, phone validity, links in notes).
+function scoreLead(data, keywords) {
+  var text = ((data.service || '') + ' ' + (data.notes || data.description || '')).toLowerCase();
+  var matchedGood = [], matchedBad = [];
+
+  // Whole-word/phrase match so short keywords can't fire inside longer
+  // words (e.g. "seo" inside "seasonal", "ice" inside "services").
+  function hits(keyword) {
+    var k = String(keyword || '').trim().toLowerCase();
+    if (!k) return false;
+    var escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('\\b' + escaped + '\\b').test(text);
+  }
+
+  keywords.good.forEach(function(k) { if (hits(k)) matchedGood.push(k); });
+  keywords.bad.forEach(function(k)  { if (hits(k)) matchedBad.push(k); });
+
+  var score = matchedGood.length * GOOD_KEYWORD_POINTS
+            + matchedBad.length  * BAD_KEYWORD_POINTS;
+
+  // Urgency: an urgent homeowner is a buying homeowner.
+  var urgency = String(data.urgency || '').toLowerCase();
+  if (urgency.indexOf('emergency') !== -1 || urgency.indexOf('today') !== -1 || urgency.indexOf('asap') !== -1) {
+    score += 15;
+  } else if (urgency.indexOf('week') !== -1) {
+    score += 5;
+  }
+
+  // Phone: a real, callable number is the whole product.
+  var digits = String(data.phone || '').replace(/\D/g, '');
+  if (digits.length === 10 || (digits.length === 11 && digits.charAt(0) === '1')) {
+    score += 5;
+  } else {
+    score -= 15;
+  }
+
+  // Links in the notes are almost always spam/solicitation.
+  var notes = String(data.notes || data.description || '').toLowerCase();
+  if (notes.indexOf('http') !== -1 || notes.indexOf('www.') !== -1) {
+    score -= 25;
+    matchedBad.push('link in notes');
+  }
+
+  var quality = score >= GOOD_THRESHOLD ? 'Good'
+              : score < BAD_THRESHOLD   ? 'Bad'
+              : 'Review';
+
+  return { quality: quality, score: score, matchedGood: matchedGood, matchedBad: matchedBad };
+}
+
+// "+replace, +today | -hiring" — readable in a sheet cell.
+function formatMatchedKeywords(verdict) {
+  var parts = [];
+  if (verdict.matchedGood.length) parts.push(verdict.matchedGood.map(function(k) { return '+' + k; }).join(', '));
+  if (verdict.matchedBad.length)  parts.push(verdict.matchedBad.map(function(k) { return '-' + k; }).join(', '));
+  return parts.join(' | ');
+}
+
+// ── Keywords sheet ───────────────────────────────────────────
+// Two columns: "Good Keywords" | "Bad Keywords". Edit it directly in the
+// sheet or from dashboard.html — the scorer re-reads it on every lead.
+function ensureKeywordsSheet(ss) {
+  var sheet = ss.getSheetByName('Keywords');
+  if (sheet) return sheet;
+
+  sheet = ss.insertSheet('Keywords');
+  sheet.appendRow(['Good Keywords', 'Bad Keywords']);
+  var headerRange = sheet.getRange(1, 1, 1, 2);
+  headerRange.setBackground('#0B1E3B');
+  headerRange.setFontColor('#FFFFFF');
+  headerRange.setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  sheet.setColumnWidth(1, 220);
+  sheet.setColumnWidth(2, 220);
+
+  var rows = Math.max(DEFAULT_GOOD_KEYWORDS.length, DEFAULT_BAD_KEYWORDS.length);
+  var values = [];
+  for (var i = 0; i < rows; i++) {
+    values.push([DEFAULT_GOOD_KEYWORDS[i] || '', DEFAULT_BAD_KEYWORDS[i] || '']);
+  }
+  sheet.getRange(2, 1, rows, 2).setValues(values);
+  return sheet;
+}
+
+function getKeywords(ss) {
+  var sheet = ensureKeywordsSheet(ss);
+  if (sheet.getLastRow() < 2) return { good: [], bad: [] };
+
+  var values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+  var good = [], bad = [];
+  values.forEach(function(row) {
+    var g = String(row[0] || '').trim();
+    var b = String(row[1] || '').trim();
+    if (g) good.push(g);
+    if (b) bad.push(b);
+  });
+  return { good: good, bad: bad };
 }
 
 // ── Contractor writer ────────────────────────────────────────
@@ -200,13 +532,22 @@ function addOneMonth(date) {
 }
 
 // ── Email alerts (Homeowner + Contractor) ────────────────────
-function sendEmailAlert(type, data) {
+function sendEmailAlert(type, data, verdict) {
   let subject, body;
 
   if (type === 'Homeowner') {
-    subject = '🔥 New Quote Request – ' + (data.service || '') + ' in ' + (data.city || data.zip || '');
+    var qualityTag = verdict ? '[' + verdict.quality.toUpperCase() + ' LEAD] ' : '';
+    subject = qualityTag + '🔥 New Quote Request – ' + (data.service || '') + ' in ' + (data.city || data.zip || '');
     body =
       'New homeowner quote request just came in!\n\n' +
+      (verdict
+        ? 'Lead Quality: ' + verdict.quality + ' (score ' + verdict.score + ')\n' +
+          'Matched Keywords: ' + (formatMatchedKeywords(verdict) || 'none') + '\n' +
+          (verdict.quality === 'Bad'
+            ? '>> NOT routed to a contractor. Review it on the dashboard - marking it Good will route it.\n'
+            : '') +
+          '\n'
+        : '') +
       'Name: '     + data.firstName + ' ' + data.lastName + '\n' +
       'Phone: '    + data.phone + '\n' +
       'Email: '    + data.email + '\n' +
@@ -252,7 +593,7 @@ function sendHomeownerFollowUps() {
   var sheet = ss.getSheetByName('Get Quotes');
   if (!sheet || sheet.getLastRow() < 2) return;
 
-  var lastCol = Math.max(sheet.getLastColumn(), 14);
+  var lastCol = Math.max(sheet.getLastColumn(), 15);
   var rows    = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   var cutoffMs = HOMEOWNER_FOLLOWUP_HOURS * 60 * 60 * 1000;
   var now = new Date();
@@ -260,6 +601,7 @@ function sendHomeownerFollowUps() {
   rows.forEach(function(row, i) {
     if (row[12]) return;              // Follow-up Sent already set
     if (row[13] !== 'Yes') return;    // no SMS consent — never text this homeowner
+    if (row[14] === 'Bad') return;    // bad lead — no contractor was sent, skip the check-in
 
     var submittedAt = parseTimestamp(row[0]);
     if (!submittedAt) return;
@@ -316,11 +658,13 @@ function notifyTrialSignupSMS(d, clientId, startDate, endDate) {
 }
 
 // ── Lead routing — round-robin for ACTIVE_CITY ───────────────
+// Returns the contractor the lead was routed to ({email, company, ...}),
+// or null if no eligible contractor was found.
 function forwardLeadToContractor(data) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Contractors');
   var contractor = pickContractor(sheet);
-  if (!contractor) return;  // no active contractors under cap, skip
+  if (!contractor) return null;  // no active contractors under cap, skip
 
   var source = data.source || 'Website';
   var subject = 'New HVAC Lead – ' + (data.service || 'Service Request') +
@@ -354,6 +698,7 @@ function forwardLeadToContractor(data) {
 
   incrementLeadCount(sheet, contractor.row);
   enforceLeadCap(sheet, contractor.row, contractor.leadCap);
+  return contractor;
 }
 
 // Picks the active contractor in ACTIVE_CITY with the fewest leads sent,
@@ -383,7 +728,7 @@ function pickContractor(sheet) {
     var underCap   = (leadCap === null || leadsCount < leadCap);
 
     if (isActive && coversCity && email && underCap) {
-      candidates.push({ row: i + 2, email: email, phone: phone, leadsCount: leadsCount, leadCap: leadCap, smsConsent: smsConsent });
+      candidates.push({ row: i + 2, email: email, phone: phone, company: String(row[3]).trim(), leadsCount: leadsCount, leadCap: leadCap, smsConsent: smsConsent });
     }
   });
 
@@ -734,7 +1079,34 @@ function onOpen() {
     .createMenu('HVAC Admin')
     .addItem('Pause Leads for Selected Row', 'pauseSelectedContractor')
     .addItem('Resume Leads for Selected Row', 'activateSelectedContractor')
+    .addItem('Rescore All Unscored Leads', 'rescoreUnscoredLeads')
     .addToUi();
+}
+
+// Scores any Get Quotes row whose Lead Quality cell is still blank
+// (i.e. rows written before the scoring upgrade). Never overwrites an
+// existing verdict and never re-routes anything.
+function rescoreUnscoredLeads() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Get Quotes');
+  if (!sheet || sheet.getLastRow() < 2) return;
+
+  var keywords = getKeywords(ss);
+  var lastCol = Math.max(sheet.getLastColumn(), 18);
+  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+  var scored = 0;
+
+  rows.forEach(function(r, i) {
+    if (r[14]) return;   // already has a verdict
+    var verdict = scoreLead({
+      phone: r[3], service: r[7], urgency: r[8], notes: r[11]
+    }, keywords);
+    sheet.getRange(i + 2, 15, 1, 3)
+         .setValues([[verdict.quality, verdict.score, formatMatchedKeywords(verdict)]]);
+    scored++;
+  });
+
+  Logger.log('Rescored ' + scored + ' lead(s).');
 }
 
 function pauseSelectedContractor() {
@@ -804,14 +1176,18 @@ function migrateGetQuotesSheet() {
   var sheet = ss.getSheetByName('Get Quotes');
   if (!sheet || sheet.getLastRow() === 0) return;
 
-  if (sheet.getLastColumn() >= 14) {
-    Logger.log('Get Quotes sheet already has 14 columns — nothing to migrate.');
-    return;
+  var headerNames = {
+    13: 'Follow-up Sent', 14: 'SMS Consent',
+    15: 'Lead Quality', 16: 'Quality Score', 17: 'Matched Keywords', 18: 'Routed To'
+  };
+  for (var c in headerNames) {
+    var cell = sheet.getRange(1, parseInt(c, 10));
+    if (!cell.getValue()) cell.setValue(headerNames[c]);
   }
 
-  if (!sheet.getRange(1, 13).getValue()) sheet.getRange(1, 13).setValue('Follow-up Sent');
-  sheet.getRange(1, 14).setValue('SMS Consent');
-  Logger.log('Migrated Get Quotes sheet to 14 columns (added SMS Consent).');
+  ensureKeywordsSheet(ss);
+  Logger.log('Migrated Get Quotes sheet to 18 columns and created the Keywords tab. ' +
+             'Run "Rescore All Unscored Leads" from the HVAC Admin menu to score existing rows.');
 }
 
 // ── Twilio SMS ─────────────────────────────────────────────
@@ -862,14 +1238,32 @@ function testHomeowner() {
     phone: '2105551234', email: 'test@example.com',
     zip: '78201', city: 'San Antonio',
     service: 'AC Repair', urgency: 'Today',
-    source: 'Test', campaign: '', notes: 'Test lead',
+    source: 'Test', campaign: '', notes: 'AC not cooling, need someone today',
     smsConsent: 'Yes'
   };
-  writeHomeowner(ss, data);
-  sendEmailAlert('Homeowner', data);
+  var verdict = scoreLead(data, getKeywords(ss));
+  writeHomeowner(ss, data, verdict);
+  sendEmailAlert('Homeowner', data, verdict);
   notifyHomeownerInstantSMS(data);
-  forwardLeadToContractor(data);
-  Logger.log('testHomeowner complete.');
+  if (verdict.quality !== 'Bad') forwardLeadToContractor(data);
+  Logger.log('testHomeowner complete. Verdict: ' + verdict.quality + ' (' + verdict.score + ')');
+}
+
+// Runs a few sample leads through the scorer without writing anything.
+function testLeadScoring() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var keywords = getKeywords(ss);
+  var samples = [
+    { label: 'GOOD: urgent repair',   phone: '2105551234', service: 'AC Repair',  urgency: 'Today',      notes: 'AC not cooling, blowing warm air' },
+    { label: 'GOOD: replacement',     phone: '2105551234', service: 'New System', urgency: 'This Week',  notes: 'Need a quote to replace my old unit' },
+    { label: 'BAD: job seeker',       phone: '2105551234', service: 'Other',      urgency: 'Just Planning', notes: 'I am hiring? no - looking for work, here is my resume' },
+    { label: 'BAD: spam with link',   phone: '',           service: 'Other',      urgency: '',           notes: 'Grow your business!! visit www.example-seo.com' },
+    { label: 'REVIEW: vague, no keywords', phone: '2105551234', service: 'Other', urgency: 'Just Planning', notes: 'Have a question' }
+  ];
+  samples.forEach(function(s) {
+    var v = scoreLead(s, keywords);
+    Logger.log(s.label + ' -> ' + v.quality + ' (score ' + v.score + ') [' + formatMatchedKeywords(v) + ']');
+  });
 }
 
 function testLeadRouting() {
