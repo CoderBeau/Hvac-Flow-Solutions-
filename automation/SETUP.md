@@ -3,11 +3,17 @@
 ## How It Works
 
 **Homeowner submits "Get Quotes":**
-- Row added to the **Get Quotes** tab
-- You get an admin email
+- The lead is **scored against your Good/Bad keyword lists** (the "Keywords" tab) and stamped **Good**, **Needs Review**, or **Bad**
+- Row added to the **Get Quotes** tab with the verdict, score, and which keywords matched
+- You get an admin email with the verdict in the subject line (e.g. `[GOOD LEAD]`)
 - Homeowner gets an instant SMS confirmation (if Twilio is configured)
-- The lead is auto-routed by email + SMS to the contractor in their city with the fewest leads sent so far (round-robin), skipping anyone who has hit their package's lead cap
-- ~24 hours later, if no follow-up has been logged yet, the homeowner gets a check-in SMS asking if a contractor reached out
+- **Good and Review leads** are auto-routed by email + SMS to the contractor in their city with the fewest leads sent so far (round-robin), skipping anyone who has hit their package's lead cap. The sheet records who each lead went to.
+- **Bad leads are saved but never routed** — job seekers, spam, and solicitors don't burn a contractor's lead cap. Overturn any verdict from the dashboard; marking a Bad lead Good routes it on the spot.
+- ~24 hours later, if no follow-up has been logged yet, the homeowner gets a check-in SMS asking if a contractor reached out (skipped for Bad leads)
+
+**Lead Dashboard (`dashboard.html`):**
+- Live view of every lead (filter Good / Review / Bad, search, reclassify), every contractor (status, leads used vs cap, trial dates, one-click pause/resume), and both keyword lists (add/remove without touching the sheet)
+- Lives at `boosthvacleads.com/dashboard.html` — it is locked behind the `DASHBOARD_KEY` you set below and is excluded from search engines
 
 **Contractor signs up (paid package):**
 - Row added to the **Contractors** tab
@@ -55,7 +61,7 @@ SMS is fully optional. If Twilio isn't configured, the script silently skips sen
 
 1. Open your Google Sheet > **Extensions > Apps Script**
 2. Delete existing code, paste the full contents of `contractor-automation.gs`
-3. Click the gear icon > **Script Properties**, add all 4:
+3. Click the gear icon > **Script Properties**, add all 5:
 
 | Property | Value |
 |---|---|
@@ -63,12 +69,15 @@ SMS is fully optional. If Twilio isn't configured, the script silently skips sen
 | `TWILIO_TOKEN` | Your Twilio Auth Token |
 | `TWILIO_FROM` | Your Twilio number, e.g. `+12105551234` |
 | `ADMIN_PHONE` | Your cell, e.g. `+12105559999` |
+| `DASHBOARD_KEY` | A long random password for the dashboard (30+ characters — treat it like a password). The dashboard API refuses every request until this is set. |
 
 4. Click **Deploy > New Deployment**
    - Type: **Web App** | Execute as: **Me** | Access: **Anyone**
 5. Point your forms (`contractor-form.html`, `get-quotes.html`, `contractor-trial.html`) at the deployed Web App URL if they aren't already.
 
 ---
+
+> Re-deploy any time you change the script or its properties — **Deploy > Manage deployments > Edit > New version**.
 
 ## Step 3 — Install Triggers (run once)
 
@@ -80,25 +89,45 @@ You only need to do this once. If you ever re-run it, it safely replaces the old
 
 ---
 
-## Step 4 — Migrating an Existing Sheet (only if upgrading)
+## Step 4 — The Lead Dashboard
+
+1. Set the `DASHBOARD_KEY` Script Property (Step 2) and re-deploy the web app
+2. Open `boosthvacleads.com/dashboard.html`
+3. Paste your web app `/exec` URL (prefilled) and your `DASHBOARD_KEY`, click **Connect**
+
+Both values are stored only in that browser. Anyone without the key gets nothing — every dashboard request is rejected server-side.
+
+**What you can do from it:**
+- **Leads tab** — every lead with its Good / Needs Review / Bad verdict, score, and the exact keywords that fired. Filter, search, and reclassify: marking a Bad lead **Good** routes it to a contractor immediately; marking a lead **Bad** just records the verdict (it never un-sends a routed lead).
+- **Contractors tab** — status, package, leads used vs cap with a progress bar, trial end dates, renewal dates. Pause / Resume / Reactivate any contractor with one click (same effect as the HVAC Admin sheet menu).
+- **Keywords tab** — add or remove Good/Bad keywords; changes write straight to the sheet's **Keywords** tab and apply to the very next lead.
+
+**How scoring works:** every lead starts at 0. Good keyword hit `+10`, bad keyword hit `-15`, urgency today/emergency `+15` (this week `+5`), valid phone `+5` (missing/fake phone `-15`), link in the notes `-25`. Score ≥ 10 → **Good**, score < 0 → **Bad**, in between → **Needs Review**. Matching is whole-word and case-insensitive. Thresholds live at the top of `contractor-automation.gs` (`GOOD_THRESHOLD` / `BAD_THRESHOLD`).
+
+---
+
+## Step 5 — Migrating an Existing Sheet (only if upgrading)
 
 If your **Contractors** or **Get Quotes** tabs already have data from an older version of this script, run these once from the Apps Script editor to add the new columns without losing existing rows:
 
 - `migrateContractorsSheet` — adds `Lead Cap`, `Trial End Date`, `Client ID` columns, and backfills `Lead Cap` for existing contractors based on their package
-- `migrateGetQuotesSheet` — adds the `Follow-up Sent` column
+- `migrateGetQuotesSheet` — adds the `Follow-up Sent`, `SMS Consent`, `Lead Quality`, `Quality Score`, `Matched Keywords`, and `Routed To` columns, and creates the **Keywords** tab seeded with the default lists
+
+Then open the sheet and run **HVAC Admin > Rescore All Unscored Leads** to score your existing rows (it never overwrites a verdict and never re-routes anything).
 
 Skip this step entirely on a brand-new sheet — `ensureContractorsHeaders` and `writeHomeowner` create the right columns automatically.
 
 ---
 
-## Step 5 — Test Everything
+## Step 6 — Test Everything
 
 Run these functions from the Apps Script editor (Logger output will confirm what happened):
 
 | Function | What it tests |
 |---|---|
 | `testSMS` | Sends a test text to `ADMIN_PHONE` — confirms Twilio is wired up correctly |
-| `testHomeowner` | Simulates a homeowner lead — checks Get Quotes row, email, SMS, and routing |
+| `testHomeowner` | Simulates a homeowner lead — checks scoring, Get Quotes row, email, SMS, and routing |
+| `testLeadScoring` | Runs 5 sample leads through the keyword scorer and logs each verdict (writes nothing) |
 | `testLeadRouting` | Shows which contractor would receive the next lead |
 | `testTrial` | Simulates a trial signup — checks Trials row, Contractors row, email, and SMS |
 
@@ -123,8 +152,9 @@ To change a cap, edit `PACKAGE_LEAD_CAPS` near the top of `contractor-automation
 
 | Tab | Contents |
 |---|---|
-| Get Quotes | Every homeowner lead submitted via the site |
+| Get Quotes | Every homeowner lead submitted via the site, with its quality verdict, score, matched keywords, and who it was routed to |
 | Contractors | Every paid contractor + every trial contractor — this is the source of truth for lead routing, caps, and status |
 | Trials | Legal/signature record for trial signups (Client ID, dates, e-signature link) |
+| Keywords | Good/Bad keyword lists used to score every incoming lead — edit here or from the dashboard |
 
 > After updating `contractor-automation.gs` in the Apps Script editor, you must **re-deploy** (Deploy → Manage deployments → Edit → New version) for changes to go live.
