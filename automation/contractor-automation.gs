@@ -7,7 +7,8 @@
 //   • Get Quotes (homeowner) leads  -> "Get Quotes" tab + email + instant SMS + 24h follow-up SMS
 //   • Contractor signups            -> "Contractors" tab + email + PayPal link + welcome SMS
 //   • Contractor trial signups      -> "Trials" tab + "Contractors" tab (Trial row) + email + SMS
-//   • Lead routing                  -> Round-robin to San Antonio contractors, by email + SMS
+//   • Lead routing                  -> Round-robin by city, email + SMS — covers web form AND Vapi calls
+//   • Vapi AI calls                 -> end-of-call-report webhook → "AI Calls" tab + contractor alert
 //   • Lead caps                     -> Hard stop once a one-time pack hits its lead limit
 //   • Monthly memberships           -> Recurring tiers whose lead quota resets each billing cycle
 //   • Trial expiration              -> Auto-pauses leads 14 days after trial start
@@ -67,6 +68,8 @@ function doPost(e) {
       const result = appendTrialRow(ss, data);
       emailTrialSignup(data, result.clientId, result.startDate, result.endDate);
       notifyTrialSignupSMS(data, result.clientId, result.startDate, result.endDate);
+    } else if (data.message && data.message.type === 'end-of-call-report') {
+      handleVapiCall(ss, data.message);
     }
 
     return ContentService
@@ -892,4 +895,119 @@ function testTrial() {
   emailTrialSignup(data, result.clientId, result.startDate, result.endDate);
   notifyTrialSignupSMS(data, result.clientId, result.startDate, result.endDate);
   Logger.log('testTrial complete: ' + result.clientId);
+}
+
+// ── Vapi AI Call Handler ──────────────────────────────────
+// Receives end-of-call-report webhooks from Vapi, logs the call to the
+// "AI Calls" sheet, and routes the lead to the right contractor by city.
+
+function handleVapiCall(ss, msg) {
+  var call       = msg.call || {};
+  var structured = (call.analysis && call.analysis.structuredData) || {};
+
+  var callerName    = structured.callerName    || 'Unknown';
+  var city          = structured.city          || '';
+  var problem       = structured.problem       || '';
+  var urgency       = structured.urgency       || '';
+  var callbackPhone = structured.callbackPhone || (call.customer && call.customer.number) || '';
+  var recordingUrl  = call.recordingUrl        || '';
+  var transcript    = call.transcript          || '';
+
+  // Log to AI Calls sheet
+  var sheet = ss.getSheetByName('AI Calls') || ss.insertSheet('AI Calls');
+  if (sheet.getLastRow() === 0) {
+    var hdr = sheet.getRange(1, 1, 1, 9);
+    sheet.appendRow(['Timestamp','Caller Name','City','Problem','Urgency',
+                     'Callback Phone','Recording URL','Transcript','Contractor Notified']);
+    hdr.setBackground('#0B1E3B');
+    hdr.setFontColor('#FFFFFF');
+    hdr.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+
+  // Route to contractor in the caller's city
+  var cSheet     = ss.getSheetByName('Contractors');
+  var contractor = pickContractorByCity(cSheet, city);
+  var notified   = '';
+
+  if (contractor) {
+    var smsBody =
+      'AI CALL LEAD\n' +
+      'Name: '    + callerName    + '\n' +
+      'City: '    + city          + '\n' +
+      'Problem: ' + problem       + '\n' +
+      'Urgency: ' + urgency       + '\n' +
+      'Call: '    + callbackPhone + '\n' +
+      (recordingUrl ? 'Recording: ' + recordingUrl : '');
+
+    if (contractor.phone) sendSMS(contractor.phone, smsBody);
+
+    MailApp.sendEmail(
+      contractor.email,
+      'AI Call Lead – ' + (problem || 'HVAC') + ' in ' + (city || 'TX'),
+      'You have a new lead from the HVAC Flow Solutions AI voice agent!\n\n' +
+      'Name: '      + callerName    + '\n' +
+      'City: '      + city          + '\n' +
+      'Problem: '   + problem       + '\n' +
+      'Urgency: '   + urgency       + '\n' +
+      'Call them: ' + callbackPhone + '\n' +
+      (recordingUrl ? '\nListen to the full call:\n' + recordingUrl : '') + '\n\n' +
+      '- HVAC Flow Solutions'
+    );
+
+    notified = contractor.email;
+    incrementLeadCount(cSheet, contractor.row);
+    enforceLeadCap(cSheet, contractor.row, contractor.leadCap);
+  }
+
+  sheet.appendRow([
+    new Date().toLocaleString(),
+    callerName, city, problem, urgency,
+    callbackPhone, recordingUrl, transcript, notified
+  ]);
+
+  // Admin alert
+  sendSMS(getProperty('ADMIN_PHONE'),
+    'AI CALL: ' + callerName + ' in ' + (city || '?') + ' – ' + (problem || 'HVAC issue') +
+    ' (' + (urgency || '?') + ')' +
+    (notified ? ' → routed to ' + notified : ' → NO contractor matched')
+  );
+}
+
+// City-aware contractor picker — same round-robin logic as pickContractor
+// but matches any city in the contractor's service areas instead of ACTIVE_CITY.
+function pickContractorByCity(sheet, city) {
+  if (!sheet || !city || sheet.getLastRow() < 2) return null;
+
+  var cityLower = city.toLowerCase();
+  var lastCol   = Math.max(sheet.getLastColumn(), 15);
+  var rows      = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+  var candidates = [];
+
+  rows.forEach(function(row, i) {
+    var serviceAreas = String(row[8]).toLowerCase();
+    var status       = String(row[10]).trim();
+    var leadsCount   = parseInt(row[11], 10) || 0;
+    var leadCapRaw   = row[12];
+    var leadCap      = (leadCapRaw === '' || leadCapRaw === null || isNaN(parseInt(leadCapRaw, 10)))
+      ? null : parseInt(leadCapRaw, 10);
+
+    var isActive   = (status === 'Active' || status === '');
+    var coversCity = serviceAreas.indexOf(cityLower) !== -1;
+    var underCap   = (leadCap === null || leadsCount < leadCap);
+
+    if (isActive && coversCity && underCap) {
+      candidates.push({
+        row:        i + 2,
+        email:      String(row[5]).trim(),
+        phone:      String(row[4]).trim(),
+        leadsCount: leadsCount,
+        leadCap:    leadCap
+      });
+    }
+  });
+
+  if (!candidates.length) return null;
+  candidates.sort(function(a, b) { return a.leadsCount - b.leadsCount; });
+  return candidates[0];
 }
