@@ -458,14 +458,14 @@ function ensureContractorsHeaders(sheet) {
   sheet.appendRow([
     'Timestamp', 'First Name', 'Last Name', 'Company', 'Phone',
     'Email', 'ZIP', 'Years in Business', 'Service Areas', 'Package Selected',
-    'Status', 'Leads Sent', 'Lead Cap', 'Trial End Date', 'Client ID', 'Renews On', 'SMS Consent'
+    'Status', 'Leads Sent', 'Lead Cap', 'Trial End Date', 'Client ID', 'Renews On', 'SMS Consent', 'Subscription ID'
   ]);
-  const headerRange = sheet.getRange(1, 1, 1, 17);
+  const headerRange = sheet.getRange(1, 1, 1, 18);
   headerRange.setBackground('#0B1E3B');
   headerRange.setFontColor('#FFFFFF');
   headerRange.setFontWeight('bold');
   sheet.setFrozenRows(1);
-  [160, 100, 100, 200, 130, 200, 70, 130, 220, 140, 100, 90, 80, 120, 110, 120, 110]
+  [160, 100, 100, 200, 130, 200, 70, 130, 220, 140, 100, 90, 80, 120, 110, 120, 110, 200]
     .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
 }
 
@@ -498,8 +498,9 @@ function writeContractor(ss, data) {
     packageToLeadCap(data.package),
     '',  // Trial End Date — not a trial signup
     '',  // Client ID — not a trial signup
-    renewsOn,                 // Renews On — membership billing anniversary (blank for one-time packs)
-    data.smsConsent || 'No'   // SMS Consent — 'Yes' only if they opted in
+    renewsOn,                    // Renews On — membership billing anniversary (blank for one-time packs)
+    data.smsConsent || 'No',     // SMS Consent — 'Yes' only if they opted in
+    data.subscriptionId || ''    // Subscription ID — PayPal recurring subscription (memberships only)
   ]);
 }
 
@@ -896,7 +897,8 @@ function addTrialToContractors(ss, d, clientId, endDate) {
     endDate,
     clientId,
     '',                                // Renews On — trials are not monthly memberships
-    smsFromDelivery(d.leaddelivery)    // SMS Consent — from their Text/Email/Both choice
+    smsFromDelivery(d.leaddelivery),   // SMS Consent — from their Text/Email/Both choice
+    ''                                 // Subscription ID — trials have no PayPal subscription
   ]);
 }
 
@@ -1150,7 +1152,7 @@ function migrateContractorsSheet() {
   // so existing headers are never clobbered).
   var headerNames = {
     11: 'Status', 12: 'Leads Sent', 13: 'Lead Cap',
-    14: 'Trial End Date', 15: 'Client ID', 16: 'Renews On', 17: 'SMS Consent'
+    14: 'Trial End Date', 15: 'Client ID', 16: 'Renews On', 17: 'SMS Consent', 18: 'Subscription ID'
   };
   for (var c in headerNames) {
     var cell = sheet.getRange(1, parseInt(c, 10));
@@ -1159,7 +1161,7 @@ function migrateContractorsSheet() {
 
   // Backfill Lead Cap, Renews On (memberships), and SMS Consent from existing data.
   if (sheet.getLastRow() > 1) {
-    var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 17).getValues();
+    var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 18).getValues();
     for (var i = 0; i < rows.length; i++) {
       var pkg = rows[i][9] || '';
       if (!rows[i][12]) sheet.getRange(i + 2, 13).setValue(packageToLeadCap(pkg));      // Lead Cap
@@ -1168,7 +1170,7 @@ function migrateContractorsSheet() {
     }
   }
 
-  Logger.log('Contractors sheet migrated to 17 columns and backfilled Lead Cap / Renews On / SMS Consent.');
+  Logger.log('Contractors sheet migrated to 18 columns and backfilled Lead Cap / Renews On / SMS Consent.');
 }
 
 function migrateGetQuotesSheet() {
