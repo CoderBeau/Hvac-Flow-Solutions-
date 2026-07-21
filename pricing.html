@@ -11,8 +11,9 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" sizes="192x192" href="/favicon.svg">
-<title>Contractor Pricing | HVAC Flow Solutions</title>
+<title>Contractor Membership | HVAC Flow Solutions</title>
 <meta name="description" content="Try HVAC Flow Solutions with a trial, buy exclusive lead packs, or lock in a monthly membership for steady Texas HVAC leads. Month-to-month, cancel anytime.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -148,9 +149,36 @@
   @media(max-width:960px){.packs{grid-template-columns:repeat(3,1fr);}}
   @media(max-width:900px){.lgrid,.tgrid{grid-template-columns:1fr;}.tier.pop{order:-1;}.grid2{grid-template-columns:1fr;}}
   @media(max-width:600px){.packs{grid-template-columns:1fr 1fr;}.areas{grid-template-columns:1fr 1fr;}}
+
+  /* Access gate (invite-only) */
+  .gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .gate-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:48px 40px;max-width:440px;width:100%;text-align:center;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+  .gate-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--orange),transparent);}
+  .gate-logo{display:flex;align-items:baseline;gap:.3rem;justify-content:center;margin-bottom:1.4rem;}
+  .gate-logo .b1{font-family:var(--dsp);font-weight:900;font-size:1.1rem;color:var(--navy);letter-spacing:-.02em;}
+  .gate-logo .b2{font-family:var(--dsp);font-weight:900;font-size:1.1rem;color:var(--orange);letter-spacing:-.02em;}
+  .gate-ic{width:60px;height:60px;border-radius:50%;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.28);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:26px;}
+  .gate-card h1{font-family:var(--dsp);font-weight:800;font-size:1.5rem;color:var(--navy);margin:0 0 10px;}
+  .gate-card p{color:var(--muted);font-size:.9rem;margin:0 0 22px;}
+  .gate-contact{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:.85rem;color:var(--muted);}
+  .gate-contact a{color:var(--orange);font-weight:600;text-decoration:none;}
 </style>
 </head>
 <body>
+
+<!-- Access gate (shown unless a valid invite token is present) -->
+<div class="gate" id="member-gate">
+  <div class="gate-card">
+    <div class="gate-logo"><span class="b1">HVAC FLOW</span><span class="b2">SOLUTIONS</span></div>
+    <div class="gate-ic">🔒</div>
+    <h1>Private Membership Page</h1>
+    <p>Monthly memberships are available by invitation only. If we sent you a private link, please open that exact link to continue.</p>
+    <div class="gate-contact">Interested in becoming a member?<br>Reach out at <a href="mailto:hvacflowsolutions@gmail.com">hvacflowsolutions@gmail.com</a></div>
+  </div>
+</div>
+
+<!-- Membership content (revealed only with a valid invite token) -->
+<div id="member-main" style="display:none;">
 
 <div class="bar">
   <div class="wrap">
@@ -336,10 +364,25 @@
   <a href="mailto:hvacflowsolutions@gmail.com">Contact</a>
 </footer>
 
+</div><!-- end #member-main -->
+
 <!-- PayPal SDK (subscriptions) -->
 <script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&vault=true&intent=subscription"></script>
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycby0Vzzb86wSpHaIkc8Nb-jVX8jJZPdR0MlNcrVqJYT75SM6B7VYX_2IUeu1paCm5UM/exec";
+
+// ── Invite-only access gate ──
+// Share this URL with contractors you contact:
+// https://boosthvacleads.com/pricing.html?access=hfs-member-2026
+const VALID_TOKEN = 'hfs-member-2026';
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const hashToken = (window.location.hash || '').replace('#','').replace('access=','');
+  if (params.get('access') === VALID_TOKEN || hashToken === VALID_TOKEN) {
+    document.getElementById('member-gate').style.display = 'none';
+    document.getElementById('member-main').style.display = 'block';
+  }
+})();
 
 // ── PayPal subscription Plan IDs — VERIFY each matches its tier + price in your PayPal dashboard ──
 const PLAN_IDS = {
