@@ -229,22 +229,6 @@
   .terms-box ul { padding-left: 16px; margin-bottom: 8px; }
   .terms-box ul li { margin-bottom: 4px; }
 
-  .signature-area { background: var(--surface); border: 1.5px solid var(--border2); border-radius: 12px; padding: 18px; margin-bottom: 22px; }
-  .sig-label { font-family: var(--dsp); font-weight: 700; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
-  canvas#sigCanvas {
-    width: 100%; height: 130px; background: var(--surface2);
-    border: 1.5px dashed var(--border2); border-radius: 8px; display: block;
-    cursor: crosshair; touch-action: none;
-  }
-  .sig-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
-  .sig-hint { font-size: 12px; color: var(--muted2); font-style: italic; }
-  .sig-clear {
-    background: none; border: 1.5px solid var(--border2); color: var(--muted);
-    font-family: var(--dsp); font-weight: 700; font-size: 10px; letter-spacing: 0.06em;
-    padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
-  }
-  .sig-clear:hover { color: var(--navy); border-color: var(--muted2); }
-
   .submit-row { display: flex; align-items: center; gap: 16px; margin-top: 36px; flex-wrap: wrap; }
   .btn-submit {
     background: var(--red); color: #fff; border: none; border-radius: 11px;
@@ -331,7 +315,6 @@
     <div class="step-dot active" id="dot1"></div>
     <div class="step-dot" id="dot2"></div>
     <div class="step-dot" id="dot3"></div>
-    <div class="step-dot" id="dot4"></div>
   </div>
 
   <form id="trialForm" novalidate>
@@ -468,23 +451,10 @@
       <span class="error-msg" id="agree-error" style="display:none; margin-bottom:16px;">Please check all boxes above to continue</span>
     </div>
 
-    <div class="section-divider"><span>Your Signature</span></div>
-
-    <div class="form-section">
-      <div class="form-section-title">Sign Below</div>
-      <div class="form-section-sub">Use your mouse or finger on mobile to sign</div>
-      <div class="signature-area">
-        <div class="sig-label">Contractor Signature <span style="color:var(--orange)">*</span></div>
-        <canvas id="sigCanvas"></canvas>
-        <div class="sig-actions">
-          <span class="sig-hint">Draw your signature above</span>
-          <button type="button" class="sig-clear" onclick="clearSig()">Clear</button>
-        </div>
-      </div>
-      <span class="error-msg" id="sig-error" style="display:none; margin-bottom:16px;">Please provide your signature</span>
+    <div class="form-section" style="margin-top:12px;">
       <div class="submit-row">
         <button type="submit" class="btn-submit" id="submitBtn">SUBMIT AGREEMENT</button>
-        <p class="submit-note">By submitting, you agree to the terms above.<br>A PayPal invoice for $25 will be sent to your email.</p>
+        <p class="submit-note">By checking the boxes above and submitting, you agree to the Trial Terms. This is your electronic signature. A PayPal invoice for $25 will be sent to your email.</p>
       </div>
     </div>
 
@@ -530,118 +500,78 @@
     document.getElementById('main-content').style.display = 'block';
   }
 
-  // ── Signature Canvas ──
-  const canvas = document.getElementById('sigCanvas');
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-    let hasSig = false;
+  // ── Form logic (checkbox e-signature; no drawn signature) ──
+  (function() {
+    var form = document.getElementById('trialForm');
+    if (!form) return;
 
-    function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-      ctx.strokeStyle = '#0B1E3B';
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-    }
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    function getPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const src = e.touches ? e.touches[0] : e;
-      return { x: src.clientX - rect.left, y: src.clientY - rect.top };
-    }
-
-    canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; });
-    canvas.addEventListener('mouseup', () => drawing = false);
-    canvas.addEventListener('mouseleave', () => drawing = false);
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
-    canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; }, { passive: false });
-    canvas.addEventListener('touchend', () => drawing = false);
-
-    window.clearSig = function() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      hasSig = false;
-    };
-
-    // Step indicator
+    // Step indicator (3 steps: your info, service area, agreement)
     function updateSteps() {
-      const s1 = document.getElementById('bizname').value && document.getElementById('email').value;
-      const s2 = document.getElementById('cities').value;
-      const s3 = document.getElementById('agree1').checked && document.getElementById('agree2').checked && document.getElementById('agree3').checked;
-      const s4 = hasSig;
-      ['dot1','dot2','dot3','dot4'].forEach((id, i) => {
-        document.getElementById(id).classList.toggle('active', !![s1,s2,s3,s4][i]);
+      var s1 = document.getElementById('bizname').value && document.getElementById('email').value;
+      var s2 = document.getElementById('cities').value;
+      var s3 = document.getElementById('agree1').checked && document.getElementById('agree2').checked && document.getElementById('agree3').checked;
+      ['dot1','dot2','dot3'].forEach(function(id, i) {
+        document.getElementById(id).classList.toggle('active', !![s1,s2,s3][i]);
       });
     }
-
-    document.querySelectorAll('input, textarea, select').forEach(el => {
+    document.querySelectorAll('input, textarea, select').forEach(function(el) {
       el.addEventListener('input', updateSteps);
       el.addEventListener('change', updateSteps);
     });
-    canvas.addEventListener('mousemove', updateSteps);
-    canvas.addEventListener('touchmove', updateSteps);
 
     // Phone formatting
     document.getElementById('phone').addEventListener('input', function() {
-      let v = this.value.replace(/\D/g, '').substring(0, 10);
+      var v = this.value.replace(/\D/g, '').substring(0, 10);
       if (v.length >= 6) v = '(' + v.slice(0,3) + ') ' + v.slice(3,6) + '-' + v.slice(6);
       else if (v.length >= 3) v = '(' + v.slice(0,3) + ') ' + v.slice(3);
       this.value = v;
     });
 
     function validateField(id, condition) {
-      const wrapper = document.getElementById('f-' + id);
-      const el = document.getElementById(id);
+      var wrapper = document.getElementById('f-' + id);
+      var el = document.getElementById(id);
       if (!condition) { wrapper.classList.add('has-error'); el.classList.add('error'); return false; }
       wrapper.classList.remove('has-error'); el.classList.remove('error'); return true;
     }
 
-    document.getElementById('trialForm').addEventListener('submit', function(e) {
+    form.addEventListener('submit', function(e) {
       e.preventDefault();
-      let valid = true;
+      var valid = true;
+      // each validateField runs first so all error states show
+      valid = validateField('bizname',   document.getElementById('bizname').value.trim()) && valid;
+      valid = validateField('firstname', document.getElementById('firstname').value.trim()) && valid;
+      valid = validateField('lastname',  document.getElementById('lastname').value.trim()) && valid;
+      valid = validateField('phone',     document.getElementById('phone').value.trim().length >= 10) && valid;
+      valid = validateField('email',     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('email').value.trim())) && valid;
+      valid = validateField('cities',    document.getElementById('cities').value.trim()) && valid;
+      valid = validateField('leaddelivery', document.getElementById('leaddelivery').value) && valid;
 
-      valid &= validateField('bizname', document.getElementById('bizname').value.trim());
-      valid &= validateField('firstname', document.getElementById('firstname').value.trim());
-      valid &= validateField('lastname', document.getElementById('lastname').value.trim());
-      valid &= validateField('phone', document.getElementById('phone').value.trim().length >= 10);
-      valid &= validateField('email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('email').value.trim()));
-      valid &= validateField('cities', document.getElementById('cities').value.trim());
-      valid &= validateField('leaddelivery', document.getElementById('leaddelivery').value);
-
-      const checkedJobs = document.querySelectorAll('input[name="jobtype"]:checked');
-      const jobErr = document.getElementById('jobtype-error');
-      if (checkedJobs.length === 0) { jobErr.style.display = 'block'; valid = false; }
+      var jobErr = document.getElementById('jobtype-error');
+      if (document.querySelectorAll('input[name="jobtype"]:checked').length === 0) { jobErr.style.display = 'block'; valid = false; }
       else jobErr.style.display = 'none';
 
-      const agreeErr = document.getElementById('agree-error');
-      const allAgreed = document.getElementById('agree1').checked && document.getElementById('agree2').checked && document.getElementById('agree3').checked;
+      var agreeErr = document.getElementById('agree-error');
+      var allAgreed = document.getElementById('agree1').checked && document.getElementById('agree2').checked && document.getElementById('agree3').checked;
       if (!allAgreed) { agreeErr.style.display = 'block'; valid = false; }
       else agreeErr.style.display = 'none';
 
-      const sigErr = document.getElementById('sig-error');
-      if (!hasSig) { sigErr.style.display = 'block'; valid = false; }
-      else sigErr.style.display = 'none';
-
       if (!valid) {
-        document.querySelector('.has-error, #jobtype-error[style*="block"], #agree-error[style*="block"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        var target = document.querySelector('.has-error');
+        if (!target && jobErr.style.display === 'block') target = jobErr;
+        if (!target && agreeErr.style.display === 'block') target = agreeErr;
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 
-      const btn = document.getElementById('submitBtn');
+      var btn = document.getElementById('submitBtn');
       btn.textContent = 'SUBMITTING...';
       btn.classList.add('loading');
 
-      const jobTypes = [...document.querySelectorAll('input[name="jobtype"]:checked')]
-        .map(el => el.value).join(', ');
+      var jobTypes = Array.prototype.slice.call(document.querySelectorAll('input[name="jobtype"]:checked'))
+        .map(function(el) { return el.value; }).join(', ');
+      var fullName = document.getElementById('firstname').value.trim() + ' ' + document.getElementById('lastname').value.trim();
 
-      const payload = {
+      var payload = {
         type: 'Trial',
         bizname:      document.getElementById('bizname').value.trim(),
         firstName:    document.getElementById('firstname').value.trim(),
@@ -653,14 +583,15 @@
         jobTypes:     jobTypes,
         leadDelivery: document.getElementById('leaddelivery').value,
         notes:        document.getElementById('notes').value.trim(),
-        signed:       hasSig ? canvas.toDataURL('image/png') : '',
+        signature:    'Agreed to Trial Terms via checkbox e-signature by ' + fullName,
         submittedAt:  new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
       };
 
-      const showSuccess = () => {
+      var showSuccess = function() {
         document.getElementById('trialForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
-        document.querySelector('.step-indicator').style.display = 'none';
+        var si = document.querySelector('.step-indicator');
+        if (si) si.style.display = 'none';
         window.scrollTo({ top: 0, behavior: 'smooth' });
         renderPayPalButton();
       };
@@ -673,14 +604,14 @@
       }).then(showSuccess).catch(showSuccess);
     });
 
-    document.querySelectorAll('input, textarea, select').forEach(el => {
-      el.addEventListener('input', () => {
+    document.querySelectorAll('input, textarea, select').forEach(function(el) {
+      el.addEventListener('input', function() {
         el.classList.remove('error');
-        const wrapper = el.closest('.field');
+        var wrapper = el.closest('.field');
         if (wrapper) wrapper.classList.remove('has-error');
       });
     });
-  }
+  })();
 </script>
 <!-- PayPal SDK -->
 <script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>

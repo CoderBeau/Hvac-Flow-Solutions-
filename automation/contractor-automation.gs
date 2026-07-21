@@ -850,7 +850,11 @@ function appendTrialRow(ss, d) {
 
   var signatureUrl = '';
   if (d.signature) {
-    signatureUrl = saveSignatureToDrive(d.signature, clientId);
+    // Drawn signatures arrive as a data:image URL and are saved to Drive.
+    // The redesigned form sends a text checkbox e-signature — record it as-is.
+    signatureUrl = (String(d.signature).indexOf('data:image') === 0)
+      ? saveSignatureToDrive(d.signature, clientId)
+      : d.signature;
   }
 
   sheet.appendRow([
