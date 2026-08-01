@@ -1302,16 +1302,34 @@ function testTrial() {
 // "AI Calls" sheet, and routes the lead to the right contractor by city.
 
 function handleVapiCall(ss, msg) {
-  var call       = msg.call || {};
-  var structured = (call.analysis && call.analysis.structuredData) || {};
+  // Guard: running this straight from the editor passes no arguments.
+  if (!msg) {
+    Logger.log('handleVapiCall needs a Vapi payload — run testVapiCall() instead.');
+    return;
+  }
 
-  var callerName    = structured.callerName    || 'Unknown';
-  var city          = structured.city          || '';
-  var problem       = structured.problem       || '';
-  var urgency       = structured.urgency       || '';
-  var callbackPhone = structured.callbackPhone || (call.customer && call.customer.number) || '';
-  var recordingUrl  = call.recordingUrl        || '';
-  var transcript    = call.transcript          || '';
+  // Vapi has moved these fields between releases: analysis/artifact are
+  // siblings of `call` under `message` in current versions, but older
+  // payloads nested them under `call` or put them at the top level.
+  // Read every known location so this keeps working across versions.
+  var call       = msg.call     || {};
+  var artifact   = msg.artifact || call.artifact || {};
+  var analysis   = msg.analysis || call.analysis || {};
+  var structured = analysis.structuredData || msg.structuredData || {};
+
+  var callerName    = structured.callerName || 'Unknown';
+  var city          = structured.city       || '';
+  var problem       = structured.problem    || analysis.summary || msg.summary || '';
+  var urgency       = structured.urgency    || '';
+  var callbackPhone = structured.callbackPhone
+                   || (msg.customer  && msg.customer.number)
+                   || (call.customer && call.customer.number)
+                   || '';
+  var recordingUrl  = artifact.recordingUrl || msg.recordingUrl || call.recordingUrl || '';
+  var transcript    = artifact.transcript   || msg.transcript   || call.transcript   || '';
+
+  // Log the raw payload so any future schema change is visible in Executions.
+  Logger.log('Vapi payload: ' + JSON.stringify(msg).slice(0, 1500));
 
   // Log to AI Calls sheet
   var sheet = ss.getSheetByName('AI Calls') || ss.insertSheet('AI Calls');
@@ -1410,4 +1428,29 @@ function pickContractorByCity(sheet, city) {
   if (!candidates.length) return null;
   candidates.sort(function(a, b) { return a.leadsCount - b.leadsCount; });
   return candidates[0];
+}
+
+// Simulates a Vapi end-of-call-report so you can test the handler from the
+// editor without placing a real call. Safe to run — it writes one test row
+// to the AI Calls tab and routes it like a live lead.
+function testVapiCall() {
+  handleVapiCall(SpreadsheetApp.getActiveSpreadsheet(), {
+    type: 'end-of-call-report',
+    call: { id: 'test-call-001', customer: { number: '+12105551234' } },
+    artifact: {
+      recordingUrl: 'https://example.com/test-recording.mp3',
+      transcript: 'AI: Thanks for calling HVAC Flow Solutions...'
+    },
+    analysis: {
+      summary: 'Caller has an AC blowing warm air.',
+      structuredData: {
+        callerName: 'Test Caller',
+        city: 'San Antonio',
+        problem: 'AC blowing warm air',
+        urgency: 'today',
+        callbackPhone: '(210) 555-1234'
+      }
+    }
+  });
+  Logger.log('testVapiCall complete — check the AI Calls tab.');
 }
