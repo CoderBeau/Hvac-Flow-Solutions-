@@ -109,8 +109,8 @@
     return '<div style="border:1.5px solid #d9dee7;border-radius:11px;padding:1rem;text-align:center;font-size:.86rem;line-height:1.6;color:#4a5568;">' +
       '<b>Online checkout is being set up.</b><br>' +
       'Call <a href="' + SUPPORT_PHONE_HREF + '" style="color:#f97316;font-weight:700;text-decoration:none;">' + SUPPORT_PHONE + '</a> ' +
-      'and we\'ll take your ' + (amount ? amount + ' ' : '') + 'payment over the phone, ' +
-      'or email <a href="mailto:' + SUPPORT_EMAIL + '" style="color:#f97316;font-weight:700;text-decoration:none;">' + SUPPORT_EMAIL + '</a>.' +
+      'or email <a href="mailto:' + SUPPORT_EMAIL + '" style="color:#f97316;font-weight:700;text-decoration:none;">' + SUPPORT_EMAIL + '</a> ' +
+      'and we\'ll send you a secure ' + (amount ? amount + ' ' : '') + 'checkout link.' +
       '</div>';
   }
 
