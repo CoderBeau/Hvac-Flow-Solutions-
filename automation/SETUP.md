@@ -118,6 +118,28 @@ on the Contractors tab (or from the dashboard). Payments still go through either
 > verified. The random token in the URL is what protects the endpoint — keep it secret. The
 > handler can only ever mark a row Active; it never moves money.
 
+### 0e. Turn on PayPal as a payment option (optional, ~2 min)
+
+Stripe can show a **PayPal** button on the same checkout page as the card form, so contractors
+who prefer PayPal — or want to pay from a PayPal balance — get that choice, without adding any
+PayPal code back to the site.
+
+1. Stripe Dashboard > **Settings > Payments > Payment methods**
+2. Find **PayPal** and click **Turn on**
+3. For the three memberships, confirm **recurring payments** are enabled for PayPal. Stripe turns
+   this on automatically for most accounts, but PayPal's own regional rules mean it sometimes has
+   to be enabled by hand on this screen.
+
+This applies to your existing payment links — you do **not** need to recreate them. Open one link
+in a browser afterwards to confirm the PayPal button appears.
+
+Fees differ: PayPal runs about **3.49% + fixed fee** versus **2.9% + 30¢** for cards, so a $697
+membership costs roughly $4 more per month when someone pays with PayPal.
+
+Card remains the default and still needs no account. The site copy already reads
+"card, Apple Pay, or PayPal — no account needed to pay by card", so it is accurate either way:
+if you leave PayPal off, the button simply doesn't appear at checkout.
+
 ---
 
 ## Step 1 — Twilio (SMS only, 5 min)
