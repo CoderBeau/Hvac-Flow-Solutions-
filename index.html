@@ -85,6 +85,9 @@
     .slist { display:flex;flex-direction:column;gap:0.35rem;margin-top:0.85rem;text-align:left; }
     .slist li { display:flex;align-items:center;gap:0.45rem;font-size:0.76rem;color:var(--navy);font-weight:500;list-style:none; }
     .slist li::before { content:'✓';width:16px;height:16px;background:rgba(11,30,59,0.08);border-radius:50%;font-size:0.52rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .pay-link { display:block;background:linear-gradient(135deg,var(--orange,#f97316),#C8102E);color:#fff;font-family:'Montserrat',sans-serif;font-weight:800;font-size:1rem;text-decoration:none;border-radius:12px;padding:0.95rem 1rem;box-shadow:0 12px 26px -12px rgba(200,16,46,0.6);transition:filter .15s; }
+    .pay-link:hover { filter:brightness(1.06); }
+    .pay-hint { color:#8494a8;font-size:0.72rem;margin-top:0.55rem; }
     .nxt { margin-top:0.85rem;background:#f4f6fa;border-radius:9px;padding:0.8rem 0.9rem;text-align:left; }
     .nxt h4 { font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);margin-bottom:0.5rem; }
     .nxt-i { display:flex;gap:0.5rem;font-size:0.76rem;color:#1a1a2e;margin-bottom:0.4rem;align-items:flex-start; }
@@ -680,7 +683,7 @@
     </div>
   </section>
 
-  <!-- Contractor form (working, writes to Google Sheet + PayPal) -->
+  <!-- Contractor form (working, writes to Google Sheet + Stripe Checkout) -->
   <section id="contractor-form" class="py-10" style="background:#f6f8fb;">
     <div class="max-w-2xl mx-auto px-4">
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -757,14 +760,14 @@
             <h3>Application Received!</h3>
             <p>Complete your payment below to activate your account and start receiving leads.</p>
 
-            <div id="ct-paypal-wrap" style="margin-top:1.25rem;text-align:center;">
-              <div id="ct-paypal-btn"></div>
+            <div id="ct-pay-wrap" style="margin-top:1.25rem;text-align:center;">
+              <div id="ct-pay-btn"></div>
             </div>
 
             <div class="nxt" style="margin-top:1rem;">
               <h4>What Happens Next</h4>
               <div class="nxt-i"><span class="nxt-n">1</span><span>Complete payment above</span></div>
-              <div class="nxt-i"><span class="nxt-n">2</span><span>Your account is activated immediately</span></div>
+              <div class="nxt-i"><span class="nxt-n">2</span><span>Your account activates as soon as payment clears</span></div>
               <div class="nxt-i"><span class="nxt-n">3</span><span>Leads begin arriving within 3-7 business days</span></div>
             </div>
           </div>
@@ -852,15 +855,20 @@ function submitContractor() {
   const btn=document.getElementById('ct-btn'), bt=document.getElementById('ct-bt'),
         ba=document.getElementById('ct-ba'), sp=document.getElementById('ct-sp');
   btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
+  // Application is recorded as Pending Payment — the Apps Script only routes
+  // leads to Active rows, so the Stripe webhook (or we, by hand) activates them
+  // once the payment actually clears.
+  const paymentRef = HFS_PAY.makeReference(company, email);
   fetch(SHEET_URL, {
     method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ type:'Contractor', firstName, lastName, company, phone, email, zip, years,
       serviceAreas: areas, package: pkg, smsConsent,
+      status: 'Pending Payment', paymentRef,
       submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}) })
   }).then(() => {
     document.getElementById('ct-form').style.display = 'none';
     document.getElementById('ct-success').style.display = 'block';
-    loadPayPalButton(pkg);
+    loadPayButton(pkg, { email, reference: paymentRef });
     if (typeof gtag !== 'undefined') { gtag('event', 'form_submit', { event_category: 'Contractor Application' }); }
   }).catch(() => {
     err.textContent='Something went wrong. Please try again.'; err.style.display='block';
@@ -902,32 +910,23 @@ function switchTab(tab) {
 
 window.onload = () => switchTab(0);
 </script>
-<!-- PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
-
+<script src="/payment-links.js"></script>
 <script>
-const PAYPAL_BUTTONS = {
-  'Tester':      '9VHMU8UYMVXXC',
-  'Starter':     'Y55WAFWV7DTHW',
-  'Growth':      'W6TP29DWKKVNN',
-  'Pro Partner': 'JLB9BGEGV6VKJ',
-  'Elite':       'X57YNYLKM8W7Y'
-};
+// Renders the Stripe Checkout link for the package the contractor picked.
+// Checkout URLs are configured once in /payment-links.js.
+function loadPayButton(pkg, opts) {
+  var wrap = document.getElementById('ct-pay-btn');
+  var link = HFS_PAY.resolve(pkg);
+  var url  = HFS_PAY.checkoutUrl(link, opts);
 
-function loadPayPalButton(pkg) {
-  var buttonId = null;
-  for (var name in PAYPAL_BUTTONS) {
-    if (pkg.indexOf(name) !== -1) {
-      buttonId = PAYPAL_BUTTONS[name];
-      break;
-    }
+  if (!url) {
+    wrap.innerHTML = HFS_PAY.unavailableHtml(link ? link.amount : '');
+    return;
   }
-  if (!buttonId) return;
 
-  document.getElementById('ct-paypal-btn').innerHTML = '';
-  paypal.HostedButtons({
-    hostedButtonId: buttonId
-  }).render('#ct-paypal-btn');
+  wrap.innerHTML =
+    '<a href="' + url + '" class="pay-link">Pay ' + link.amount + ' securely →</a>' +
+    '<p class="pay-hint">🔒 Secure checkout by Stripe · debit or credit card · no account to create</p>';
 }
 </script>
 </body>

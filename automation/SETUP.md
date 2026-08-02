@@ -18,7 +18,9 @@
 **Contractor signs up (paid package):**
 - Row added to the **Contractors** tab
 - You get an admin email + SMS
-- Contractor gets a welcome email with a PayPal payment link, plus a welcome SMS
+- Contractor gets a welcome email with a Stripe payment link, plus a welcome SMS
+- The row starts as **Pending Payment** — no leads route until Stripe confirms payment
+- The `checkout.session.completed` webhook flips them to **Active** automatically
 - Once active, they're in the round-robin rotation up to their package's lead cap
 
 **Contractor signs up for a free trial:**
@@ -43,9 +45,78 @@
 
 | Service | Purpose | Cost |
 |---|---|---|
+| **Stripe** (stripe.com) | Card checkout for every package, membership, and the trial | 2.9% + 30¢ per charge |
 | **Twilio** (twilio.com) | SMS only — texts homeowners, contractors, and you | ~$1/mo + $0.0075/text |
 
 SMS is fully optional. If Twilio isn't configured, the script silently skips sending texts and everything else (email, sheets, routing, caps, trial expiry) still works.
+
+Stripe is **not** optional — until the payment links are filled in (Step 0), every checkout button on the site falls back to a "call us to pay" message with the office number.
+
+---
+
+## Step 0 — Stripe Payment Links (do this first, ~20 min)
+
+Checkout is Stripe Payment Links — hosted pages that take any debit or credit card.
+**Nobody has to create an account or log in to pay.**
+
+### 0a. Create the products
+
+Stripe Dashboard > **Product catalogue** > **Add product**. Create these nine:
+
+| Product | Price | Billing |
+|---|---|---|
+| Starter Membership | $397 | **Recurring — monthly** |
+| Growth Membership | $697 | **Recurring — monthly** |
+| Pro Membership | $997 | **Recurring — monthly** |
+| Tester Pack | $75 | One-off |
+| Starter Pack | $150 | One-off |
+| Growth Pack | $375 | One-off |
+| Pro Partner Pack | $700 | One-off |
+| Elite Pack | $1,300 | One-off |
+| 14-Day Trial | $25 | One-off |
+
+The three memberships **must** be recurring/monthly — that's what makes the monthly fee charge itself.
+
+### 0b. Create a payment link for each
+
+**Payment links** > **New** > pick the product > **Create link**.
+On each link, open **After payment** > **Confirmation page** > **Redirect to a page** and enter:
+
+```
+https://boosthvacleads.com/thanks.html
+```
+
+### 0c. Paste the links into the site
+
+Open **`/payment-links.js`** in the repo root — that is the only file with checkout URLs in it.
+Replace each `REPLACE_WITH_STRIPE_PAYMENT_LINK` with the matching `https://buy.stripe.com/...` URL.
+
+Then open **`automation/contractor-automation.gs`** and paste the *same* URLs into the
+`STRIPE_LINKS` block near the top, so the "complete your payment" email points at the same checkout.
+
+Any link left blank simply shows a "call (830) 538-0713 to pay" card instead — nothing breaks.
+
+### 0d. Turn on automatic activation (the webhook)
+
+Contractors are written to the sheet as **Pending Payment**, and leads are only routed to
+**Active** rows. This webhook flips them to Active the moment Stripe confirms payment.
+
+1. In Apps Script: **Project Settings > Script Properties** > add
+   `STRIPE_WEBHOOK_TOKEN` = a long random string you make up.
+2. In Stripe: **Developers > Webhooks > Add endpoint**. URL:
+
+   ```
+   https://script.google.com/macros/s/<YOUR_DEPLOY_ID>/exec?stripeToken=<that same string>
+   ```
+
+3. Select the event **`checkout.session.completed`**, then save.
+
+Without this, paid contractors sit at Pending Payment until you flip them to Active by hand
+on the Contractors tab (or from the dashboard). Payments still go through either way.
+
+> Apps Script web apps can't read request headers, so Stripe's signature header can't be
+> verified. The random token in the URL is what protects the endpoint — keep it secret. The
+> handler can only ever mark a row Active; it never moves money.
 
 ---
 

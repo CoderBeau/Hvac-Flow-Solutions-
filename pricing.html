@@ -137,15 +137,13 @@
   .terms-d[open]>summary{border-radius:11px 11px 0 0;border-bottom:none;}
   .terms-d[open] .terms{border-radius:0 0 11px 11px;margin-top:0;}
 
-  /* No-PayPal-account card fallback */
-  .altpay{margin-top:1.1rem;border-top:1px solid var(--line);padding-top:1.1rem;}
-  .altpay h4{font-family:var(--dsp);font-weight:800;font-size:.9rem;color:var(--navy);margin:0 0 .35rem;}
-  .altpay p{font-size:.83rem;color:var(--muted);line-height:1.55;margin:0 0 .7rem;}
-  .altbtn{width:100%;background:#fff;border:1.5px solid var(--navy);color:var(--navy);font-family:var(--dsp);font-weight:800;font-size:.9rem;border-radius:11px;padding:.85rem 1rem;cursor:pointer;transition:all .15s;}
-  .altbtn:hover{background:var(--navy);color:#fff;}
-  .altcall{font-size:.8rem;color:var(--muted2);text-align:center;margin:.7rem 0 0;}
+  /* Stripe checkout button */
+  .paybtn{width:100%;background:linear-gradient(135deg,var(--orange),var(--red));border:none;color:#fff;font-family:var(--dsp);font-weight:800;font-size:1.02rem;letter-spacing:.01em;border-radius:12px;padding:1rem 1rem;cursor:pointer;transition:filter .15s,transform .1s;box-shadow:0 12px 26px -12px rgba(200,16,46,.6);}
+  .paybtn:hover{filter:brightness(1.06);}
+  .paybtn:active{transform:translateY(1px);}
+  .paybtn:disabled{opacity:.65;cursor:default;filter:none;transform:none;}
+  .altcall{font-size:.8rem;color:var(--muted2);text-align:center;margin:.6rem 0 0;}
   .altcall a{color:var(--orange);font-weight:700;text-decoration:none;}
-  .altdone{display:none;background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);border-radius:11px;padding:.85rem 1rem;font-size:.85rem;color:#15803d;line-height:1.55;}
 
   .terms{background:var(--paper);border:1.5px solid var(--line2);border-radius:12px;padding:1rem 1.1rem;max-height:180px;overflow-y:auto;margin:.5rem 0 1rem;font-size:.82rem;color:var(--muted);}
   .terms h4{font-family:var(--dsp);font-weight:700;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin:.8rem 0 .25rem;}
@@ -157,14 +155,8 @@
   .chk .optlab{font-family:var(--dsp);font-weight:800;font-size:.58rem;letter-spacing:.05em;text-transform:uppercase;color:var(--green);background:rgba(22,163,74,.12);padding:.1rem .4rem;border-radius:100px;margin-right:.3rem;}
   .chk a{color:var(--orange);text-decoration:underline;}
   .err{background:#fff5f6;border:1px solid rgba(200,16,46,.25);border-radius:9px;padding:.6rem .8rem;font-size:.82rem;color:var(--red);margin-bottom:.85rem;display:none;}
-  #paypal-sub-button{margin-top:.5rem;min-height:48px;}
-  .paypal-hint{text-align:center;font-size:.75rem;color:var(--muted2);margin-top:.7rem;}
-
-  .join-success{display:none;text-align:center;padding:2.5rem 1.5rem;}
-  .join-success .ic{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#15803d,#16a34a);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;}
-  .join-success .ic svg{width:28px;height:28px;color:#fff;}
-  .join-success h3{font-family:var(--dsp);font-weight:800;font-size:1.5rem;color:var(--navy);margin-bottom:.4rem;}
-  .join-success p{color:var(--muted);font-size:.9rem;max-width:420px;margin:0 auto;}
+  #stripe-sub-button{margin-top:.5rem;min-height:48px;}
+  .pay-hint{text-align:center;font-size:.75rem;color:var(--muted2);margin-top:.7rem;}
 
   .promise{max-width:820px;margin:2.5rem auto 0;background:linear-gradient(135deg,rgba(11,30,59,.04),rgba(249,115,22,.06));border:1px solid var(--line);border-radius:18px;padding:1.9rem;text-align:center;}
   .promise .shield{font-size:2rem;}
@@ -318,7 +310,7 @@
               <h4>2. What You Get</h4>
               <p>You'll receive your tier's exclusive lead range each month in your service area. Your monthly lead count resets at the start of each billing cycle.</p>
               <h4>3. Month-to-Month, Cancel Anytime</h4>
-              <p>No contract. Cancel anytime by contacting us, or from your PayPal account if you paid with one; cancelling stops future charges. Partial months are not refunded.</p>
+              <p>No contract. Cancel anytime by emailing or calling us and we'll stop future charges immediately. Partial months are not refunded.</p>
               <h4>4. Valid Leads &amp; Replacement</h4>
               <p>A valid lead is a real homeowner in your service area with working contact info and an active HVAC need. Invalid leads are replaced at no cost.</p>
               <h4>5. Exclusive to You</h4>
@@ -330,26 +322,13 @@
           <label class="chk"><input type="checkbox" id="m-sms"><span><span class="optlab">Optional</span>Yes, text me lead and account updates from HVAC Flow Solutions. Msg frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Not required to subscribe.</span></label>
 
           <div class="err" id="m-err"></div>
-          <div id="paypal-sub-button"></div>
-          <p class="paypal-hint">Secure checkout · month-to-month · cancel anytime</p>
-
-          <div class="altpay">
-            <h4>Don't have a PayPal account?</h4>
-            <p>You don't need one. Use the <b>Debit or Credit Card</b> button above if it's shown, or have us send you a card payment link instead — no PayPal login, nothing to sign up for.</p>
-            <button type="button" class="altbtn" id="alt-card-btn">Send me a card payment link</button>
-            <div class="altdone" id="alt-card-done">
-              Got it — we're sending a secure card payment link to your email, usually within the hour.
-              If your email app didn't open, just call us and we'll take the card over the phone.
-            </div>
-            <p class="altcall">Prefer to talk? Call <a href="tel:+18305380713">(830) 538-0713</a> and we'll set it up for you.</p>
-          </div>
+          <div id="stripe-sub-button"></div>
+          <p class="pay-hint">🔒 Secure checkout by Stripe · debit or credit card · no account to create</p>
+          <p class="altcall">Prefer to pay over the phone? Call <a href="tel:+18305380713">(830) 538-0713</a>.</p>
         </div>
 
-        <div class="join-success" id="join-success">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-          <h3>You're a member!</h3>
-          <p>Your subscription is active. Exclusive leads in your service area will start arriving shortly, and your quota refreshes every billing cycle. Check your email for confirmation.</p>
-        </div>
+        <!-- Stripe hosts the confirmation page and redirects to /thanks.html
+             after payment, so there is no on-page success screen here. -->
       </div>
     </div>
 
@@ -369,10 +348,7 @@
 
 </div><!-- end #member-main -->
 
-<!-- PayPal SDK (subscriptions) -->
-<!-- enable-funding=card exposes PayPal's "Debit or Credit Card" guest button so a
-     contractor can pay without a PayPal login, wherever PayPal deems them eligible. -->
-<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&vault=true&intent=subscription&enable-funding=card,venmo&disable-funding=credit"></script>
+<script src="/payment-links.js"></script>
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEzU0QIrzKDlruiDQ28UKVeJpgyvlkVe0JSWVw7Y7vsLvFq8/exec";
 
@@ -389,12 +365,8 @@ const VALID_TOKEN = 'hfs-m-2f5bc259c054da0914085ac7';
   }
 })();
 
-// ── PayPal subscription Plan IDs — VERIFY each matches its tier + price in your PayPal dashboard ──
-const PLAN_IDS = {
-  starter: 'P-2LU85377A41503144NJOV7XI',   // Starter Membership — $397/mo
-  growth:  'P-2SE83787XY9238006NJOV6IA',   // Growth Membership  — $697/mo
-  pro:     'P-68007229G3158532UNJOV4QY'    // Pro Membership     — $997/mo
-};
+// Checkout URLs live in /payment-links.js — the tier names below must match
+// the membership keys there so HFS_PAY.resolve() can find the right link.
 const TIERS = {
   starter: { name:'Starter Membership', price:'$397' },
   growth:  { name:'Growth Membership',  price:'$697' },
@@ -419,6 +391,7 @@ function syncSummary(){
   document.getElementById('sum-rate').textContent  = t.price + '/mo';
   document.getElementById('sum-today').textContent = t.price;
   document.getElementById('agree-price').textContent = t.price;
+  syncCheckoutButton();
 }
 syncSummary();
 
@@ -453,8 +426,30 @@ function validateMembership(){
   return true;
 }
 
-function recordMembership(subscriptionId){
-  var d = membershipData();
+// Records the signup as "Pending Payment" and hands off to Stripe Checkout.
+// The row is written before the redirect (we lose the page once we leave), but
+// deliberately NOT as Active — pickContractor() in the Apps Script only routes
+// leads to Active rows, so nobody receives leads until Stripe confirms payment.
+function startCheckout(){
+  if (!validateMembership()) return;
+
+  var d    = membershipData();
+  var tier = TIERS[selectedTier];
+  var link = HFS_PAY.resolve(tier.name);
+  var ref  = HFS_PAY.makeReference(d.bizname, d.email);
+  var btn  = document.getElementById('stripe-sub-btn');
+  var url  = HFS_PAY.checkoutUrl(link, { email: d.email, reference: ref });
+
+  if (!url) {
+    document.getElementById('stripe-sub-button').innerHTML = HFS_PAY.unavailableHtml(tier.price + '/mo');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Taking you to secure checkout…';
+
+  var go = function(){ window.location.href = url; };
+
   fetch(SHEET_URL, {
     method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
@@ -462,81 +457,30 @@ function recordMembership(subscriptionId){
       firstName: d.firstName, lastName: d.lastName, company: d.bizname,
       phone: d.phone, email: d.email, zip:'', years:'',
       serviceAreas: d.areas,
-      package: TIERS[selectedTier].name,   // e.g. "Growth Membership" — matches the automation
+      package: tier.name,                 // e.g. "Growth Membership" — matches the automation
       smsConsent: d.smsConsent,
-      subscriptionId: subscriptionId,
+      status: 'Pending Payment',          // flipped to Active by the Stripe webhook
+      paymentRef: ref,
       submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'})
     })
-  }).then(function(){
-    document.getElementById('join-form').style.display = 'none';
-    document.getElementById('join-success').style.display = 'block';
-    document.getElementById('join').scrollIntoView({ behavior:'smooth', block:'start' });
-    if (typeof gtag !== 'undefined') { gtag('event', 'subscribe', { event_category:'Membership', event_label: TIERS[selectedTier].name }); }
-  }).catch(function(){
-    document.getElementById('join-form').style.display = 'none';
-    document.getElementById('join-success').style.display = 'block';
-  });
+  }).then(go).catch(go);   // a sheet hiccup must never block someone from paying
+
+  if (typeof gtag !== 'undefined') { gtag('event', 'begin_checkout', { event_category:'Membership', event_label: tier.name }); }
 }
 
-if (window.paypal && paypal.Buttons) {
-  paypal.Buttons({
-    style: { shape:'rect', color:'gold', layout:'vertical', label:'subscribe' },
-    onClick: function(data, actions){
-      return validateMembership() ? actions.resolve() : actions.reject();
-    },
-    createSubscription: function(data, actions){
-      return actions.subscription.create({ plan_id: PLAN_IDS[selectedTier] });
-    },
-    onApprove: function(data){
-      recordMembership(data.subscriptionID);
-    }
-  }).render('#paypal-sub-button');
-} else {
-  document.getElementById('paypal-sub-button').innerHTML =
-    '<p style="text-align:center;color:#C8102E;font-size:.85rem;">PayPal could not load. Please refresh, or email hvacflowsolutions@gmail.com to sign up.</p>';
+// Swap in the "call us" card if this tier has no link configured yet, so the
+// button is never a dead end.
+function syncCheckoutButton(){
+  var tier = TIERS[selectedTier];
+  var wrap = document.getElementById('stripe-sub-button');
+  if (!HFS_PAY.isConfigured(HFS_PAY.resolve(tier.name))) {
+    wrap.innerHTML = HFS_PAY.unavailableHtml(tier.price + '/mo');
+    return;
+  }
+  wrap.innerHTML = '<button type="button" class="paybtn" id="stripe-sub-btn">Subscribe — ' + tier.price + '/mo</button>';
+  document.getElementById('stripe-sub-btn').addEventListener('click', startCheckout);
 }
-
-// ── Card-payment fallback (no PayPal account required) ──
-// Deliberately does NOT post to the Apps Script: writeContractor() marks every
-// row 'Active' immediately, which would start routing leads before this
-// contractor has actually paid. This just hands us their details so we can send
-// a card payment link and activate them once it clears.
-document.getElementById('alt-card-btn').addEventListener('click', function(){
-  var err = document.getElementById('m-err');
-  err.style.display = 'none';
-  var d = membershipData();
-  if (!d.bizname || !d.firstName || !d.lastName || !d.phone || !d.email){
-    err.textContent = 'Please fill out your business name, name, phone, and email so we know where to send the payment link.';
-    err.style.display = 'block';
-    document.getElementById('m-biz').scrollIntoView({ behavior:'smooth', block:'center' });
-    return;
-  }
-  if (!/\S+@\S+\.\S+/.test(d.email)){
-    err.textContent = 'Please enter a valid email address so we can send the payment link.';
-    err.style.display = 'block';
-    return;
-  }
-
-  var t = TIERS[selectedTier];
-  var body =
-    'I would like to pay by debit/credit card instead of PayPal.\n\n' +
-    'Membership: ' + t.name + ' (' + t.price + '/mo)\n' +
-    'Business: '   + d.bizname + '\n' +
-    'Name: '       + d.firstName + ' ' + d.lastName + '\n' +
-    'Phone: '      + d.phone + '\n' +
-    'Email: '      + d.email + '\n' +
-    'Service areas: ' + (d.areas || '(not selected)') + '\n' +
-    'Text me updates: ' + d.smsConsent + '\n\n' +
-    'Please send me a card payment link.';
-
-  document.getElementById('alt-card-done').style.display = 'block';
-  this.style.display = 'none';
-  if (typeof gtag !== 'undefined') { gtag('event', 'card_link_request', { event_category:'Membership', event_label: t.name }); }
-
-  window.location.href = 'mailto:hvacflowsolutions@gmail.com'
-    + '?subject=' + encodeURIComponent('Card payment link request — ' + d.bizname + ' (' + t.name + ')')
-    + '&body='    + encodeURIComponent(body);
-});
+syncCheckoutButton();
 </script>
 </body>
 </html>
