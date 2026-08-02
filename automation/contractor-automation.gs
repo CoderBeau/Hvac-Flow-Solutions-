@@ -5,7 +5,7 @@
 //
 // Handles:
 //   • Get Quotes (homeowner) leads  -> "Get Quotes" tab + email + instant SMS + 24h follow-up SMS
-//   • Contractor signups            -> "Contractors" tab + email + PayPal link + welcome SMS
+//   • Contractor signups            -> "Contractors" tab + email + Stripe payment link + welcome SMS
 //   • Contractor trial signups      -> "Trials" tab + "Contractors" tab (Trial row) + email + SMS
 //   • Lead routing                  -> Round-robin by city, email + SMS — covers web form AND Vapi calls
 //   • Vapi AI calls                 -> end-of-call-report webhook → "AI Calls" tab + contractor alert
@@ -14,6 +14,7 @@
 //   • Trial expiration              -> Auto-pauses leads 14 days after trial start
 //   • Manual control                -> "HVAC Admin" menu in the sheet to pause/resume any contractor
 //   • Lead quality scoring          -> Good/Bad/Review verdict on every lead via the "Keywords" tab
+//   • Stripe payments               -> checkout.session.completed webhook flips 'Pending Payment' -> 'Active'
 //   • Dashboard API                 -> doGet() JSON feed for dashboard.html (requires DASHBOARD_KEY)
 //
 // Required Script Properties (Project Settings > Script Properties):
@@ -23,6 +24,8 @@
 //   ADMIN_PHONE    — Owner's cell for alerts, e.g. +12105559999
 //   DASHBOARD_KEY  — Long random password for dashboard.html (the dashboard
 //                    API stays locked until this is set)
+//   STRIPE_WEBHOOK_TOKEN — Long random string, repeated in the Stripe webhook URL
+//                    as ?stripeToken=... (paid signups stay Pending until this is set)
 // ============================================================
 
 var TRIAL_LENGTH_DAYS = 14;
@@ -51,6 +54,33 @@ var MEMBERSHIP_LEAD_CAPS = {
   'Growth Membership':  30,
   'Pro Membership':     9999   // effectively unlimited (40+ / mo)
 };
+
+// ── Stripe Payment Links ─────────────────────────────────────
+// Server-side mirror of /payment-links.js on the website. Paste the SAME
+// https://buy.stripe.com/... URLs here so the "complete your payment" email
+// sends people to the same checkout the site does.
+// Memberships are listed first because "Starter Membership" also contains
+// the one-time package name "Starter".
+var STRIPE_LINKS = {
+  'Starter Membership': { url: '', amount: '$397/mo' },
+  'Growth Membership':  { url: '', amount: '$697/mo' },
+  'Pro Membership':     { url: '', amount: '$997/mo' },
+  'Tester':             { url: '', amount: '$75' },
+  'Starter':            { url: '', amount: '$150' },
+  'Growth':             { url: '', amount: '$375' },
+  'Pro Partner':        { url: '', amount: '$700' },
+  'Elite':              { url: '', amount: '$1,300' }
+};
+
+function resolveStripeLink(packageName) {
+  var pkg = String(packageName || '');
+  for (var name in STRIPE_LINKS) {
+    if (pkg.indexOf(name) !== -1) {
+      return { name: name, url: STRIPE_LINKS[name].url || '', amount: STRIPE_LINKS[name].amount };
+    }
+  }
+  return { name: '', url: '', amount: '' };
+}
 
 // ── Lead Quality Scoring ─────────────────────────────────────
 // Every homeowner lead is scored against the Good/Bad keyword lists
@@ -96,6 +126,12 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
+    // Stripe webhook events must be matched BEFORE the form types below —
+    // a Stripe event carries its own `type` (e.g. "checkout.session.completed").
+    if (data.object === 'event' && data.data && data.data.object) {
+      return jsonOut(handleStripeWebhook(ss, data, (e && e.parameter) || {}));
+    }
+
     if (data.type === 'Homeowner') {
       var verdict = scoreLead(data, getKeywords(ss));
       writeHomeowner(ss, data, verdict);
@@ -133,6 +169,110 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ── Stripe webhook ───────────────────────────────────────────
+// Flips a contractor from 'Pending Payment' to 'Active' the moment Stripe
+// confirms their payment, so leads start routing without you touching the sheet.
+//
+// SETUP
+//   1. Script Properties: add STRIPE_WEBHOOK_TOKEN = <long random string>.
+//   2. Stripe Dashboard > Developers > Webhooks > Add endpoint, URL:
+//        https://script.google.com/macros/s/<YOUR_DEPLOY_ID>/exec?stripeToken=<same string>
+//      Events: checkout.session.completed
+//
+// Apps Script web apps cannot read request headers, so Stripe's signature
+// header can't be verified here. The shared token in the URL is what keeps
+// this endpoint from being triggered by anyone who finds it — treat it like a
+// password, and the handler only ever sets a row to Active (it can't move money).
+function handleStripeWebhook(ss, event, params) {
+  var expected = getProperty('STRIPE_WEBHOOK_TOKEN');
+  if (!expected) return { status: 'error', message: 'STRIPE_WEBHOOK_TOKEN is not set in Script Properties.' };
+  if (params.stripeToken !== expected) return { status: 'error', message: 'Invalid Stripe webhook token.' };
+
+  if (event.type !== 'checkout.session.completed') {
+    return { status: 'ignored', event: event.type };
+  }
+
+  var session = event.data.object || {};
+  if (session.payment_status && session.payment_status !== 'paid') {
+    return { status: 'ignored', reason: 'payment_status=' + session.payment_status };
+  }
+
+  var ref   = String(session.client_reference_id || '');
+  var email = String((session.customer_details && session.customer_details.email) || session.customer_email || '');
+
+  var result = activatePaidContractor(ss, ref, email, session);
+  if (!result.matched) {
+    MailApp.sendEmail(ADMIN_EMAIL,
+      'Stripe payment received but no matching contractor row',
+      'A Stripe payment completed but no Contractors row matched it.\n\n' +
+      'Reference: ' + (ref || '(none)') + '\n' +
+      'Email: '     + (email || '(none)') + '\n' +
+      'Amount: '    + formatStripeAmount(session) + '\n\n' +
+      'Activate them by hand on the Contractors tab.'
+    );
+  }
+  return { status: 'success', matched: result.matched, row: result.row || null };
+}
+
+// Finds the contractor by payment reference (col 18) first, then by email
+// (col 6), preferring a row that is still awaiting payment.
+function activatePaidContractor(ss, ref, email, session) {
+  var sheet = ss.getSheetByName('Contractors');
+  if (!sheet || sheet.getLastRow() < 2) return { matched: false };
+
+  var lastCol = Math.max(sheet.getLastColumn(), 18);
+  var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+  var byRef = -1, byEmail = -1;
+
+  for (var i = 0; i < rows.length; i++) {
+    var rowRef    = String(rows[i][17] || '').trim();
+    var rowEmail  = String(rows[i][5]  || '').trim().toLowerCase();
+    var pending   = String(rows[i][10] || '').trim() === 'Pending Payment';
+
+    if (ref && rowRef && rowRef === ref) { byRef = i + 2; break; }
+    if (email && rowEmail === email.toLowerCase() && pending && byEmail === -1) byEmail = i + 2;
+  }
+
+  var rowNum = byRef !== -1 ? byRef : byEmail;
+  if (rowNum === -1) return { matched: false };
+
+  sheet.getRange(rowNum, 11).setValue('Active');
+
+  // Store the Stripe subscription (memberships) or session id (one-time) so a
+  // payment in the dashboard can always be traced back to this row.
+  var stripeId = session.subscription || session.id || '';
+  if (stripeId) sheet.getRange(rowNum, 18).setValue(stripeId);
+
+  var firstName = sheet.getRange(rowNum, 2).getValue();
+  var company   = sheet.getRange(rowNum, 4).getValue();
+  var phone     = String(sheet.getRange(rowNum, 5).getValue() || '');
+  var pkg       = sheet.getRange(rowNum, 10).getValue();
+  var smsOk     = String(sheet.getRange(rowNum, 17).getValue()).trim() === 'Yes';
+
+  MailApp.sendEmail(ADMIN_EMAIL,
+    'PAID + ACTIVATED: ' + company + ' — ' + pkg,
+    company + ' completed payment and is now Active on row ' + rowNum + '.\n\n' +
+    'Package: ' + pkg + '\n' +
+    'Amount: '  + formatStripeAmount(session) + '\n' +
+    'Stripe ref: ' + (stripeId || '(none)') + '\n'
+  );
+
+  if (phone && smsOk) {
+    sendSMS(phone,
+      'Payment received, ' + (firstName || '') + '! Your HVAC Flow Solutions ' + pkg +
+      ' is active and exclusive leads are on the way. Reply STOP to opt out, HELP for help.'
+    );
+  }
+
+  return { matched: true, row: rowNum };
+}
+
+function formatStripeAmount(session) {
+  var cents = session.amount_total;
+  if (typeof cents !== 'number') return '(unknown)';
+  return '$' + (cents / 100).toFixed(2) + ' ' + String(session.currency || 'usd').toUpperCase();
 }
 
 // ── Dashboard API (used by dashboard.html) ───────────────────
@@ -485,6 +625,11 @@ function writeContractor(ss, data) {
   ensureContractorsHeaders(sheet);
 
   var renewsOn = isMembership(data.package) ? addOneMonth(new Date()) : '';
+
+  // Web signups arrive as 'Pending Payment' and are flipped to 'Active' by the
+  // Stripe webhook once payment clears — pickContractor() only routes leads to
+  // Active rows, so nobody receives leads before they've actually paid.
+  // Callers that don't send a status (e.g. manual entry) still default to Active.
   sheet.appendRow([
     data.submittedAt  || new Date().toLocaleString(),
     data.firstName    || '',
@@ -496,14 +641,14 @@ function writeContractor(ss, data) {
     data.years        || '',
     data.serviceAreas || '',
     data.package      || '',
-    'Active',
+    data.status       || 'Active',
     0,
     packageToLeadCap(data.package),
     '',  // Trial End Date — not a trial signup
     '',  // Client ID — not a trial signup
     renewsOn,                    // Renews On — membership billing anniversary (blank for one-time packs)
     data.smsConsent || 'No',     // SMS Consent — 'Yes' only if they opted in
-    data.subscriptionId || ''    // Subscription ID — PayPal recurring subscription (memberships only)
+    data.paymentRef || ''        // Payment Ref — client_reference_id sent to Stripe Checkout
   ]);
 }
 
@@ -794,29 +939,23 @@ function enforceLeadCap(sheet, rowIndex, leadCap) {
 function sendContractorPaymentLink(data) {
   var pkg = data.package || '';
 
-  var packageLinks = {
-    'Tester':      'https://www.paypal.com/ncp/payment/9VHMU8UYMVXXC',
-    'Starter':     'https://www.paypal.com/ncp/payment/Y55WAFWV7DTHW',
-    'Growth':      'https://www.paypal.com/ncp/payment/W6TP29DWKKVNN',
-    'Pro Partner': 'https://www.paypal.com/ncp/payment/JLB9BGEGV6VKJ',
-    'Elite':       'https://www.paypal.com/ncp/payment/X57YNYLKM8W7Y'
-  };
-  var packageAmounts = {
-    'Tester':      '$75',
-    'Starter':     '$150',
-    'Growth':      '$375',
-    'Pro Partner': '$700',
-    'Elite':       '$1,300'
-  };
-
-  var paypalLink = '', amount = '';
-  for (var name in packageLinks) {
-    if (pkg.indexOf(name) !== -1) {
-      paypalLink = packageLinks[name];
-      amount = packageAmounts[name];
-      break;
-    }
+  var link = resolveStripeLink(pkg);
+  if (!link.url) {
+    // No link configured for this package yet — tell the owner rather than
+    // emailing the contractor a broken "Pay Now:" line.
+    MailApp.sendEmail(ADMIN_EMAIL,
+      'ACTION NEEDED: no Stripe link for package "' + pkg + '"',
+      'A contractor signed up for "' + pkg + '" but STRIPE_LINKS in contractor-automation.gs\n' +
+      'has no payment link for it, so no payment email was sent.\n\n' +
+      'Contractor: ' + (data.firstName || '') + ' ' + (data.lastName || '') + ' <' + (data.email || '') + '>\n\n' +
+      'Add the link, then email them manually.'
+    );
+    return;
   }
+
+  var payUrl = link.url;
+  if (data.email)      payUrl += (payUrl.indexOf('?') === -1 ? '?' : '&') + 'prefilled_email=' + encodeURIComponent(data.email);
+  if (data.paymentRef) payUrl += '&client_reference_id=' + encodeURIComponent(data.paymentRef);
 
   var subject = 'Your HVAC Flow Solutions Application - Complete Payment to Activate';
   var body = 'Hi ' + data.firstName + ',\n\n'
@@ -824,12 +963,13 @@ function sendContractorPaymentLink(data) {
     + 'Your application has been received. To activate your account and start receiving leads, '
     + 'please complete your payment using the link below:\n\n'
     + 'Package: ' + pkg + '\n'
-    + 'Amount Due: ' + amount + '\n\n'
-    + 'Pay Now: ' + paypalLink + '\n\n'
+    + 'Amount Due: ' + link.amount + '\n\n'
+    + 'Pay Now: ' + payUrl + '\n\n'
+    + 'You can pay with any debit or credit card. There is no account to create.\n\n'
     + 'Once payment is confirmed your leads will begin arriving within 3-7 business days.\n\n'
     + 'What happens next:\n'
     + '1. Click the payment link above\n'
-    + '2. Complete payment via PayPal\n'
+    + '2. Pay securely by card (checkout is handled by Stripe)\n'
     + '3. Leads start flowing within 3-7 business days\n\n'
     + 'Questions? Reply to this email.\n\n'
     + '- HVAC Flow Solutions Team\n'
@@ -905,7 +1045,7 @@ function addTrialToContractors(ss, d, clientId, endDate) {
     clientId,
     '',                                // Renews On — trials are not monthly memberships
     smsFromDelivery(d.leaddelivery),   // SMS Consent — from their Text/Email/Both choice
-    ''                                 // Subscription ID — trials have no PayPal subscription
+    ''                                 // Payment Ref — trials are paid via the one-time trial link
   ]);
 }
 

@@ -242,6 +242,8 @@
   .submit-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
   .success-screen { display: none; text-align: center; padding: 70px 24px; animation: fadeUp 0.6s ease both; }
+  .pay-link { display:block;background:linear-gradient(135deg,var(--orange),#C8102E);color:#fff;font-family:var(--dsp,'Montserrat',sans-serif);font-weight:800;font-size:1rem;text-decoration:none;border-radius:12px;padding:0.95rem 1rem;box-shadow:0 12px 26px -12px rgba(200,16,46,0.6);transition:filter .15s; }
+  .pay-link:hover { filter:brightness(1.06); }
   .success-icon {
     width: 72px; height: 72px; background: rgba(22,163,74,0.1); border: 1px solid rgba(22,163,74,0.3);
     border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -454,7 +456,7 @@
     <div class="form-section" style="margin-top:12px;">
       <div class="submit-row">
         <button type="submit" class="btn-submit" id="submitBtn">SUBMIT AGREEMENT</button>
-        <p class="submit-note">By checking the boxes above and submitting, you agree to the Trial Terms. This is your electronic signature. A PayPal invoice for $25 will be sent to your email.</p>
+        <p class="submit-note">By checking the boxes above and submitting, you agree to the Trial Terms. This is your electronic signature. You'll complete the $25 payment by card on the next screen.</p>
       </div>
     </div>
 
@@ -465,8 +467,8 @@
     <h2>You're In.</h2>
     <p>Your trial agreement has been submitted. Complete your <strong>$25 payment</strong> below to activate your 5 exclusive leads. We'll be in touch within 1 business day to get things going.</p>
 
-    <div id="paypal-container-WQUF4X73V742A" style="margin-top:28px;max-width:300px;margin-left:auto;margin-right:auto;"></div>
-    <p style="margin-top:14px; font-size:12px; color:var(--muted2);">Secure checkout via PayPal</p>
+    <div id="trial-pay-btn" style="margin-top:28px;max-width:300px;margin-left:auto;margin-right:auto;"></div>
+    <p style="margin-top:14px; font-size:12px; color:var(--muted2);">🔒 Secure checkout by Stripe · debit or credit card · no account to create</p>
 
     <div style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);max-width:420px;margin-left:auto;margin-right:auto;">
       <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Want steady leads every month after your trial? Lock in a monthly membership anytime.</p>
@@ -593,7 +595,7 @@
         var si = document.querySelector('.step-indicator');
         if (si) si.style.display = 'none';
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        renderPayPalButton();
+        renderPayButton({ email: payload.email, reference: HFS_PAY.makeReference(payload.bizname, payload.email) });
       };
 
       fetch(SHEET_URL, {
@@ -613,13 +615,20 @@
     });
   })();
 </script>
-<!-- PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
+<script src="/payment-links.js"></script>
 <script>
-  function renderPayPalButton() {
-    paypal.HostedButtons({
-      hostedButtonId: "WQUF4X73V742A",
-    }).render("#paypal-container-WQUF4X73V742A");
+  // Renders the $25 trial-fee Stripe Checkout link. URL is configured
+  // once in /payment-links.js (loaded above, before this script).
+  function renderPayButton(opts) {
+    var wrap = document.getElementById('trial-pay-btn');
+    var link = HFS_PAY.trial();
+    var url  = HFS_PAY.checkoutUrl(link, opts);
+
+    if (!url) {
+      wrap.innerHTML = HFS_PAY.unavailableHtml(link.amount);
+      return;
+    }
+    wrap.innerHTML = '<a href="' + url + '" class="pay-link">Pay ' + link.amount + ' securely →</a>';
   }
 </script>
 </body>

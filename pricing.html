@@ -119,6 +119,32 @@
   .area label{display:flex;align-items:center;justify-content:center;padding:.5rem .3rem;border:1.5px solid var(--line2);border-radius:8px;cursor:pointer;font-family:var(--dsp);font-weight:700;font-size:.7rem;color:var(--muted);text-align:center;transition:all .15s;}
   .area input:checked + label{border-color:var(--navy);background:var(--navy);color:#fff;}
 
+  /* Order summary — shows exactly what gets charged today */
+  .summary{background:var(--paper);border:1.5px solid var(--line2);border-radius:12px;padding:.95rem 1.1rem;margin:.3rem 0 .9rem;}
+  .srow{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;font-size:.86rem;color:var(--muted);padding:.28rem 0;}
+  .srow b{font-family:var(--dsp);font-weight:800;color:var(--ink);}
+  .srow.total{border-top:1.5px solid var(--line2);margin-top:.35rem;padding-top:.55rem;font-size:.95rem;color:var(--ink);}
+  .srow.total b{color:var(--red);font-size:1.15rem;}
+  .snote{font-size:.75rem;color:var(--muted2);margin-top:.5rem;}
+
+  /* Terms are collapsed by default so the pay button stays above the fold */
+  .terms-d{margin:0 0 .8rem;}
+  .terms-d>summary{list-style:none;cursor:pointer;font-family:var(--dsp);font-weight:700;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);background:var(--paper);border:1.5px solid var(--line2);border-radius:11px;padding:.7rem .85rem;display:flex;align-items:center;gap:.45rem;}
+  .terms-d>summary::-webkit-details-marker{display:none;}
+  .terms-d>summary::before{content:"+";font-size:1rem;line-height:1;color:var(--orange);}
+  .terms-d[open]>summary::before{content:"–";}
+  .terms-d>summary span{font-family:var(--body);font-weight:400;font-size:.74rem;letter-spacing:0;text-transform:none;color:var(--muted2);}
+  .terms-d[open]>summary{border-radius:11px 11px 0 0;border-bottom:none;}
+  .terms-d[open] .terms{border-radius:0 0 11px 11px;margin-top:0;}
+
+  /* Stripe checkout button */
+  .paybtn{width:100%;background:linear-gradient(135deg,var(--orange),var(--red));border:none;color:#fff;font-family:var(--dsp);font-weight:800;font-size:1.02rem;letter-spacing:.01em;border-radius:12px;padding:1rem 1rem;cursor:pointer;transition:filter .15s,transform .1s;box-shadow:0 12px 26px -12px rgba(200,16,46,.6);}
+  .paybtn:hover{filter:brightness(1.06);}
+  .paybtn:active{transform:translateY(1px);}
+  .paybtn:disabled{opacity:.65;cursor:default;filter:none;transform:none;}
+  .altcall{font-size:.8rem;color:var(--muted2);text-align:center;margin:.6rem 0 0;}
+  .altcall a{color:var(--orange);font-weight:700;text-decoration:none;}
+
   .terms{background:var(--paper);border:1.5px solid var(--line2);border-radius:12px;padding:1rem 1.1rem;max-height:180px;overflow-y:auto;margin:.5rem 0 1rem;font-size:.82rem;color:var(--muted);}
   .terms h4{font-family:var(--dsp);font-weight:700;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin:.8rem 0 .25rem;}
   .terms h4:first-child{margin-top:0;}
@@ -129,14 +155,8 @@
   .chk .optlab{font-family:var(--dsp);font-weight:800;font-size:.58rem;letter-spacing:.05em;text-transform:uppercase;color:var(--green);background:rgba(22,163,74,.12);padding:.1rem .4rem;border-radius:100px;margin-right:.3rem;}
   .chk a{color:var(--orange);text-decoration:underline;}
   .err{background:#fff5f6;border:1px solid rgba(200,16,46,.25);border-radius:9px;padding:.6rem .8rem;font-size:.82rem;color:var(--red);margin-bottom:.85rem;display:none;}
-  #paypal-sub-button{margin-top:.5rem;min-height:48px;}
-  .paypal-hint{text-align:center;font-size:.75rem;color:var(--muted2);margin-top:.7rem;}
-
-  .join-success{display:none;text-align:center;padding:2.5rem 1.5rem;}
-  .join-success .ic{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#15803d,#16a34a);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;}
-  .join-success .ic svg{width:28px;height:28px;color:#fff;}
-  .join-success h3{font-family:var(--dsp);font-weight:800;font-size:1.5rem;color:var(--navy);margin-bottom:.4rem;}
-  .join-success p{color:var(--muted);font-size:.9rem;max-width:420px;margin:0 auto;}
+  #stripe-sub-button{margin-top:.5rem;min-height:48px;}
+  .pay-hint{text-align:center;font-size:.75rem;color:var(--muted2);margin-top:.7rem;}
 
   .promise{max-width:820px;margin:2.5rem auto 0;background:linear-gradient(135deg,rgba(11,30,59,.04),rgba(249,115,22,.06));border:1px solid var(--line);border-radius:18px;padding:1.9rem;text-align:center;}
   .promise .shield{font-size:2rem;}
@@ -275,33 +295,40 @@
             <div class="area"><input type="checkbox" id="a-ep" value="El Paso"><label for="a-ep">El Paso</label></div>
           </div>
 
-          <div class="terms">
-            <h4>1. Billing</h4>
-            <p>Your membership is charged automatically to your PayPal each month until you cancel. Your first payment is due today to activate leads.</p>
-            <h4>2. What You Get</h4>
-            <p>You'll receive your tier's exclusive lead range each month in your service area. Your monthly lead count resets at the start of each billing cycle.</p>
-            <h4>3. Month-to-Month, Cancel Anytime</h4>
-            <p>No contract. Cancel anytime from your PayPal account or by contacting us; cancelling stops future charges. Partial months are not refunded.</p>
-            <h4>4. Valid Leads &amp; Replacement</h4>
-            <p>A valid lead is a real homeowner in your service area with working contact info and an active HVAC need. Invalid leads are replaced at no cost.</p>
-            <h4>5. Exclusive to You</h4>
-            <p>Every lead is delivered to you only. We never resell or share it with another contractor in your area.</p>
+          <div class="summary">
+            <div class="srow"><span>Membership</span><b id="sum-tier">Growth Membership</b></div>
+            <div class="srow"><span>Billed every month</span><b id="sum-rate">$697/mo</b></div>
+            <div class="srow total"><span>Due today</span><b id="sum-today">$697</b></div>
+            <p class="snote">Renews automatically each month. No contract — cancel anytime.</p>
           </div>
 
-          <label class="chk"><input type="checkbox" id="m-agree-terms"><span>I have read and agree to the <b>Membership Terms</b> above and the <a href="/terms.html" target="_blank">Terms of Service</a>.</span></label>
-          <label class="chk"><input type="checkbox" id="m-agree-bill"><span>I understand my PayPal will be <b>charged the monthly amount automatically</b> until I cancel.</span></label>
+          <details class="terms-d">
+            <summary>Membership Terms <span>— tap to read</span></summary>
+            <div class="terms">
+              <h4>1. Billing</h4>
+              <p>Your membership is charged automatically to your payment method each month until you cancel. Your first payment is due today to activate leads.</p>
+              <h4>2. What You Get</h4>
+              <p>You'll receive your tier's exclusive lead range each month in your service area. Your monthly lead count resets at the start of each billing cycle.</p>
+              <h4>3. Month-to-Month, Cancel Anytime</h4>
+              <p>No contract. Cancel anytime by emailing or calling us and we'll stop future charges immediately. Partial months are not refunded.</p>
+              <h4>4. Valid Leads &amp; Replacement</h4>
+              <p>A valid lead is a real homeowner in your service area with working contact info and an active HVAC need. Invalid leads are replaced at no cost.</p>
+              <h4>5. Exclusive to You</h4>
+              <p>Every lead is delivered to you only. We never resell or share it with another contractor in your area.</p>
+            </div>
+          </details>
+
+          <label class="chk"><input type="checkbox" id="m-agree"><span>I agree to the <b>Membership Terms</b> and <a href="/terms.html" target="_blank">Terms of Service</a>, and I understand my payment method will be <b>charged <span id="agree-price">$697</span> automatically every month</b> until I cancel.</span></label>
           <label class="chk"><input type="checkbox" id="m-sms"><span><span class="optlab">Optional</span>Yes, text me lead and account updates from HVAC Flow Solutions. Msg frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Not required to subscribe.</span></label>
 
           <div class="err" id="m-err"></div>
-          <div id="paypal-sub-button"></div>
-          <p class="paypal-hint">Secure checkout via PayPal · month-to-month · cancel anytime</p>
+          <div id="stripe-sub-button"></div>
+          <p class="pay-hint">🔒 Secure checkout by Stripe · debit or credit card · no account to create</p>
+          <p class="altcall">Prefer to pay over the phone? Call <a href="tel:+18305380713">(830) 538-0713</a>.</p>
         </div>
 
-        <div class="join-success" id="join-success">
-          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-          <h3>You're a member!</h3>
-          <p>Your subscription is active. Exclusive leads in your service area will start arriving shortly, and your quota refreshes every billing cycle. Check your email for confirmation.</p>
-        </div>
+        <!-- Stripe hosts the confirmation page and redirects to /thanks.html
+             after payment, so there is no on-page success screen here. -->
       </div>
     </div>
 
@@ -321,8 +348,7 @@
 
 </div><!-- end #member-main -->
 
-<!-- PayPal SDK (subscriptions) -->
-<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&vault=true&intent=subscription&disable-funding=card,credit,paylater"></script>
+<script src="/payment-links.js"></script>
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEzU0QIrzKDlruiDQ28UKVeJpgyvlkVe0JSWVw7Y7vsLvFq8/exec";
 
@@ -339,12 +365,8 @@ const VALID_TOKEN = 'hfs-m-2f5bc259c054da0914085ac7';
   }
 })();
 
-// ── PayPal subscription Plan IDs — VERIFY each matches its tier + price in your PayPal dashboard ──
-const PLAN_IDS = {
-  starter: 'P-2LU85377A41503144NJOV7XI',   // Starter Membership — $397/mo
-  growth:  'P-2SE83787XY9238006NJOV6IA',   // Growth Membership  — $697/mo
-  pro:     'P-68007229G3158532UNJOV4QY'    // Pro Membership     — $997/mo
-};
+// Checkout URLs live in /payment-links.js — the tier names below must match
+// the membership keys there so HFS_PAY.resolve() can find the right link.
 const TIERS = {
   starter: { name:'Starter Membership', price:'$397' },
   growth:  { name:'Growth Membership',  price:'$697' },
@@ -357,8 +379,21 @@ function pickTier(key){
   selectedTier = key;
   document.querySelectorAll('.tierchip').forEach(function(c){ c.classList.toggle('on', c.dataset.t === key); });
   document.getElementById('join-title').textContent = TIERS[key].name + ' — ' + TIERS[key].price + '/mo';
+  syncSummary();
   document.getElementById('join').scrollIntoView({ behavior:'smooth', block:'start' });
 }
+
+// Keeps the order summary and the billing-consent wording matched to the chosen tier,
+// so the contractor always sees the exact amount they're agreeing to.
+function syncSummary(){
+  var t = TIERS[selectedTier];
+  document.getElementById('sum-tier').textContent  = t.name;
+  document.getElementById('sum-rate').textContent  = t.price + '/mo';
+  document.getElementById('sum-today').textContent = t.price;
+  document.getElementById('agree-price').textContent = t.price;
+  syncCheckoutButton();
+}
+syncSummary();
 
 // Phone formatting
 document.getElementById('m-phone').addEventListener('input', function(e){
@@ -387,13 +422,34 @@ function validateMembership(){
   }
   if (!/\S+@\S+\.\S+/.test(d.email)){ err.textContent='Please enter a valid email address.'; err.style.display='block'; return false; }
   if (!d.areas){ err.textContent='Please select at least one service area.'; err.style.display='block'; return false; }
-  if (!document.getElementById('m-agree-terms').checked){ err.textContent='Please agree to the Membership Terms to continue.'; err.style.display='block'; return false; }
-  if (!document.getElementById('m-agree-bill').checked){ err.textContent='Please acknowledge the recurring monthly charge to continue.'; err.style.display='block'; return false; }
+  if (!document.getElementById('m-agree').checked){ err.textContent='Please check the box agreeing to the terms and the monthly charge to continue.'; err.style.display='block'; return false; }
   return true;
 }
 
-function recordMembership(subscriptionId){
-  var d = membershipData();
+// Records the signup as "Pending Payment" and hands off to Stripe Checkout.
+// The row is written before the redirect (we lose the page once we leave), but
+// deliberately NOT as Active — pickContractor() in the Apps Script only routes
+// leads to Active rows, so nobody receives leads until Stripe confirms payment.
+function startCheckout(){
+  if (!validateMembership()) return;
+
+  var d    = membershipData();
+  var tier = TIERS[selectedTier];
+  var link = HFS_PAY.resolve(tier.name);
+  var ref  = HFS_PAY.makeReference(d.bizname, d.email);
+  var btn  = document.getElementById('stripe-sub-btn');
+  var url  = HFS_PAY.checkoutUrl(link, { email: d.email, reference: ref });
+
+  if (!url) {
+    document.getElementById('stripe-sub-button').innerHTML = HFS_PAY.unavailableHtml(tier.price + '/mo');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Taking you to secure checkout…';
+
+  var go = function(){ window.location.href = url; };
+
   fetch(SHEET_URL, {
     method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
@@ -401,39 +457,30 @@ function recordMembership(subscriptionId){
       firstName: d.firstName, lastName: d.lastName, company: d.bizname,
       phone: d.phone, email: d.email, zip:'', years:'',
       serviceAreas: d.areas,
-      package: TIERS[selectedTier].name,   // e.g. "Growth Membership" — matches the automation
+      package: tier.name,                 // e.g. "Growth Membership" — matches the automation
       smsConsent: d.smsConsent,
-      subscriptionId: subscriptionId,
+      status: 'Pending Payment',          // flipped to Active by the Stripe webhook
+      paymentRef: ref,
       submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'})
     })
-  }).then(function(){
-    document.getElementById('join-form').style.display = 'none';
-    document.getElementById('join-success').style.display = 'block';
-    document.getElementById('join').scrollIntoView({ behavior:'smooth', block:'start' });
-    if (typeof gtag !== 'undefined') { gtag('event', 'subscribe', { event_category:'Membership', event_label: TIERS[selectedTier].name }); }
-  }).catch(function(){
-    document.getElementById('join-form').style.display = 'none';
-    document.getElementById('join-success').style.display = 'block';
-  });
+  }).then(go).catch(go);   // a sheet hiccup must never block someone from paying
+
+  if (typeof gtag !== 'undefined') { gtag('event', 'begin_checkout', { event_category:'Membership', event_label: tier.name }); }
 }
 
-if (window.paypal && paypal.Buttons) {
-  paypal.Buttons({
-    style: { shape:'rect', color:'gold', layout:'vertical', label:'subscribe' },
-    onClick: function(data, actions){
-      return validateMembership() ? actions.resolve() : actions.reject();
-    },
-    createSubscription: function(data, actions){
-      return actions.subscription.create({ plan_id: PLAN_IDS[selectedTier] });
-    },
-    onApprove: function(data){
-      recordMembership(data.subscriptionID);
-    }
-  }).render('#paypal-sub-button');
-} else {
-  document.getElementById('paypal-sub-button').innerHTML =
-    '<p style="text-align:center;color:#C8102E;font-size:.85rem;">PayPal could not load. Please refresh, or email hvacflowsolutions@gmail.com to sign up.</p>';
+// Swap in the "call us" card if this tier has no link configured yet, so the
+// button is never a dead end.
+function syncCheckoutButton(){
+  var tier = TIERS[selectedTier];
+  var wrap = document.getElementById('stripe-sub-button');
+  if (!HFS_PAY.isConfigured(HFS_PAY.resolve(tier.name))) {
+    wrap.innerHTML = HFS_PAY.unavailableHtml(tier.price + '/mo');
+    return;
+  }
+  wrap.innerHTML = '<button type="button" class="paybtn" id="stripe-sub-btn">Subscribe — ' + tier.price + '/mo</button>';
+  document.getElementById('stripe-sub-btn').addEventListener('click', startCheckout);
 }
+syncCheckoutButton();
 </script>
 </body>
 </html>

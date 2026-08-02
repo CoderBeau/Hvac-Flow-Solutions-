@@ -364,6 +364,9 @@ body::after {
   margin-bottom:0.4rem;
 }
 .success-view p { color:#5a6a80; font-size:0.85rem; line-height:1.6; }
+.pay-link { display:block;background:linear-gradient(135deg,#f97316,#C8102E);color:#fff;font-family:'Montserrat',sans-serif;font-weight:800;font-size:1rem;text-decoration:none;border-radius:12px;padding:0.95rem 1rem;box-shadow:0 12px 26px -12px rgba(200,16,46,0.6);transition:filter .15s; }
+.pay-link:hover { filter:brightness(1.06); }
+.pay-hint { color:#8494a8;font-size:0.72rem;margin-top:0.55rem; }
 .next-steps {
   margin-top:1.1rem;
   background:#f4f6fa;
@@ -499,13 +502,13 @@ body::after {
         <h2>Application Received!</h2>
         <p>Complete your payment below to activate your account and start receiving leads.</p>
 
-        <!-- PayPal button renders here -->
-        <div id="ct-paypal-btn" style="margin-top:1.25rem;text-align:center;"></div>
+        <!-- Stripe Checkout link renders here -->
+        <div id="ct-pay-btn" style="margin-top:1.25rem;text-align:center;"></div>
 
         <div class="next-steps" style="margin-top:1rem;">
           <h3>What Happens Next</h3>
           <div class="nxt-i"><span class="nxt-n">1</span><span>Complete payment above</span></div>
-          <div class="nxt-i"><span class="nxt-n">2</span><span>Your account is activated immediately</span></div>
+          <div class="nxt-i"><span class="nxt-n">2</span><span>Your account activates as soon as payment clears</span></div>
           <div class="nxt-i"><span class="nxt-n">3</span><span>Leads begin arriving within 3-7 business days</span></div>
         </div>
       </div>
@@ -514,31 +517,26 @@ body::after {
 
 </div>
 
-<!-- PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
+<script src="/payment-links.js"></script>
 
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEzU0QIrzKDlruiDQ28UKVeJpgyvlkVe0JSWVw7Y7vsLvFq8/exec";
 
-var PAYPAL_BUTTONS = {
-  'Tester':      '9VHMU8UYMVXXC',
-  'Starter':     'Y55WAFWV7DTHW',
-  'Growth':      'W6TP29DWKKVNN',
-  'Pro Partner': 'JLB9BGEGV6VKJ',
-  'Elite':       'X57YNYLKM8W7Y'
-};
+// Renders the Stripe Checkout link for the package the contractor picked.
+// Checkout URLs are configured once in /payment-links.js.
+function loadPayButton(pkg, opts) {
+  var wrap = document.getElementById('ct-pay-btn');
+  var link = HFS_PAY.resolve(pkg);
+  var url  = HFS_PAY.checkoutUrl(link, opts);
 
-function loadPayPalButton(pkg) {
-  var buttonId = null;
-  for (var name in PAYPAL_BUTTONS) {
-    if (pkg.indexOf(name) !== -1) {
-      buttonId = PAYPAL_BUTTONS[name];
-      break;
-    }
+  if (!url) {
+    wrap.innerHTML = HFS_PAY.unavailableHtml(link ? link.amount : '');
+    return;
   }
-  if (!buttonId) return;
-  document.getElementById('ct-paypal-btn').innerHTML = '';
-  paypal.HostedButtons({ hostedButtonId: buttonId }).render('#ct-paypal-btn');
+
+  wrap.innerHTML =
+    '<a href="' + url + '" class="pay-link">Pay ' + link.amount + ' securely →</a>' +
+    '<p class="pay-hint">🔒 Secure checkout by Stripe · debit or credit card · no account to create</p>';
 }
 
 function handleSubmit() {
@@ -564,18 +562,22 @@ function handleSubmit() {
         ba=document.getElementById('ct-ba'), sp=document.getElementById('ct-sp');
   btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
 
+  // Recorded as Pending Payment — the Apps Script only routes leads to Active
+  // rows, so nobody gets leads until Stripe confirms the payment.
+  const paymentRef = HFS_PAY.makeReference(company, email);
   fetch(SHEET_URL, {
     method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       type:'Contractor', firstName, lastName, company,
       phone, email, zip, years, serviceAreas:areas, package:pkg, smsConsent,
+      status: 'Pending Payment', paymentRef,
       submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'})
     })
   }).then(() => {
     document.getElementById('ct-form').style.display = 'none';
     document.getElementById('ct-success').style.display = 'block';
-    loadPayPalButton(pkg);
+    loadPayButton(pkg, { email, reference: paymentRef });
   }).catch(() => {
     err.textContent='Something went wrong. Please try again.'; err.style.display='block';
     btn.disabled=false; bt.textContent='Submit Application'; ba.style.display='inline'; sp.style.display='none';
