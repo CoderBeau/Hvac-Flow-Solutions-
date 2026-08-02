@@ -154,7 +154,7 @@ if you leave PayPal off, the button simply doesn't appear at checkout.
 
 1. Open your Google Sheet > **Extensions > Apps Script**
 2. Delete existing code, paste the full contents of `contractor-automation.gs`
-3. Click the gear icon > **Script Properties**, add all 5:
+3. Click the gear icon > **Script Properties**, add all 6:
 
 | Property | Value |
 |---|---|
@@ -163,14 +163,32 @@ if you leave PayPal off, the button simply doesn't appear at checkout.
 | `TWILIO_FROM` | Your Twilio number, e.g. `+12105551234` |
 | `ADMIN_PHONE` | Your cell, e.g. `+12105559999` |
 | `DASHBOARD_KEY` | A long random password for the dashboard (30+ characters — treat it like a password). The dashboard API refuses every request until this is set. |
+| `STRIPE_WEBHOOK_TOKEN` | A long random string, repeated in the Stripe webhook URL as `?stripeToken=...` (Step 0d). Paid contractors stay at Pending Payment until this is set. |
 
 4. Click **Deploy > New Deployment**
    - Type: **Web App** | Execute as: **Me** | Access: **Anyone**
+   - **Access must be "Anyone"** — the website forms and the Stripe webhook both call this URL without signing in to Google.
 5. Point your forms (`contractor-form.html`, `get-quotes.html`, `contractor-trial.html`) at the deployed Web App URL if they aren't already.
 
 ---
 
-> Re-deploy any time you change the script or its properties — **Deploy > Manage deployments > Edit > New version**.
+## Updating the script later (READ THIS BEFORE YOU RE-PASTE)
+
+Apps Script serves the **last deployed version**, not whatever is currently in the editor.
+Pasting new code and hitting **Save** changes nothing for the live site — you have to publish
+a new version.
+
+**Deploy > Manage deployments >** pencil/**Edit** icon **> Version: New version > Deploy**
+
+That keeps the **same `/exec` URL**, which is what you want.
+
+> ⚠️ Do **not** use **Deploy > New deployment** for an update. That mints a *different* `/exec`
+> URL, and the old one goes stale — every form on the site would silently stop writing to the
+> sheet. Eight files hardcode the current URL (`pricing.html`, `index.html`, `contractor-form.html`,
+> `contractor-trial.html`, `get-quotes.html`, `docs/get-quotes.html`, and `dashboard.html`), so a
+> new URL means editing all of them plus re-pointing the Stripe webhook.
+
+Re-deploy this way any time you change the script **or** its Script Properties.
 
 ## Step 3 — Install Triggers (run once)
 
