@@ -119,6 +119,34 @@
   .area label{display:flex;align-items:center;justify-content:center;padding:.5rem .3rem;border:1.5px solid var(--line2);border-radius:8px;cursor:pointer;font-family:var(--dsp);font-weight:700;font-size:.7rem;color:var(--muted);text-align:center;transition:all .15s;}
   .area input:checked + label{border-color:var(--navy);background:var(--navy);color:#fff;}
 
+  /* Order summary — shows exactly what gets charged today */
+  .summary{background:var(--paper);border:1.5px solid var(--line2);border-radius:12px;padding:.95rem 1.1rem;margin:.3rem 0 .9rem;}
+  .srow{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;font-size:.86rem;color:var(--muted);padding:.28rem 0;}
+  .srow b{font-family:var(--dsp);font-weight:800;color:var(--ink);}
+  .srow.total{border-top:1.5px solid var(--line2);margin-top:.35rem;padding-top:.55rem;font-size:.95rem;color:var(--ink);}
+  .srow.total b{color:var(--red);font-size:1.15rem;}
+  .snote{font-size:.75rem;color:var(--muted2);margin-top:.5rem;}
+
+  /* Terms are collapsed by default so the pay button stays above the fold */
+  .terms-d{margin:0 0 .8rem;}
+  .terms-d>summary{list-style:none;cursor:pointer;font-family:var(--dsp);font-weight:700;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);background:var(--paper);border:1.5px solid var(--line2);border-radius:11px;padding:.7rem .85rem;display:flex;align-items:center;gap:.45rem;}
+  .terms-d>summary::-webkit-details-marker{display:none;}
+  .terms-d>summary::before{content:"+";font-size:1rem;line-height:1;color:var(--orange);}
+  .terms-d[open]>summary::before{content:"–";}
+  .terms-d>summary span{font-family:var(--body);font-weight:400;font-size:.74rem;letter-spacing:0;text-transform:none;color:var(--muted2);}
+  .terms-d[open]>summary{border-radius:11px 11px 0 0;border-bottom:none;}
+  .terms-d[open] .terms{border-radius:0 0 11px 11px;margin-top:0;}
+
+  /* No-PayPal-account card fallback */
+  .altpay{margin-top:1.1rem;border-top:1px solid var(--line);padding-top:1.1rem;}
+  .altpay h4{font-family:var(--dsp);font-weight:800;font-size:.9rem;color:var(--navy);margin:0 0 .35rem;}
+  .altpay p{font-size:.83rem;color:var(--muted);line-height:1.55;margin:0 0 .7rem;}
+  .altbtn{width:100%;background:#fff;border:1.5px solid var(--navy);color:var(--navy);font-family:var(--dsp);font-weight:800;font-size:.9rem;border-radius:11px;padding:.85rem 1rem;cursor:pointer;transition:all .15s;}
+  .altbtn:hover{background:var(--navy);color:#fff;}
+  .altcall{font-size:.8rem;color:var(--muted2);text-align:center;margin:.7rem 0 0;}
+  .altcall a{color:var(--orange);font-weight:700;text-decoration:none;}
+  .altdone{display:none;background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);border-radius:11px;padding:.85rem 1rem;font-size:.85rem;color:#15803d;line-height:1.55;}
+
   .terms{background:var(--paper);border:1.5px solid var(--line2);border-radius:12px;padding:1rem 1.1rem;max-height:180px;overflow-y:auto;margin:.5rem 0 1rem;font-size:.82rem;color:var(--muted);}
   .terms h4{font-family:var(--dsp);font-weight:700;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin:.8rem 0 .25rem;}
   .terms h4:first-child{margin-top:0;}
@@ -275,26 +303,46 @@
             <div class="area"><input type="checkbox" id="a-ep" value="El Paso"><label for="a-ep">El Paso</label></div>
           </div>
 
-          <div class="terms">
-            <h4>1. Billing</h4>
-            <p>Your membership is charged automatically to your PayPal each month until you cancel. Your first payment is due today to activate leads.</p>
-            <h4>2. What You Get</h4>
-            <p>You'll receive your tier's exclusive lead range each month in your service area. Your monthly lead count resets at the start of each billing cycle.</p>
-            <h4>3. Month-to-Month, Cancel Anytime</h4>
-            <p>No contract. Cancel anytime from your PayPal account or by contacting us; cancelling stops future charges. Partial months are not refunded.</p>
-            <h4>4. Valid Leads &amp; Replacement</h4>
-            <p>A valid lead is a real homeowner in your service area with working contact info and an active HVAC need. Invalid leads are replaced at no cost.</p>
-            <h4>5. Exclusive to You</h4>
-            <p>Every lead is delivered to you only. We never resell or share it with another contractor in your area.</p>
+          <div class="summary">
+            <div class="srow"><span>Membership</span><b id="sum-tier">Growth Membership</b></div>
+            <div class="srow"><span>Billed every month</span><b id="sum-rate">$697/mo</b></div>
+            <div class="srow total"><span>Due today</span><b id="sum-today">$697</b></div>
+            <p class="snote">Renews automatically each month. No contract — cancel anytime.</p>
           </div>
 
-          <label class="chk"><input type="checkbox" id="m-agree-terms"><span>I have read and agree to the <b>Membership Terms</b> above and the <a href="/terms.html" target="_blank">Terms of Service</a>.</span></label>
-          <label class="chk"><input type="checkbox" id="m-agree-bill"><span>I understand my PayPal will be <b>charged the monthly amount automatically</b> until I cancel.</span></label>
+          <details class="terms-d">
+            <summary>Membership Terms <span>— tap to read</span></summary>
+            <div class="terms">
+              <h4>1. Billing</h4>
+              <p>Your membership is charged automatically to your payment method each month until you cancel. Your first payment is due today to activate leads.</p>
+              <h4>2. What You Get</h4>
+              <p>You'll receive your tier's exclusive lead range each month in your service area. Your monthly lead count resets at the start of each billing cycle.</p>
+              <h4>3. Month-to-Month, Cancel Anytime</h4>
+              <p>No contract. Cancel anytime by contacting us, or from your PayPal account if you paid with one; cancelling stops future charges. Partial months are not refunded.</p>
+              <h4>4. Valid Leads &amp; Replacement</h4>
+              <p>A valid lead is a real homeowner in your service area with working contact info and an active HVAC need. Invalid leads are replaced at no cost.</p>
+              <h4>5. Exclusive to You</h4>
+              <p>Every lead is delivered to you only. We never resell or share it with another contractor in your area.</p>
+            </div>
+          </details>
+
+          <label class="chk"><input type="checkbox" id="m-agree"><span>I agree to the <b>Membership Terms</b> and <a href="/terms.html" target="_blank">Terms of Service</a>, and I understand my payment method will be <b>charged <span id="agree-price">$697</span> automatically every month</b> until I cancel.</span></label>
           <label class="chk"><input type="checkbox" id="m-sms"><span><span class="optlab">Optional</span>Yes, text me lead and account updates from HVAC Flow Solutions. Msg frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Not required to subscribe.</span></label>
 
           <div class="err" id="m-err"></div>
           <div id="paypal-sub-button"></div>
-          <p class="paypal-hint">Secure checkout via PayPal · month-to-month · cancel anytime</p>
+          <p class="paypal-hint">Secure checkout · month-to-month · cancel anytime</p>
+
+          <div class="altpay">
+            <h4>Don't have a PayPal account?</h4>
+            <p>You don't need one. Use the <b>Debit or Credit Card</b> button above if it's shown, or have us send you a card payment link instead — no PayPal login, nothing to sign up for.</p>
+            <button type="button" class="altbtn" id="alt-card-btn">Send me a card payment link</button>
+            <div class="altdone" id="alt-card-done">
+              Got it — we're sending a secure card payment link to your email, usually within the hour.
+              If your email app didn't open, just call us and we'll take the card over the phone.
+            </div>
+            <p class="altcall">Prefer to talk? Call <a href="tel:+18305380713">(830) 538-0713</a> and we'll set it up for you.</p>
+          </div>
         </div>
 
         <div class="join-success" id="join-success">
@@ -322,7 +370,9 @@
 </div><!-- end #member-main -->
 
 <!-- PayPal SDK (subscriptions) -->
-<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&vault=true&intent=subscription&disable-funding=card,credit,paylater"></script>
+<!-- enable-funding=card exposes PayPal's "Debit or Credit Card" guest button so a
+     contractor can pay without a PayPal login, wherever PayPal deems them eligible. -->
+<script src="https://www.paypal.com/sdk/js?client-id=AVgdZn_4GOzeQHa9V4MSJ7VGHK6CXGrIhBfowxSoDHhjdKUgWi1BCf-bjhAr1Z1Jsgwvrw9UTx7oaoSk&vault=true&intent=subscription&enable-funding=card,venmo&disable-funding=credit"></script>
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEzU0QIrzKDlruiDQ28UKVeJpgyvlkVe0JSWVw7Y7vsLvFq8/exec";
 
@@ -357,8 +407,20 @@ function pickTier(key){
   selectedTier = key;
   document.querySelectorAll('.tierchip').forEach(function(c){ c.classList.toggle('on', c.dataset.t === key); });
   document.getElementById('join-title').textContent = TIERS[key].name + ' — ' + TIERS[key].price + '/mo';
+  syncSummary();
   document.getElementById('join').scrollIntoView({ behavior:'smooth', block:'start' });
 }
+
+// Keeps the order summary and the billing-consent wording matched to the chosen tier,
+// so the contractor always sees the exact amount they're agreeing to.
+function syncSummary(){
+  var t = TIERS[selectedTier];
+  document.getElementById('sum-tier').textContent  = t.name;
+  document.getElementById('sum-rate').textContent  = t.price + '/mo';
+  document.getElementById('sum-today').textContent = t.price;
+  document.getElementById('agree-price').textContent = t.price;
+}
+syncSummary();
 
 // Phone formatting
 document.getElementById('m-phone').addEventListener('input', function(e){
@@ -387,8 +449,7 @@ function validateMembership(){
   }
   if (!/\S+@\S+\.\S+/.test(d.email)){ err.textContent='Please enter a valid email address.'; err.style.display='block'; return false; }
   if (!d.areas){ err.textContent='Please select at least one service area.'; err.style.display='block'; return false; }
-  if (!document.getElementById('m-agree-terms').checked){ err.textContent='Please agree to the Membership Terms to continue.'; err.style.display='block'; return false; }
-  if (!document.getElementById('m-agree-bill').checked){ err.textContent='Please acknowledge the recurring monthly charge to continue.'; err.style.display='block'; return false; }
+  if (!document.getElementById('m-agree').checked){ err.textContent='Please check the box agreeing to the terms and the monthly charge to continue.'; err.style.display='block'; return false; }
   return true;
 }
 
@@ -434,6 +495,48 @@ if (window.paypal && paypal.Buttons) {
   document.getElementById('paypal-sub-button').innerHTML =
     '<p style="text-align:center;color:#C8102E;font-size:.85rem;">PayPal could not load. Please refresh, or email hvacflowsolutions@gmail.com to sign up.</p>';
 }
+
+// ── Card-payment fallback (no PayPal account required) ──
+// Deliberately does NOT post to the Apps Script: writeContractor() marks every
+// row 'Active' immediately, which would start routing leads before this
+// contractor has actually paid. This just hands us their details so we can send
+// a card payment link and activate them once it clears.
+document.getElementById('alt-card-btn').addEventListener('click', function(){
+  var err = document.getElementById('m-err');
+  err.style.display = 'none';
+  var d = membershipData();
+  if (!d.bizname || !d.firstName || !d.lastName || !d.phone || !d.email){
+    err.textContent = 'Please fill out your business name, name, phone, and email so we know where to send the payment link.';
+    err.style.display = 'block';
+    document.getElementById('m-biz').scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  if (!/\S+@\S+\.\S+/.test(d.email)){
+    err.textContent = 'Please enter a valid email address so we can send the payment link.';
+    err.style.display = 'block';
+    return;
+  }
+
+  var t = TIERS[selectedTier];
+  var body =
+    'I would like to pay by debit/credit card instead of PayPal.\n\n' +
+    'Membership: ' + t.name + ' (' + t.price + '/mo)\n' +
+    'Business: '   + d.bizname + '\n' +
+    'Name: '       + d.firstName + ' ' + d.lastName + '\n' +
+    'Phone: '      + d.phone + '\n' +
+    'Email: '      + d.email + '\n' +
+    'Service areas: ' + (d.areas || '(not selected)') + '\n' +
+    'Text me updates: ' + d.smsConsent + '\n\n' +
+    'Please send me a card payment link.';
+
+  document.getElementById('alt-card-done').style.display = 'block';
+  this.style.display = 'none';
+  if (typeof gtag !== 'undefined') { gtag('event', 'card_link_request', { event_category:'Membership', event_label: t.name }); }
+
+  window.location.href = 'mailto:hvacflowsolutions@gmail.com'
+    + '?subject=' + encodeURIComponent('Card payment link request — ' + d.bizname + ' (' + t.name + ')')
+    + '&body='    + encodeURIComponent(body);
+});
 </script>
 </body>
 </html>
