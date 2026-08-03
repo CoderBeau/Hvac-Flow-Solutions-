@@ -30,22 +30,22 @@
   // Checked BEFORE one-time packages, because "Starter Membership"
   // also contains the one-time package name "Starter".
   var MEMBERSHIPS = {
-    'Starter Membership': { url: NOT_SET, amount: '$397' },
-    'Growth Membership':  { url: NOT_SET, amount: '$697' },
-    'Pro Membership':     { url: NOT_SET, amount: '$997' }
+    'Starter Membership': { url: 'https://buy.stripe.com/3cI6oI4ykdZr2Kp4HC4ZG00', amount: '$397' },
+    'Growth Membership':  { url: 'https://buy.stripe.com/5kQ8wQgh24oR0Ch4HC4ZG02', amount: '$697' },
+    'Pro Membership':     { url: 'https://buy.stripe.com/bJe7sM4ykcVn5WB2zu4ZG01', amount: '$997' }
   };
 
   // One-time lead packages (index.html, contractor-form.html).
   var PACKAGES = {
-    'Tester':      { url: NOT_SET, amount: '$75' },
-    'Starter':     { url: NOT_SET, amount: '$150' },
-    'Growth':      { url: NOT_SET, amount: '$375' },
-    'Pro Partner': { url: NOT_SET, amount: '$700' },
-    'Elite':       { url: NOT_SET, amount: '$1,300' }
+    'Tester':      { url: 'https://buy.stripe.com/14A14o8OA2gJ2Kpfmg4ZG03', amount: '$75' },
+    'Starter':     { url: 'https://buy.stripe.com/dRmfZi6Gs3kN3Otb604ZG04', amount: '$150' },
+    'Growth':      { url: 'https://buy.stripe.com/6oUdRafcYf3vckZ5LG4ZG05', amount: '$375' },
+    'Pro Partner': { url: 'https://buy.stripe.com/28EcN65Co7B384Jgqk4ZG06', amount: '$700' },
+    'Elite':       { url: 'https://buy.stripe.com/8x23cw9SE9JbgBf0rm4ZG07', amount: '$1,300' }
   };
 
   // One-time 14-day trial fee (contractor-trial.html).
-  var TRIAL = { url: NOT_SET, amount: '$25' };
+  var TRIAL = { url: 'https://buy.stripe.com/4gM3cw7Kw4oR70F0rm4ZG08', amount: '$25' };
 
   var SUPPORT_PHONE      = '(830) 538-0713';
   var SUPPORT_PHONE_HREF = 'tel:+18305380713';
