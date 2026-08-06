@@ -319,7 +319,7 @@ function getDashboardData(ss) {
   var leads = [];
   var gq = ss.getSheetByName('Get Quotes');
   if (gq && gq.getLastRow() > 1) {
-    var lastCol = Math.max(gq.getLastColumn(), 18);
+    var lastCol = Math.max(gq.getLastColumn(), 22);
     gq.getRange(2, 1, gq.getLastRow() - 1, lastCol).getValues().forEach(function(r, i) {
       leads.push({
         row: i + 2,
@@ -330,7 +330,9 @@ function getDashboardData(ss) {
         followUpSent: r[12] ? String(r[12]) : '',
         smsConsent: r[13],
         quality: r[14] || '', score: r[15], matched: r[16] || '',
-        routedTo: r[17] || ''
+        routedTo: r[17] || '',
+        term: r[18] || '', clickId: r[19] || '',
+        landingPage: r[20] || '', referrer: r[21] || ''
       });
     });
   }
@@ -447,7 +449,14 @@ function apiRemoveKeyword(ss, p) {
 // ── Get Quotes (Homeowner) writer ────────────────────────────
 // Columns: Timestamp | First | Last | Phone | Email | ZIP | City | Service |
 //          Urgency | Source | Campaign | Notes | Follow-up Sent | SMS Consent |
-//          Lead Quality | Quality Score | Matched Keywords | Routed To
+//          Lead Quality | Quality Score | Matched Keywords | Routed To |
+//          Keyword / Term | Ad Click ID | Landing Page | Referrer
+//
+// The last four are ad attribution, captured by /attribution.js on the site.
+// They are what makes cost per *Good* lead answerable: Google Ads reports the
+// spend per campaign and term, this sheet reports which of those leads were
+// worth routing. Columns 19-22 are appended, never inserted — every read in
+// this file is positional.
 function writeHomeowner(ss, data, verdict) {
   let sheet = ss.getSheetByName('Get Quotes');
   if (!sheet) sheet = ss.insertSheet('Get Quotes');
@@ -456,14 +465,16 @@ function writeHomeowner(ss, data, verdict) {
     sheet.appendRow([
       'Timestamp', 'First Name', 'Last Name', 'Phone', 'Email',
       'ZIP', 'City', 'Service Needed', 'Urgency', 'Source', 'Campaign', 'Notes', 'Follow-up Sent', 'SMS Consent',
-      'Lead Quality', 'Quality Score', 'Matched Keywords', 'Routed To'
+      'Lead Quality', 'Quality Score', 'Matched Keywords', 'Routed To',
+      'Keyword / Term', 'Ad Click ID', 'Landing Page', 'Referrer'
     ]);
-    const headerRange = sheet.getRange(1, 1, 1, 18);
+    const headerRange = sheet.getRange(1, 1, 1, 22);
     headerRange.setBackground('#0B1E3B');
     headerRange.setFontColor('#FFFFFF');
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
-    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280, 130, 110, 100, 90, 220, 160]
+    [160, 100, 100, 130, 200, 70, 120, 180, 140, 130, 160, 280, 130, 110, 100, 90, 220, 160,
+     200, 240, 200, 220]
       .forEach((w, i) => sheet.setColumnWidth(i + 1, w));
   }
 
@@ -487,7 +498,11 @@ function writeHomeowner(ss, data, verdict) {
     verdict.quality,
     verdict.score,
     formatMatchedKeywords(verdict),
-    ''                         // Routed To — filled in after routing
+    '',                        // Routed To — filled in after routing
+    data.term        || '',    // Keyword / Term — utm_term, the search that paid for this lead
+    data.clickId     || '',    // Ad Click ID — gclid; needed for offline conversion import
+    data.landingPage || '',
+    data.referrer    || ''
   ]);
 }
 
@@ -706,6 +721,8 @@ function sendEmailAlert(type, data, verdict) {
       'Urgency: '  + data.urgency + '\n' +
       'Source: '   + (data.source   || 'Organic / Direct') + '\n' +
       'Campaign: ' + (data.campaign || 'N/A') + '\n' +
+      (data.term    ? 'Search Term: ' + data.term + '\n' : '') +
+      (data.clickId ? 'Ad Click ID: ' + data.clickId + '\n' : '') +
       'Notes: '    + (data.notes || data.description || 'N/A') + '\n' +
       'Submitted: '+ data.submittedAt;
   } else {
@@ -1327,7 +1344,8 @@ function migrateGetQuotesSheet() {
 
   var headerNames = {
     13: 'Follow-up Sent', 14: 'SMS Consent',
-    15: 'Lead Quality', 16: 'Quality Score', 17: 'Matched Keywords', 18: 'Routed To'
+    15: 'Lead Quality', 16: 'Quality Score', 17: 'Matched Keywords', 18: 'Routed To',
+    19: 'Keyword / Term', 20: 'Ad Click ID', 21: 'Landing Page', 22: 'Referrer'
   };
   for (var c in headerNames) {
     var cell = sheet.getRange(1, parseInt(c, 10));
@@ -1335,8 +1353,10 @@ function migrateGetQuotesSheet() {
   }
 
   ensureKeywordsSheet(ss);
-  Logger.log('Migrated Get Quotes sheet to 18 columns and created the Keywords tab. ' +
-             'Run "Rescore All Unscored Leads" from the HVAC Admin menu to score existing rows.');
+  Logger.log('Migrated Get Quotes sheet to 22 columns and created the Keywords tab. ' +
+             'Columns 19-22 hold ad attribution and stay blank for leads captured before ' +
+             'attribution.js went live. Run "Rescore All Unscored Leads" from the HVAC Admin ' +
+             'menu to score existing rows.');
 }
 
 // ── Twilio SMS ─────────────────────────────────────────────
@@ -1387,7 +1407,10 @@ function testHomeowner() {
     phone: '2105551234', email: 'test@example.com',
     zip: '78201', city: 'San Antonio',
     service: 'AC Repair', urgency: 'Today',
-    source: 'Test', campaign: '', notes: 'AC not cooling, need someone today',
+    source: 'google / cpc', campaign: 'SA | AC Repair | Emergency',
+    term: 'ac not cooling san antonio', clickId: 'TEST_GCLID_00000',
+    landingPage: '/get-quotes.html?utm_source=google', referrer: '',
+    notes: 'AC not cooling, need someone today',
     smsConsent: 'Yes'
   };
   var verdict = scoreLead(data, getKeywords(ss));

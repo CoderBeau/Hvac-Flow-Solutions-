@@ -69,8 +69,17 @@ SA | AC Replace | Core
 | Final URL | `https://boosthvacleads.com/get-quotes.html` | |
 | Tracking template | `{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_term={keyword}&gclid={gclid}` | Lets the sheet trace a lead back to its campaign |
 
-## The tracking template matters
+## The tracking template matters — attribution is live
 
-`contractor-automation.gs` writes every lead to the **Get Quotes** tab with its quality verdict. If `get-quotes.html` captures the UTM parameters into a hidden field and posts them along with the lead, the sheet can tell you *which campaign produced Good leads and which produced Bad ones*.
+The tracking template above is what fills the attribution columns in the sheet. **This wiring exists**, as of the UTM tracking commit:
 
-That wiring does not exist yet. Until it does, ad-to-lead-quality attribution is manual. Flag this to the user the first time they ask about cost per Good lead — it's a small change to `get-quotes.html` and `writeHomeowner()` in the Apps Script, and it's the highest-value thing on the whole roadmap.
+- `/attribution.js` captures `utm_*`, `gclid`, `gbraid`, `wbraid`, `msclkid`, and `fbclid` on any page, stores the last non-direct touch in `localStorage` for 30 days, and falls back to referrer classification for organic traffic.
+- `index.html`, `get-quotes.html`, and `docs/get-quotes.html` post that context with every homeowner lead.
+- `writeHomeowner()` stores it in **Get Quotes** columns 19–22: `Keyword / Term`, `Ad Click ID`, `Landing Page`, `Referrer`. Source (col 10) and Campaign (col 11) were already there.
+- The dashboard's Leads tab shows source, campaign, and search term per lead, and the search box matches on all three.
+
+So cost per Good lead is answerable: join campaign spend from the `search` tool against Good-verdict counts grouped by the Campaign column. See `measurement.md` § Closing the loop.
+
+**If the tracking template is missing from a campaign, `utm_term` is empty and keyword-level analysis silently degrades to campaign-level.** `gclid` still arrives — Google appends it — and `attribution.js` infers `google / cpc` from a bare gclid, so the lead is still marked as paid. But you lose the search term, which is the part that drives the negative-keyword loop. Check the tracking template on every new campaign.
+
+Leads captured before this shipped have blank columns 19–22. That's expected; don't read it as broken tracking.

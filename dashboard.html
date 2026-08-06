@@ -287,7 +287,7 @@
           <thead>
             <tr>
               <th>Received</th><th>Homeowner</th><th>Contact</th><th>Location</th>
-              <th>Service / Urgency</th><th>Quality</th><th>Keywords Hit</th><th>Routed To</th><th>Actions</th>
+              <th>Service / Urgency</th><th>Source</th><th>Quality</th><th>Keywords Hit</th><th>Routed To</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="leadRows"></tbody>
@@ -560,7 +560,8 @@ function renderLeads() {
     var q = qualityOf(l);
     if (state.leadFilter !== 'All' && q !== state.leadFilter) return false;
     if (search) {
-      var hay = [l.firstName, l.lastName, l.phone, l.email, l.city, l.zip, l.service, l.notes, l.routedTo].join(' ').toLowerCase();
+      var hay = [l.firstName, l.lastName, l.phone, l.email, l.city, l.zip, l.service, l.notes, l.routedTo,
+                 l.source, l.campaign, l.term].join(' ').toLowerCase();
       if (hay.indexOf(search) === -1) return false;
     }
     return true;
@@ -581,6 +582,9 @@ function renderLeads() {
       '<td class="nowrap">' + esc(l.phone) + '<div class="muted">' + esc(l.email) + '</div></td>' +
       '<td>' + esc(l.city || '') + ' <span class="muted">' + esc(l.zip || '') + '</span></td>' +
       '<td>' + esc(l.service || '') + '<div class="muted">' + esc(l.urgency || '') + '</div></td>' +
+      '<td>' + esc(l.source || 'Organic / Direct') +
+        (l.campaign ? '<div class="muted">' + esc(l.campaign) + '</div>' : '') +
+        (l.term ? '<div class="muted">“' + esc(l.term) + '”</div>' : '') + '</td>' +
       '<td>' + qualityBadge(q) + '<div class="muted">score ' + esc(l.score === '' ? '?' : l.score) + '</div></td>' +
       '<td>' + keywordChips(l.matched) + '</td>' +
       '<td>' + (l.routedTo ? esc(l.routedTo) : '<span class="badge neutral">Not routed</span>') + '</td>' +

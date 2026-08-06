@@ -213,6 +213,7 @@
     @media(max-width:600px){ .m-steps,.m-bgrid,.m-tgrid,.m-pgrid { grid-template-columns:1fr; } .m-stats-inner { grid-template-columns:1fr 1fr; } .m-band { padding-bottom:5.5rem; } }
     @media(prefers-reduced-motion:reduce){ .m-btn,.m-bcard,.m-step,.m-pcard { transition:none; } }
   </style>
+<script src="/attribution.js"></script>
 </head>
 <body class="bg-zinc-50 text-zinc-900 overflow-x-hidden">
 
@@ -822,15 +823,24 @@ function submitHomeowner() {
   const btn=document.getElementById('hw-btn'), bt=document.getElementById('hw-bt'),
         ba=document.getElementById('hw-ba'), sp=document.getElementById('hw-sp');
   btn.disabled=true; bt.textContent='Submitting...'; ba.style.display='none'; sp.style.display='block';
+  // Campaign attribution — persisted by /attribution.js across pages and for
+  // 30 days, so the ad that produced this lead is recorded on the sheet row.
+  const attr = (window.HFSAttribution && window.HFSAttribution.get()) || {};
   fetch(SHEET_URL, {
     method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ type:'Homeowner', firstName, lastName, phone, email, zip, city, service, urgency,
       smsConsent,
+      source:      attr.leadSource  || 'Organic / Direct',
+      campaign:    attr.campaign    || '',
+      term:        attr.term        || '',
+      clickId:     attr.clickId     || '',
+      landingPage: attr.landingPage || '',
+      referrer:    attr.referrer    || '',
       submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}) })
   }).then(() => {
     document.getElementById('hw-form').style.display = 'none';
     document.getElementById('hw-success').style.display = 'block';
-    if (typeof gtag !== 'undefined') { gtag('event', 'form_submit', { event_category: 'Homeowner Lead' }); }
+    if (typeof gtag !== 'undefined') { gtag('event', 'form_submit', { event_category: 'Homeowner Lead', event_label: attr.leadSource || 'Organic / Direct' }); }
   }).catch(() => {
     err.textContent='Something went wrong. Please try again.'; err.style.display='block';
     btn.disabled=false; bt.textContent='Get My Free Quotes'; ba.style.display='inline'; sp.style.display='none';

@@ -146,4 +146,8 @@ ORDER BY metrics.cost_micros DESC
 
 Anything with spend and no conversions is a negative-keyword candidate. Show the user the list, let them approve, then `add_negative_keywords`.
 
-**The compounding version** — once UTM capture is wired into `get-quotes.html` (see `account-config.md`): cross-reference search terms against leads the sheet scored **Bad**. That surfaces terms which convert on paper but produce garbage — invisible to Google, obvious in your own data, and the reason you can run this account tighter than any competitor.
+**The compounding version** — now available, since the sheet records the search term per lead in **Get Quotes** column 19: cross-reference paid search terms against leads scored **Bad**.
+
+That surfaces terms which convert on paper but produce garbage — a term with 4 conversions and 4 Bad verdicts looks like a winner in Google Ads and is pure loss to you. Invisible to Google, obvious in your own data, and the reason you can run this account tighter than any competitor.
+
+Run it alongside the zero-conversion query above; the two catch different failures.

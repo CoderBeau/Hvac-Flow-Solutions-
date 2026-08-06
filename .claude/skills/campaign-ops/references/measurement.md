@@ -104,12 +104,14 @@ WHERE segments.date DURING LAST_30_DAYS
 
 The Google Ads number is cost per **conversion**. The number that matters is cost per **Good lead**. Google can't see the difference; `contractor-automation.gs` can.
 
-Once UTM capture is wired (see `account-config.md`), the analysis is:
+UTM capture is live — `/attribution.js` on the site, columns 19–22 in the **Get Quotes** tab. The analysis is:
 
-1. Pull spend + conversions by campaign for the period
+1. Pull spend + conversions by campaign (and by search term) for the period
 2. Pull the **Get Quotes** tab for the same period
-3. Group leads by campaign UTM, count Good / Needs Review / Bad
+3. Group leads by the **Campaign** column (col 11) and **Keyword / Term** (col 19), count Good / Needs Review / Bad
 4. Compute **cost per Good lead** = campaign spend ÷ Good leads
+
+Campaign names in the sheet match the Google Ads campaign names exactly, because the tracking template passes `{campaignid}` and the naming convention is stable — join on either.
 
 Then act:
 
@@ -120,7 +122,7 @@ Then act:
 | High cost per Good lead in a zip | Wrong neighborhood | Move zip to exclusions |
 | Good leads clustering on one term | Found the vein | Exact match it, raise its bid, and write the blog post |
 
-Until UTM capture exists, say so rather than presenting Google's conversion count as if it were lead quality. It isn't, and the gap is usually large.
+For leads predating attribution, columns 19–22 are blank. Exclude those rows from the join rather than counting them as unattributed paid traffic.
 
 ## Reporting format
 
