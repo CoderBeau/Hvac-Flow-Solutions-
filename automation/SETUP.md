@@ -184,8 +184,8 @@ That keeps the **same `/exec` URL**, which is what you want.
 
 > ⚠️ Do **not** use **Deploy > New deployment** for an update. That mints a *different* `/exec`
 > URL, and the old one goes stale — every form on the site would silently stop writing to the
-> sheet. Eight files hardcode the current URL (`pricing.html`, `index.html`, `contractor-form.html`,
-> `contractor-trial.html`, `get-quotes.html`, `docs/get-quotes.html`, and `dashboard.html`), so a
+> sheet. Six files hardcode the current URL (`index.html`, `pricing.html`, `contractor-form.html`,
+> `contractor-trial.html`, `get-quotes.html`, and `dashboard.html`), so a
 > new URL means editing all of them plus re-pointing the Stripe webhook.
 
 Re-deploy this way any time you change the script **or** its Script Properties.
