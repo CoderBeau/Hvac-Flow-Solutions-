@@ -74,7 +74,7 @@ SA | AC Replace | Core
 The tracking template above is what fills the attribution columns in the sheet. **This wiring exists**, as of the UTM tracking commit:
 
 - `/attribution.js` captures `utm_*`, `gclid`, `gbraid`, `wbraid`, `msclkid`, and `fbclid` on any page, stores the last non-direct touch in `localStorage` for 30 days, and falls back to referrer classification for organic traffic.
-- `index.html`, `get-quotes.html`, and `docs/get-quotes.html` post that context with every homeowner lead.
+- `index.html` and `get-quotes.html` post that context with every homeowner lead. Those are the only two homeowner forms; `homeowner-form.html` is a redirect into the second.
 - `writeHomeowner()` stores it in **Get Quotes** columns 19–22: `Keyword / Term`, `Ad Click ID`, `Landing Page`, `Referrer`. Source (col 10) and Campaign (col 11) were already there.
 - The dashboard's Leads tab shows source, campaign, and search term per lead, and the search box matches on all three.
 
