@@ -269,3 +269,14 @@ To change a cap, edit `PACKAGE_LEAD_CAPS` near the top of `contractor-automation
 | Keywords | Good/Bad keyword lists used to score every incoming lead — edit here or from the dashboard |
 
 > After updating `contractor-automation.gs` in the Apps Script editor, you must **re-deploy** (Deploy → Manage deployments → Edit → New version) for changes to go live.
+
+---
+
+## Related — Marketing Automation
+
+This guide covers the **lead pipeline** (forms → sheet → scoring → routing). The other half — how leads get *created* — is documented separately:
+
+- **`automation/GOOGLE-ADS-MCP-SETUP.md`** — connect Google Ads to Claude Code so campaigns can be built, adjusted, and reported on by command. Start-to-finish, with every copy/paste step for the manager account.
+- **`.claude/skills/campaign-ops/`** — the ops skill that executes those campaigns and publishes SEO content. Loads automatically when working in this repo.
+
+The two halves are designed to meet: the Bad keyword list in `contractor-automation.gs` seeds the ad negative-keyword list, and the Good/Bad verdicts in the **Get Quotes** tab are what ad spend should ultimately be judged against — not Google's raw conversion count.
