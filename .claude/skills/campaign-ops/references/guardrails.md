@@ -4,15 +4,24 @@ Two layers: the server enforces the first, Claude enforces the second. Both matt
 
 ## Server-enforced (env vars, set in `claude mcp add`)
 
-| Variable | Value | Effect |
-|---|---|---|
-| `GOOGLE_ADS_REQUIRE_DRY_RUN` | `true` | Every apply simulates unless explicitly bypassed |
-| `GOOGLE_ADS_MAX_DAILY_BUDGET` | `150` | Hard-rejects any campaign budget above this |
-| `GOOGLE_ADS_MAX_BID_INCREASE_PCT` | `50` | Blocks bid increases over 50% |
-| `GOOGLE_ADS_AUDIT_LOG` | `~/.mcp-google-ads/audit.log` | Every mutation logged with timestamp and dry-run status |
-| `GOOGLE_ADS_READ_ONLY` | `false` | Set `true` to freeze the account entirely |
+| Variable | Value | Server default | Effect |
+|---|---|---|---|
+| `GOOGLE_ADS_REQUIRE_DRY_RUN` | `true` | `true` | Every apply simulates unless explicitly bypassed |
+| `GOOGLE_ADS_MAX_DAILY_BUDGET` | `150` | `50` | Hard-rejects any campaign budget above this |
+| `GOOGLE_ADS_MAX_BID_INCREASE_PCT` | `50` | — | Blocks bid increases over this percentage |
+| `GOOGLE_ADS_BLOCKED_OPS` | see below | *(empty)* | Comma-separated list of tools the server refuses outright |
+| `GOOGLE_ADS_AUDIT_LOG` | `~/.mcp-google-ads/audit.log` | same | Every mutation logged with timestamp and dry-run status |
+| `GOOGLE_ADS_READ_ONLY` | `false` | `false` | Set `true` to freeze the account entirely |
 
-`GOOGLE_ADS_MAX_DAILY_BUDGET` is your protection against a misplaced decimal turning $80/day into $800/day. Raise it deliberately when peak season needs it, then lower it again in October.
+`GOOGLE_ADS_MAX_DAILY_BUDGET` is your protection against a misplaced decimal turning $80/day into $800/day. Note the server's own default is `50` — set it explicitly or an $80/day campaign is rejected. Raise it deliberately for peak season, then lower it again in October.
+
+**`GOOGLE_ADS_BLOCKED_OPS` is the strongest guardrail available** and it's empty by default. It refuses named tools at the server, below any judgment Claude applies. For this account:
+
+```
+GOOGLE_ADS_BLOCKED_OPS=remove_entity,remove_keywords,remove_negative_keywords,remove_geo_target,remove_extension,apply_recommendation
+```
+
+Those are exactly the irreversible operations plus the one that lets Google change your account on its own advice. Nothing in normal operation needs them — pausing covers every routine case. If you genuinely need to remove something, edit the env var deliberately and re-add the server; the friction is the point.
 
 The server also blocks broad match combined with Manual CPC. Don't route around it.
 

@@ -9,7 +9,8 @@
 | Field | Value | Where it comes from |
 |---|---|---|
 | Manager account (MCC) ID | `<FILL IN>` | Top-right of the manager account, format `123-456-7890` |
-| Ads account customer ID | `<FILL IN>` | Top-right of the HVAC Flow Solutions ads account |
+| Ads account customer ID | `<FILL IN>` | Top-right of the HVAC Flow Solutions ads account. This is the *default* only — every tool takes an optional per-call `customer_id`, so one server instance reaches every account under the manager. `list_accounts` enumerates them. |
+| `Good Lead` conversion action ID | `<FILL IN once offline import is set up>` | Trailing segment of the resource name returned by `create_conversion_action` — see `measurement.md` § Offline conversion import |
 | Developer token access level | `<FILL IN — Test / Explorer / Basic>` | MCC → Tools → API Center |
 | Google Cloud project ID | `<FILL IN>` | Cloud console |
 | MCP server name in Claude Code | `google-ads` | The name used in `claude mcp add` |
@@ -18,7 +19,7 @@ Secrets — developer token, OAuth client secret, refresh token — live **only*
 
 ## Conversion actions
 
-Create these in the Ads UI (Goals → Conversions → New), then record the resource names here. The build sequence attaches them to campaigns.
+**These must be created in the Ads UI** (Goals → Conversions → New), then recorded here. The MCP server's `create_conversion_action` only makes `UPLOAD_CLICKS` actions for offline import — it cannot create website or call conversions. `get_conversion_actions` lists what exists.
 
 | Conversion | Type | Counting | Value | Resource name |
 |---|---|---|---|---|
@@ -78,7 +79,7 @@ The tracking template above is what fills the attribution columns in the sheet. 
 - `writeHomeowner()` stores it in **Get Quotes** columns 19–22: `Keyword / Term`, `Ad Click ID`, `Landing Page`, `Referrer`. Source (col 10) and Campaign (col 11) were already there.
 - The dashboard's Leads tab shows source, campaign, and search term per lead, and the search box matches on all three.
 
-So cost per Good lead is answerable: join campaign spend from the `search` tool against Good-verdict counts grouped by the Campaign column. See `measurement.md` § Closing the loop.
+So cost per Good lead is answerable: join campaign spend from `get_campaign_performance` against Good-verdict counts grouped by the Campaign column. See `measurement.md` § Closing the loop.
 
 **If the tracking template is missing from a campaign, `utm_term` is empty and keyword-level analysis silently degrades to campaign-level.** `gclid` still arrives — Google appends it — and `attribution.js` infers `google / cpc` from a bare gclid, so the lead is still marked as paid. But you lose the search term, which is the part that drives the negative-keyword loop. Check the tracking template on every new campaign.
 

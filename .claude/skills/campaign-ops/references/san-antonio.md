@@ -58,21 +58,15 @@ High-rental, low owner-occupancy. Not a judgment about the neighborhoods — it'
 
 ## Resolving geo target IDs
 
-The API needs geo target constant IDs, not zip strings. Do not hardcode them and do not guess. Resolve via the `search` tool:
+The API needs geo target constant IDs, not zip strings. Do not hardcode them and do not guess — use the dedicated tool:
 
-```sql
-SELECT geo_target_constant.id,
-       geo_target_constant.name,
-       geo_target_constant.canonical_name,
-       geo_target_constant.country_code,
-       geo_target_constant.target_type
-FROM geo_target_constant
-WHERE geo_target_constant.country_code = 'US'
-  AND geo_target_constant.target_type = 'Postal Code'
-  AND geo_target_constant.name = '78209'
+```
+search_geo_targets(query: "78209")
 ```
 
-Check `canonical_name` contains `Texas` before using an ID — US postal codes are not unique across the geo target table.
+**Check the result is the Texas postal code before using it.** US zips are not unique in the geo target table, and a wrong ID silently targets another state. Verify the canonical name mentions Texas.
+
+The resolved IDs go into `draft_campaign`'s `geo_target_ids` for positive targeting, and into `exclude_geo_target` one at a time for the exclusion list.
 
 ## Seasonality
 

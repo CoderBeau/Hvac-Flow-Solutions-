@@ -131,20 +131,13 @@ Without these, your Replacement ad group — which carries the highest bids — 
 
 Run this weekly for the first month, then every two weeks:
 
-```sql
-SELECT search_term_view.search_term,
-       campaign.name,
-       metrics.clicks,
-       metrics.cost_micros,
-       metrics.conversions
-FROM search_term_view
-WHERE segments.date DURING LAST_30_DAYS
-  AND metrics.clicks > 2
-  AND metrics.conversions = 0
-ORDER BY metrics.cost_micros DESC
+```
+get_search_terms(customer_id?, date range)     # top 200 by clicks, last 30 days by default
 ```
 
-Anything with spend and no conversions is a negative-keyword candidate. Show the user the list, let them approve, then `add_negative_keywords`.
+Filter for terms with clicks and **zero conversions** — those are negative-keyword candidates. Show the user the list, let them approve, then `add_negative_keywords`.
+
+`get_negative_keywords` reads back what's already applied, so you don't re-propose something that's live. Raw GAQL via `run_gaql` is only needed if volume ever exceeds the 200-term cap — see `measurement.md`.
 
 **The compounding version** — now available, since the sheet records the search term per lead in **Get Quotes** column 19: cross-reference paid search terms against leads scored **Bad**.
 

@@ -2,158 +2,151 @@
 
 Exact tool order for the `google-ads` MCP server ([FGRibreau/mcp-google-ads](https://github.com/FGRibreau/mcp-google-ads)).
 
+Tool names and parameters below were read from the server source, not from its README — the README undercounts the surface. There are **51 tools**, including dedicated report tools that are better than raw GAQL for routine work.
+
 ## How every write works
 
 The server enforces draft → confirm:
 
 1. Call a `draft_*` / `create_*` / `update_*` tool. It returns a **plan preview and a `plan_id`**. Nothing has hit the API yet.
 2. Call `confirm_and_apply(plan_id, dry_run)`.
-   - `dry_run=true` (default) simulates.
-   - `dry_run=false` executes. While `GOOGLE_ADS_REQUIRE_DRY_RUN=true`, executing also needs `bypass_require_dry_run=true`.
-   - Destructive ops flagged `requires_double_confirm` need `confirmed_twice=true`.
+   - `dry_run` **defaults to `true`** — it simulates.
+   - `dry_run=false` executes. While `GOOGLE_ADS_REQUIRE_DRY_RUN=true`, that is rejected unless `bypass_require_dry_run=true` is also set.
+   - Destructive ops need `confirmed_twice=true`.
 
 **Show the user the preview between those two calls. Every time.**
 
-New entities are created **PAUSED**. The response carries `status_after_apply` and `next_action_hint`. Enabling is `enable_entity`, and it is always a separate user request.
+New entities are created **PAUSED**. Enabling is `enable_entity`, and it is always a separate user request.
 
-> On the first run in a new environment, call the server's tool list and check parameter names against what's below. This is a community server; a version bump can rename a field. If a parameter here doesn't exist, use the server's schema — it wins — and note the drift to the user.
+## Customer ID is per call
 
-## Full campaign build — order matters
+Every tool takes an **optional `customer_id`**, falling back to `GOOGLE_ADS_CUSTOMER_ID` when omitted. One server instance handles every account under the manager — no second registration when you add a metro or a second ad account. Pass `customer_id` explicitly whenever working outside the default account, and say which account you're touching.
 
-Each step depends on the one above it. Do not reorder.
+`list_accounts` enumerates what's reachable (all sub-accounts when an MCC is configured). `health_check` verifies config and credentials — run it first when anything looks wrong.
 
-### 1. Budget + campaign
+## Full campaign build
 
-`draft_campaign`
-
-```
-name:              "SA | AC Repair | Emergency"     # naming convention in account-config.md
-advertising_channel_type: SEARCH
-daily_budget:      <dollars>                        # check against guardrails.md ceiling first
-bidding_strategy:  MAXIMIZE_CONVERSIONS             # no tCPA until 15+ conversions
-status:            PAUSED                           # explicit, never rely on the default
-network_settings:  Google Search only — search partners OFF, display OFF
-final_url_suffix / tracking template: see account-config.md
-```
-
-Positive location targets are set here if `draft_campaign` accepts a locations parameter. **If it does not**, the server has no dedicated add-positive-geo tool — it exposes `exclude_geo_target`, `remove_geo_target`, and `set_campaign_geo_target_type` only. In that case set the Tier 1/2 zips by hand in the UI (Campaign → Settings → Locations → Enter another location → paste the zip list) and say so clearly instead of silently skipping targeting.
-
-Resolve zips to geo target constant IDs first — see `san-antonio.md` § Resolving geo target IDs.
-
-### 2. Geo hardening
+### 1. Resolve geo target IDs
 
 ```
-set_campaign_geo_target_type   → PRESENCE            # never PRESENCE_OR_INTEREST
-exclude_geo_target             → each excluded zip from san-antonio.md
+search_geo_targets(query: "78209")
 ```
 
-Do this immediately after the campaign exists, before it can ever serve.
+Dedicated tool — don't hand-write GAQL against `geo_target_constant`. Confirm the result is the Texas postal code before using it; US zips aren't unique in that table. Details in `san-antonio.md`.
 
-### 3. Ad schedule
+### 2. Campaign, budget, ad group, and keywords — one call
+
+`draft_campaign` does more than its name suggests. It creates the budget, the campaign, a first ad group, its keywords, and positive geo targeting together:
+
+```
+campaign_name:     "SA | AC Repair | Emergency"     # naming convention in account-config.md
+daily_budget:      <dollars>                        # check guardrails.md ceiling first
+bidding_strategy:  MAXIMIZE_CONVERSIONS             # target_cpa / target_roas optional
+channel_type:      SEARCH                           # defaults to SEARCH
+ad_group_name:     "AC Repair - Not Cooling"
+keywords:          [ ... with match types ... ]
+geo_target_ids:    [ ... from step 1 ... ]
+language_ids:      [ ... ]
+status:            PAUSED                           # omit and it defaults to PAUSED anyway
+customer_id:       <optional>
+```
+
+Positive geo targeting is handled here — **no UI fallback needed**. `update_campaign` also carries positive geo targeting for changes after launch.
+
+### 3. Geo hardening
+
+```
+set_campaign_geo_target_type(positive_geo_target_type: "PRESENCE")
+exclude_geo_target(campaign_id, geo_target_id)      # each excluded zip
+```
+
+Do this immediately, before the campaign can ever serve. `PRESENCE_OR_INTEREST` is the **API default** — if you skip this call you get the wrong behavior silently.
+
+`exclude_geo_target` adds a negative criterion. `remove_geo_target` is different: it strips a location that is already positively targeted, and a negative criterion would collide with the existing positive one. Use exclude for zips you never targeted, remove for trimming ones you did. `remove_geo_target` is destructive and needs `confirmed_twice`.
+
+### 4. Ad schedule
 
 `set_campaign_schedule` — dayparting table in `san-antonio.md`.
 
-### 4. Ad groups
+### 5. Additional ad groups
 
-`create_ad_group` per ad group in the approved package.
-
-```
-campaign:   <campaign resource name from step 1>
-name:       "AC Repair - Not Cooling"
-cpc_bid:    <ceiling bid>          # a safety rail under Maximize Conversions
-status:     PAUSED
-```
-
-### 5. Keywords
-
-`draft_keywords` — batch per ad group, don't call once per keyword.
+`create_ad_group` for every ad group beyond the one `draft_campaign` made. Then `draft_keywords` for each.
 
 Match type discipline:
-
 - **Phrase** for symptom and service terms — the workhorse
-- **Exact** for proven converters and head terms you're willing to pay up for
-- **Broad only with Smart Bidding, never with Manual CPC.** The server actively blocks broad + Manual CPC. That guard is correct; don't work around it.
+- **Exact** for proven converters
+- **Broad only with Smart Bidding, never Manual CPC.** The server blocks that combination. The guard is correct; don't work around it.
 
 ### 6. Negatives — before enabling, not after
 
-`add_negative_keywords` — full list in `negative-keywords.md`.
+`add_negative_keywords` — full list in `negative-keywords.md`. Campaign level.
 
-This is the step people skip and regret. In HVAC the junk-query volume is enormous: job seekers, DIY, parts shoppers, training courses, SEO spam. Every one of those clicks is money spent to create a lead that `contractor-automation.gs` will score **Bad**.
+The step people skip and regret. HVAC junk-query volume is enormous, and every one of those clicks buys a lead that `contractor-automation.gs` will score **Bad**.
 
-Apply at the campaign level. Ad-group-level negatives only for cross-contamination (e.g. blocking `repair` inside the Replacement ad group).
+`get_negative_keywords` reads back what's applied.
 
 ### 7. Ads
 
-`draft_responsive_search_ad`
-
-API minimums: **3+ headlines, 2+ descriptions, 1 final URL.** Practical minimums for quality: 12–15 headlines, 4 descriptions, 2 RSAs per ad group.
-
-```
-ad_group:     <resource name>
-headlines:    [...]                 # 30 char max each
-descriptions: [...]                 # 90 char max each
-final_url:    https://boosthvacleads.com/get-quotes.html
-path1/path2:  "san-antonio" / "ac-repair"
-```
-
-Copy comes from `hvac-ad-campaign`. Do not write it here.
+`draft_responsive_search_ad`. API minimums are 3 headlines, 2 descriptions, 1 final URL; practical minimums are 12–15 headlines, 4 descriptions, 2 RSAs per ad group. Copy comes from `hvac-ad-campaign`.
 
 ### 8. Extensions
 
 ```
-draft_sitelinks              → Get Free Quotes · How It Works · Service Areas · Pricing
-create_callouts              → Licensed & Insured · Same-Day Service · Free Quotes · No Obligation
-create_structured_snippets   → Services: AC Repair, AC Replacement, Heating Repair, Duct Repair, Maintenance
+draft_sitelinks · create_callouts · create_structured_snippets
 ```
 
-Call extensions are worth more than any of these for HVAC. Add the call extension with `+18305380713` in the UI if the server exposes no tool for it.
+`list_extensions` reads back what's attached. There is **no call-extension tool** — add the call extension with `+18305380713` in the UI. For HVAC that extension is worth more than all three of the above, so don't treat it as optional.
 
-### 9. Conversions
+### 9. Conversion actions — read this carefully
 
-Conversion actions are created in the UI (see `account-config.md`), not here. If they don't exist yet, `create_conversion_action` can make them, then `set_conversion_action_primary_status` marks Quote Form Submit and Phone Call from Ad as **Primary**.
+**`create_conversion_action` does not create website or form conversions.** It creates `UPLOAD_CLICKS` actions only — gclid-based offline conversion import. Your Quote Form Submit and Phone Call from Ad actions must be created in the **UI** (see `account-config.md` Step 9).
+
+What the tool is genuinely for is the Good-lead feedback loop — see `measurement.md` § Offline conversion import.
+
+`get_conversion_actions` lists what exists. `set_conversion_action_primary_status` marks Primary (counts in the Conversions column and feeds Smart Bidding) or Secondary (observation only). Use it to demote a signal that would otherwise dilute the bidding goal.
 
 ### 10. Verify before enabling
 
-Run this and show the user the result:
-
-```sql
-SELECT campaign.id, campaign.name, campaign.status,
-       campaign.bidding_strategy_type, campaign_budget.amount_micros
-FROM campaign
-WHERE campaign.name LIKE 'SA | %'
+```
+get_campaign_performance      # confirms the campaign exists and its settings
+get_negative_keywords         # confirms negatives applied
+list_extensions               # confirms extensions attached
 ```
 
-Then confirm out loud: geo type is PRESENCE, excluded zips are attached, negatives are applied, each ad group has 2 RSAs, budget matches what was approved.
+Then confirm out loud: geo type is PRESENCE, excluded zips attached, negatives applied, 2 RSAs per ad group, budget as approved, everything still PAUSED.
 
 ### 11. Enable
 
-`enable_entity` on the campaign — **only when the user explicitly asks.** Enable the campaign last, after ad groups.
+`enable_entity` on ad groups, then the campaign — **only when the user explicitly asks.**
 
 ## Incremental changes
 
 | Ask | Tools |
 |---|---|
-| Add negatives from a search-term report | `search` (report) → `add_negative_keywords` → `confirm_and_apply` |
-| Change a budget | `update_campaign` (check `guardrails.md`) → `confirm_and_apply` |
-| Pause a campaign / ad group / keyword | `pause_entity` → `confirm_and_apply` |
+| Add negatives from search terms | `get_search_terms` → `add_negative_keywords` → `confirm_and_apply` |
+| Change a budget | `update_campaign` (check `guardrails.md`) |
+| Pause anything | `pause_entity` |
 | Raise a keyword bid | `update_keyword_bid` — server blocks increases over `GOOGLE_ADS_MAX_BID_INCREASE_PCT` |
-| Add keywords to an existing group | `draft_keywords` → `confirm_and_apply` |
-| Seasonal budget shift | `update_campaign` per campaign; state the new monthly total in dollars |
+| Add keywords | `draft_keywords` |
+| Check disapprovals | `get_policy_issues` |
+| Find new keyword ideas | `discover_keywords` (Keyword Planner), `get_keyword_forecasts` |
 
-## Never do these without being asked in the current conversation
+`resolve_entity_id_for_status` and `resolve_ad_composite_id` translate names to the IDs the status tools need.
+
+## Never without being asked in the current conversation
 
 `remove_entity` · `remove_keywords` · `remove_negative_keywords` · `remove_geo_target` · `remove_extension`
 
-All are destructive and irreversible. `remove_negative_keywords` is the sneakiest — it silently reopens spend on junk traffic. Pausing is almost always the right move instead of removing.
+All irreversible. `remove_negative_keywords` is the sneakiest — it silently reopens spend on junk traffic. Pausing is almost always right instead.
 
-`apply_recommendation` is also off-limits without a specific request. Google's recommendations routinely suggest broad match expansion, Search Partners, and Display — every one of which is wrong for this account.
+`apply_recommendation` is also off-limits without a specific request; Google routinely recommends broad match expansion, Search Partners, and Display, all wrong for this account. `list_recommendations` and `dismiss_recommendation` are fine to use freely.
+
+For a hard stop, set `GOOGLE_ADS_BLOCKED_OPS` — see `guardrails.md`.
 
 ## Local Services Ads
 
 **LSA campaigns cannot be created through the Google Ads API.** Creating LOCAL_SERVICES campaigns, and any ad group, ad, or criterion inside them, is unsupported.
 
-What the API *can* do on an LSA campaign that already exists: retrieve it, change status and budget, set bidding (ManualCpa / MaximizeConversions), set ad schedule, set location targeting, and target service types.
+What the API *can* do on an existing LSA campaign: retrieve it, change status and budget, set bidding (ManualCpa / MaximizeConversions), set ad schedule, set location targeting, target service types.
 
-So: stand LSA up by hand in the UI, complete Google Guaranteed verification (license, insurance, background check — allow 2–3 weeks), then manage budget and schedule from here. For HVAC in San Antonio, LSA is usually the cheapest lead source in the account. Getting verified is worth the paperwork.
-
-Lead data from LSA is available as read-only report resources — leads, lead conversations, verification artifacts.
+Stand LSA up by hand in the UI, complete Google Guaranteed verification (license, insurance, background check — allow 2–3 weeks), then manage budget and schedule from here. In San Antonio it's usually the cheapest lead source in the account.

@@ -104,6 +104,8 @@ cargo build --release
 
 Needs Rust. If `cargo` is missing: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
+Verified: v0.7.0 builds clean on rustc 1.94.1 in about 100 seconds, producing a ~13 MB binary at `target/release/mcp-google-ads`. Running it directly starts the server and then exits with `connection closed: initialized request` — that's expected, it's waiting for an MCP client on stdio. Claude Code is what supplies one.
+
 **📥 PASTE #5 (the downloaded JSON):**
 
 ```bash
@@ -133,12 +135,15 @@ claude mcp add --transport stdio google-ads --scope user \
   --env GOOGLE_ADS_MAX_DAILY_BUDGET=150 \
   --env GOOGLE_ADS_MAX_BID_INCREASE_PCT=50 \
   --env GOOGLE_ADS_REQUIRE_DRY_RUN=true \
+  --env GOOGLE_ADS_BLOCKED_OPS=remove_entity,remove_keywords,remove_negative_keywords,remove_geo_target,remove_extension,apply_recommendation \
   --env GOOGLE_ADS_AUDIT_LOG="$HOME/.mcp-google-ads/audit.log" \
   -- $HOME/mcp-google-ads/target/release/mcp-google-ads
 ```
 
 Notes:
-- `GOOGLE_ADS_CUSTOMER_ID` is the **ads account**; `GOOGLE_ADS_LOGIN_CUSTOMER_ID` is the **manager account**. Swapping them is the most common failure.
+- `GOOGLE_ADS_CUSTOMER_ID` is the **ads account**; `GOOGLE_ADS_LOGIN_CUSTOMER_ID` is the **manager account**. Swapping them is the most common failure. The customer ID here is only a default — every tool accepts a per-call `customer_id`, so this one server reaches every account under the manager.
+- `GOOGLE_ADS_MAX_DAILY_BUDGET` **must** be set — the server's own default is `50`, which would reject an $80/day campaign.
+- `GOOGLE_ADS_BLOCKED_OPS` refuses the irreversible operations outright, at the server. Empty by default. Strongest guardrail available; see `guardrails.md`.
 - `--scope user` makes it available in every project, not just this repo. Correct here — the token is yours, not the repo's.
 - **These env vars never go in a file in this repo.** This repo is public.
 
@@ -148,13 +153,14 @@ Verify:
 claude mcp list          # google-ads → ✔ Connected
 ```
 
-Then in a Claude Code session, from this repo:
+Then in a Claude Code session:
 
 ```
-Use list_accessible_customers to show my Google Ads accounts.
+Run health_check on the google-ads server.
+Then use list_accounts to show my Google Ads accounts.
 ```
 
-If that returns your customer ID, the whole chain works.
+`health_check` validates config and credentials and tells you which piece is wrong. `list_accounts` returns every sub-account under the manager. If both work, the whole chain works.
 
 ## Step 8 — Confirm the skill loads
 
