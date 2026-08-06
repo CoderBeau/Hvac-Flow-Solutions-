@@ -130,6 +130,7 @@ body.embedded{background:transparent;padding:0.25rem 0 1rem;}
   .ff-full{grid-column:auto;}
 }
 </style>
+<script src="/attribution.js"></script>
 </head>
 <body>
 
@@ -255,14 +256,12 @@ const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEz
   }
 })();
 
-// ── Auto-capture UTM parameters (silent, invisible to user) ──
-const _p = new URLSearchParams(window.location.search);
-const _utmSource   = _p.get('utm_source')   || '';
-const _utmMedium   = _p.get('utm_medium')   || '';
-const _utmCampaign = _p.get('utm_campaign') || '';
-const _leadSource  = _utmSource
-  ? (_utmSource + (_utmMedium ? ' / ' + _utmMedium : ''))
-  : 'Organic / Direct';
+// ── Auto-capture campaign attribution (silent, invisible to user) ──
+// attribution.js persists the touch across pages and for 30 days, so a lead
+// still credits the ad that brought them in even if they convert days later.
+const _attr        = (window.HFSAttribution && window.HFSAttribution.get()) || {};
+const _leadSource  = _attr.leadSource || 'Organic / Direct';
+const _utmCampaign = _attr.campaign   || '';
 
 // ── Form submit ──
 function handleSubmit() {
@@ -304,6 +303,10 @@ function handleSubmit() {
       firstName, lastName, phone, email, zip, city, service, urgency, notes,
       source:   _leadSource,
       campaign: _utmCampaign,
+      term:        _attr.term        || '',
+      clickId:     _attr.clickId     || '',
+      landingPage: _attr.landingPage || '',
+      referrer:    _attr.referrer    || '',
       smsConsent,
       submittedAt: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
     })

@@ -94,6 +94,7 @@ body{padding:2rem 1rem 3rem;}
   .src-grid{grid-template-columns:repeat(2,1fr);}
 }
 </style>
+<script src="attribution.js"></script>
 </head>
 <body>
 <div class="page-header">
@@ -193,6 +194,7 @@ function handleSubmit() {
   const err = document.getElementById('err-msg');
   const g = id => document.getElementById(id).value.trim();
   const urgency = document.querySelector('input[name="urgency"]:checked')?.value || '';
+  const _attr = (window.HFSAttribution && window.HFSAttribution.get()) || {};
   const source  = document.querySelector('input[name="source"]:checked')?.value  || 'Not specified';
   const firstName=g('firstName'), lastName=g('lastName'), phone=g('phone'),
         email=g('email'), zip=g('zip'), city=g('city'),
@@ -219,6 +221,13 @@ function handleSubmit() {
     body: JSON.stringify({
       type: 'Homeowner', firstName, lastName, phone, email,
       zip, city, service, urgency, notes, source,
+      // Campaign attribution — additive. `source` above stays the visitor's
+      // own "how did you hear about us" answer on this version of the form.
+      campaign:    _attr.campaign    || '',
+      term:        _attr.term        || '',
+      clickId:     _attr.clickId     || '',
+      landingPage: _attr.landingPage || '',
+      referrer:    _attr.referrer    || '',
       submittedAt: new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
     })
   }).then(() => {

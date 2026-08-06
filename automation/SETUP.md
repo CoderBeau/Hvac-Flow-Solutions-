@@ -222,7 +222,7 @@ Both values are stored only in that browser. Anyone without the key gets nothing
 If your **Contractors** or **Get Quotes** tabs already have data from an older version of this script, run these once from the Apps Script editor to add the new columns without losing existing rows:
 
 - `migrateContractorsSheet` — adds `Lead Cap`, `Trial End Date`, `Client ID` columns, and backfills `Lead Cap` for existing contractors based on their package
-- `migrateGetQuotesSheet` — adds the `Follow-up Sent`, `SMS Consent`, `Lead Quality`, `Quality Score`, `Matched Keywords`, and `Routed To` columns, and creates the **Keywords** tab seeded with the default lists
+- `migrateGetQuotesSheet` — adds the `Follow-up Sent`, `SMS Consent`, `Lead Quality`, `Quality Score`, `Matched Keywords`, `Routed To`, `Keyword / Term`, `Ad Click ID`, `Landing Page`, and `Referrer` columns (22 total), and creates the **Keywords** tab seeded with the default lists
 
 Then open the sheet and run **HVAC Admin > Rescore All Unscored Leads** to score your existing rows (it never overwrites a verdict and never re-routes anything).
 
@@ -263,9 +263,20 @@ To change a cap, edit `PACKAGE_LEAD_CAPS` near the top of `contractor-automation
 
 | Tab | Contents |
 |---|---|
-| Get Quotes | Every homeowner lead submitted via the site, with its quality verdict, score, matched keywords, and who it was routed to |
+| Get Quotes | Every homeowner lead submitted via the site, with its quality verdict, score, matched keywords, who it was routed to, and the ad attribution it arrived with (source, campaign, search term, click ID) |
 | Contractors | Every paid contractor + every trial contractor — this is the source of truth for lead routing, caps, and status |
 | Trials | Legal/signature record for trial signups (Client ID, dates, e-signature link) |
 | Keywords | Good/Bad keyword lists used to score every incoming lead — edit here or from the dashboard |
 
 > After updating `contractor-automation.gs` in the Apps Script editor, you must **re-deploy** (Deploy → Manage deployments → Edit → New version) for changes to go live.
+
+---
+
+## Related — Marketing Automation
+
+This guide covers the **lead pipeline** (forms → sheet → scoring → routing). The other half — how leads get *created* — is documented separately:
+
+- **`automation/GOOGLE-ADS-MCP-SETUP.md`** — connect Google Ads to Claude Code so campaigns can be built, adjusted, and reported on by command. Start-to-finish, with every copy/paste step for the manager account.
+- **`.claude/skills/campaign-ops/`** — the ops skill that executes those campaigns and publishes SEO content. Loads automatically when working in this repo.
+
+The two halves are designed to meet: the Bad keyword list in `contractor-automation.gs` seeds the ad negative-keyword list, and the Good/Bad verdicts in the **Get Quotes** tab are what ad spend should ultimately be judged against — not Google's raw conversion count.
