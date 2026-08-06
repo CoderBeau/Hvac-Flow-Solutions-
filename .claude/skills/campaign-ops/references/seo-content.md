@@ -28,9 +28,14 @@ blog/
 **Match the existing site.** Every page must:
 
 - Link `styles.css` from the root
-- Reuse the header/nav and footer markup from `index.html` — copy it, don't reinvent it
-- Include the same favicon and meta viewport
+- Reuse the **footer** markup from `index.html` verbatim
+- Include the same favicon, meta viewport, and the `gtag` snippet
+- Load `/attribution.js` so a visitor arriving from an ad keeps their campaign context
 - End with a CTA to `get-quotes.html` and a `tel:+18305380713` link
+
+> **`styles.css` is a pre-built Tailwind bundle.** Only the utility classes already used elsewhere on the site are compiled into it — arbitrary Tailwind classes on a new page will silently do nothing. Write page-specific CSS in a `<style>` block using the brand palette (`--navy:#0B1E3B`, `--red:#C8102E`, `--orange:#f97316`, `--muted:#5a6a80`, `--border:#dce4ef`, `--bg:#f6f8fb`), the way `get-quotes.html` does. Reusing the footer works because every class it uses is already in the bundle.
+>
+> `index.html` has no reusable nav — it's a two-audience hero-band layout. Blog pages use their own slim top bar (logo + phone), established by `blog/ac-replacement-cost-san-antonio.html`. Copy that.
 
 A blog post that looks like a different website destroys the trust the rest of the site builds.
 
@@ -49,7 +54,9 @@ Body:
 3. **H2 sections** covering the sub-questions people actually ask
 4. **A local signal** — San Antonio summer load, hard water on coils, the 2021 freeze, Bexar County permit requirements. This is the E-E-A-T differentiator against national content farms.
 5. **CTA block** mid-article and at the end
-6. **3–5 internal links** to `get-quotes.html`, `pricing.html`, and sibling posts
+6. **3–5 internal links** to `get-quotes.html`, `/`, `/blog/`, and sibling posts
+
+> **Do not link homeowner posts to `pricing.html`.** That page sells contractor lead packages — it's the wrong audience entirely, and sending a homeowner researching AC costs into a contractor pricing table kills the conversion.
 
 ## Schema
 
