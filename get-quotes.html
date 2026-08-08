@@ -314,6 +314,8 @@ function handleSubmit() {
   }).then(() => {
     document.getElementById('form-view').style.display  = 'none';
     document.getElementById('success-view').style.display = 'block';
+    // Google Ads conversion — homeowner lead submitted
+    if (typeof gtag !== 'undefined') { gtag('event', 'conversion', { 'send_to': 'AW-18329870725/ERrbCK2ngd4cEIXDrqRE' }); }
     reportHeight();
   }).catch(() => {
     err.textContent='Something went wrong. Please try again.'; err.style.display='block';
