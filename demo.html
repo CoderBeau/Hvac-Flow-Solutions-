@@ -54,6 +54,11 @@
   .btn.ghost{background:#fff;border:1.5px solid var(--line2);color:var(--navy);box-shadow:none;font-size:.85rem;padding:.7rem;margin-top:.6rem;}
   .btn.ghost:hover{background:var(--paper);filter:none;}
 
+  .conn-line{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted);margin-bottom:1.2rem;padding:0 .2rem;}
+  .conn-line .ok-dot{color:var(--green);font-weight:700;}
+  .conn-line button{background:none;border:none;color:var(--muted2);font-family:var(--body);font-size:.78rem;text-decoration:underline;cursor:pointer;padding:0;margin-left:auto;}
+  .conn-line button:hover{color:var(--navy);}
+
   .err{background:#fff5f6;border:1px solid rgba(200,16,46,.25);border-radius:9px;padding:.7rem .9rem;font-size:.84rem;color:var(--red);margin-bottom:.9rem;display:none;}
   .ok{background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);border-radius:12px;padding:1.1rem 1.2rem;margin-top:1rem;display:none;}
   .ok h3{font-family:var(--dsp);font-weight:800;font-size:1rem;color:#15803d;margin-bottom:.35rem;}
@@ -92,7 +97,14 @@
   <h1 class="pt">Live Demo Console</h1>
   <p class="sub">Fill this in on a sales call and the prospect watches a lead hit their own phone in seconds.</p>
 
-  <div class="card">
+  <!-- Once the key is saved this collapses to one quiet line, so a prospect
+       looking at the screen doesn't see a config field on your sales tool. -->
+  <div class="conn-line" id="conn-collapsed" style="display:none;">
+    <span class="ok-dot">✓</span> Connected
+    <button type="button" id="conn-edit">change key</button>
+  </div>
+
+  <div class="card" id="conn-card" style="display:none;">
     <div class="card-h">
       <h2>Connection</h2>
       <p>Your dashboard key — stored in this browser only, entered once.</p>
@@ -103,7 +115,7 @@
         <input type="password" id="d-key" placeholder="Your DASHBOARD_KEY value">
         <span class="hint">Same key as dashboard.html. Needed so the demo can report back whether it actually sent.</span>
       </div>
-      <div id="conn-state" class="hint"></div>
+      <button type="button" class="btn ghost" id="conn-save" style="margin-top:0;">Save key</button>
     </div>
   </div>
 
@@ -186,13 +198,33 @@ const VALID_TOKEN = 'hfs-m-2f5bc259c054da0914085ac7';
 // Shares the dashboard's stored key, so if you've used dashboard.html in this
 // browser the field is already filled in.
 var LS_KEY = 'hfs_dash_key';
+
+function showConnection(expanded){
+  document.getElementById('conn-card').style.display      = expanded ? 'block' : 'none';
+  document.getElementById('conn-collapsed').style.display = expanded ? 'none'  : 'flex';
+  if (expanded) document.getElementById('d-key').focus();
+}
+
 (function(){
   var saved = localStorage.getItem(LS_KEY) || '';
   document.getElementById('d-key').value = saved;
-  document.getElementById('conn-state').textContent = saved
-    ? '✓ Key remembered from this browser.'
-    : 'No key saved yet — paste it once and it will be remembered.';
+  showConnection(!saved);   // first run shows the field; after that it stays out of the way
 })();
+
+document.getElementById('conn-edit').addEventListener('click', function(){ showConnection(true); });
+
+document.getElementById('conn-save').addEventListener('click', function(){
+  var key = document.getElementById('d-key').value.trim();
+  var err = document.getElementById('err');
+  if (!key){
+    err.textContent = 'Paste your dashboard key before saving.';
+    err.style.display = 'block';
+    return;
+  }
+  localStorage.setItem(LS_KEY, key);
+  err.style.display = 'none';
+  showConnection(false);
+});
 
 var DEFAULTS = {
   'h-first':'Sandra', 'h-last':'Whitfield', 'h-phone':'(210) 555-0147',
@@ -240,7 +272,7 @@ document.getElementById('send').addEventListener('click', function(){
   if (!key){
     err.textContent = 'Enter your dashboard key first — it is what lets this page confirm the send actually worked.';
     err.style.display = 'block';
-    document.getElementById('d-key').focus();
+    showConnection(true);
     return;
   }
   localStorage.setItem(LS_KEY, key);
@@ -289,8 +321,10 @@ document.getElementById('send').addEventListener('click', function(){
             'then Deploy > Manage deployments > Edit > New version > Deploy.';
       } else if (/Invalid dashboard key/i.test(m)) {
         m = 'That dashboard key is wrong. Check DASHBOARD_KEY in Apps Script > Project Settings > Script Properties.';
+        showConnection(true);   // reopen so it can be corrected on the spot
       } else if (/Dashboard is locked/i.test(m)) {
         m = 'DASHBOARD_KEY is not set in Apps Script > Project Settings > Script Properties.';
+        showConnection(true);
       } else if (/Failed to fetch|NetworkError|Load failed/i.test(m)) {
         m = 'Could not reach the Apps Script. Check the deployment exists and its access is set to "Anyone".';
       }
