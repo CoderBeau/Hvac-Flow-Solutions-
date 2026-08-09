@@ -74,6 +74,14 @@
   .ok p{font-size:.86rem;color:#166534;}
   .ok .meta{margin-top:.6rem;font-size:.8rem;color:var(--muted);background:#fff;border-radius:8px;padding:.6rem .75rem;}
 
+  /* Neutral, low-contrast toggle — reads as housekeeping, not a sales script. */
+  .script-d>summary{list-style:none;cursor:pointer;font-size:.78rem;color:var(--muted2);padding:.5rem .2rem;display:inline-flex;align-items:center;gap:.35rem;}
+  .script-d>summary::-webkit-details-marker{display:none;}
+  .script-d>summary::before{content:"▸";font-size:.7rem;}
+  .script-d[open]>summary::before{content:"▾";}
+  .script-d>summary:hover{color:var(--navy);}
+  .script-d[open] .script{margin-top:.4rem;}
+
   .script{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.2rem 1.3rem;}
   .script h3{font-family:var(--dsp);font-weight:800;font-size:.95rem;color:var(--navy);margin-bottom:.6rem;}
   .script ol{margin:0 0 0 1.1rem;font-size:.87rem;color:var(--muted);}
@@ -178,8 +186,13 @@
     </div>
   </div>
 
-  <div class="script">
-    <h3>Suggested 60-second script</h3>
+  <!-- Collapsed by default. A contractor glancing at the screen must never read
+       the talk track — seeing "hit send, then stop talking" makes the demo feel
+       staged and run on them. Neutral label, and it opens only when you ask.
+       Add &script=1 to the URL to have it already open while you prep. -->
+  <details class="script-d" id="script-block">
+    <summary>Notes</summary>
+    <div class="script">
     <ol>
       <li><b>Set it up.</b><span class="say">"Rather than tell you how it works, let me just show you. What's the best cell number for you?"</span></li>
       <li><b>Type their number in</b> while you talk. Say what you're doing — it builds the reveal.<span class="say">"I'm creating a homeowner in your area right now. AC out, 88 degrees upstairs, ready to book today."</span></li>
@@ -187,7 +200,8 @@
       <li><b>Let them read it.</b><span class="say">"That's it. Name, number, what's wrong, how urgent. Straight to your phone, and it went to you only — nobody else got that one."</span></li>
       <li><b>Close on exclusivity.</b><span class="say">"On the shared-lead sites, four other companies just got that same homeowner. Here, it's yours. That's the whole difference."</span></li>
     </ol>
-  </div>
+    </div>
+  </details>
 
 </div>
 
@@ -202,6 +216,8 @@ const VALID_TOKEN = 'hfs-m-2f5bc259c054da0914085ac7';
     document.getElementById('gate').style.display = 'none';
     document.getElementById('main').style.display = 'block';
   }
+  // &script=1 opens the talk track on load, for reading through before a call.
+  if (params.get('script') === '1') document.getElementById('script-block').open = true;
 })();
 
 // Shares the dashboard's stored key, so if you've used dashboard.html in this
