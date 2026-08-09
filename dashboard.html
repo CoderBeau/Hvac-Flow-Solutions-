@@ -408,8 +408,82 @@ function saveSettings() {
   loadDashboard();
 }
 
+// ── Demo mode ─────────────────────────────────────────
+// dashboard.html?demo=1 renders a self-contained sample dataset so the
+// dashboard can be shown on a sales call without exposing real homeowners'
+// names and phone numbers, and without typing the DASHBOARD_KEY in front of
+// anyone. No network call is made and every write action is disabled.
+var DEMO = new URLSearchParams(window.location.search).get('demo') === '1';
+
+function demoDataset() {
+  var svc = [
+    ['AC not cooling - blowing warm air', 'Emergency - Need someone today', 'Good', 9],
+    ['Furnace making loud banging noise', 'Within 2-3 days', 'Good', 7],
+    ['Need quote on full system replacement', 'This week', 'Good', 8],
+    ['Annual maintenance / tune-up', 'Just getting quotes', 'Review', 3],
+    ['Thermostat not responding', 'Within 2-3 days', 'Good', 6],
+    ['Looking for HVAC technician job', 'Just getting quotes', 'Bad', -8],
+    ['Ductwork inspection after remodel', 'This week', 'Review', 4],
+    ['AC frozen over, water leaking', 'Emergency - Need someone today', 'Good', 10],
+    ['Selling SEO services to contractors', 'Just getting quotes', 'Bad', -10],
+    ['Heat pump short cycling', 'Within 2-3 days', 'Good', 7]
+  ];
+  var first = ['Sandra','Marcus','Reyna','Daniel','Priya','Tom','Alicia','Grant','Nora','Victor','Kelsey','Andre'];
+  var last  = ['Whitfield','Alvarez','Boone','Nakamura','Patel','Ellery','Duarte','Sinclair','Vance','Ortiz','Hahn','Boyd'];
+  var cities = [['San Antonio','78209'],['San Antonio','78230'],['San Antonio','78248'],['Schertz','78154'],['Helotes','78023']];
+  var firms = ['Alamo Comfort Air','Lone Star Heating & Cooling','Riverwalk HVAC','Hill Country Climate','TXPro Air'];
+
+  var leads = [];
+  for (var i = 0; i < 34; i++) {
+    var s = svc[i % svc.length], c = cities[i % cities.length];
+    var d = new Date(Date.now() - (i * 9 + (i % 5) * 4) * 3600 * 1000);
+    leads.push({
+      row: i + 2,
+      timestamp: d.toLocaleString('en-US', { timeZone: 'America/Chicago' }),
+      firstName: first[i % first.length], lastName: last[(i * 3) % last.length],
+      phone: '(210) 555-0' + String(100 + i).slice(-3),
+      email: first[i % first.length].toLowerCase() + '@example.com',
+      zip: c[1], city: c[0], service: s[0], urgency: s[1],
+      source: i % 3 === 0 ? 'Google Ads' : (i % 3 === 1 ? 'Organic / Direct' : 'AI Phone Agent'),
+      campaign: '', notes: 'Sample lead for demonstration.', followUpSent: i > 4 ? 'Yes' : '',
+      smsConsent: i % 4 === 0 ? 'No' : 'Yes',
+      quality: s[2], score: s[3], matched: '',
+      routedTo: s[2] === 'Bad' ? '' : firms[i % firms.length]
+    });
+  }
+
+  var contractors = firms.map(function(name, i) {
+    var pkgs = ['Growth Membership', 'Starter Membership', 'Elite', 'Pro Membership', 'Growth'];
+    var caps = [30, 15, 100, 9999, 25];
+    return {
+      row: i + 2,
+      timestamp: new Date(Date.now() - (i + 2) * 86400000 * 9).toLocaleString(),
+      firstName: ['Mike','Dana','Luis','Erin','Cal'][i], lastName: ['Reyes','Foster','Marín','Kowalski','Draper'][i],
+      company: name, phone: '(210) 555-01' + (10 + i), email: 'owner@' + name.toLowerCase().replace(/[^a-z]/g, '') + '.com',
+      zip: '782' + (10 + i), years: String(6 + i * 3), serviceAreas: 'San Antonio',
+      pkg: pkgs[i], status: i === 4 ? 'Limit Reached' : 'Active',
+      leadsSent: [12, 9, 41, 27, 25][i], leadCap: caps[i],
+      trialEnd: '', clientId: '',
+      renewsOn: pkgs[i].indexOf('Membership') !== -1 ? new Date(Date.now() + (12 + i) * 86400000).toLocaleDateString() : '',
+      smsConsent: 'Yes'
+    };
+  });
+
+  return {
+    status: 'success',
+    activeCity: 'San Antonio',
+    keywords: {
+      good: ['not cooling', 'no heat', 'emergency', 'replace', 'install', 'leaking', 'furnace', 'quote'],
+      bad:  ['job', 'hiring', 'resume', 'seo', 'marketing', 'wholesale', 'apprentice']
+    },
+    leads: leads,
+    contractors: contractors
+  };
+}
+
 // ── API ───────────────────────────────────────────────
 function api(params) {
+  if (DEMO) return Promise.reject(new Error('Demo mode — changes are disabled.'));
   var c = cfg();
   var qs = new URLSearchParams(params);
   qs.set('key', c.key);
@@ -422,6 +496,20 @@ function api(params) {
 }
 
 function loadDashboard() {
+  if (DEMO) {
+    var demo = demoDataset();
+    state.leads = demo.leads;
+    state.contractors = demo.contractors;
+    state.keywords = demo.keywords;
+    document.getElementById('activeCity').textContent = demo.activeCity;
+    document.getElementById('updated').textContent = 'Sample data · demo mode';
+    document.getElementById('main').classList.remove('hidden');
+    document.getElementById('setup').classList.add('hidden');
+    showDemoBanner();
+    renderAll();
+    return;
+  }
+
   var c = cfg();
   if (!c.url || !c.key) { openSettings(); return; }
 
@@ -697,6 +785,18 @@ function removeKeyword(kind, word) {
   api({ action: 'removeKeyword', kind: kind, word: word })
     .then(function() { toast('Removed "' + word + '"'); loadDashboard(); })
     .catch(function(e) { toast(e.message, true); });
+}
+
+// Purple bar so nobody mistakes the sample dataset for live numbers.
+function showDemoBanner() {
+  if (document.getElementById('demoBanner')) return;
+  var bar = document.createElement('div');
+  bar.id = 'demoBanner';
+  bar.style.cssText = 'background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;' +
+    'font-family:Montserrat,sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.03em;' +
+    'padding:.6rem 1rem;text-align:center;position:sticky;top:0;z-index:999;';
+  bar.textContent = '🎬 DEMO MODE — sample data only. No real customer information is shown.';
+  document.body.insertBefore(bar, document.body.firstChild);
 }
 
 // ── Tabs / boot ───────────────────────────────────────
