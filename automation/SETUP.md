@@ -233,6 +233,52 @@ That keeps the **same `/exec` URL**, which is what you want.
 
 Re-deploy this way any time you change the script **or** its Script Properties.
 
+### Redeploy checklist
+
+Most things survive a redeploy. The list below is short on purpose — **only the "check" column
+needs your attention.**
+
+**✅ Survives automatically — do NOT redo these**
+
+| Thing | Why it's safe |
+|---|---|
+| All 6 Script Properties | Stored on the project, not the code. Never cleared by pasting or deploying. |
+| The `/exec` URL | Unchanged as long as you use **Edit → New version** (not *New deployment*). |
+| Triggers (`sendHomeownerFollowUps`, `runDailyMaintenance`) | Attached to the project, not the deployment. They keep firing. |
+| Stripe webhook endpoint | Points at the same `/exec` URL, so nothing to re-enter. |
+| Deployment access = "Anyone" | Kept when you edit an existing deployment. |
+| Every sheet tab and all your data | Untouched by deploys. |
+
+**⚠️ Check these — pasting the whole file overwrites in-code settings**
+
+Pasting `contractor-automation.gs` replaces everything, including any value you edited
+*inside the code*. After each paste, confirm these still say what you want (all are near
+the top of the file):
+
+1. **`ACTIVE_CITY`** — line ~36. Ships as `'San Antonio'`. **If you've expanded to another
+   city, a paste silently reverts it and leads route to the wrong place.** This is the one
+   that bites.
+2. **`STRIPE_LINKS`** — the 8 payment links. Kept in the repo, so a paste from GitHub is
+   correct. Only an issue if you created new links and didn't push them here.
+3. **`PACKAGE_LEAD_CAPS` / `MEMBERSHIP_LEAD_CAPS`** — lead limits per tier.
+4. **`ADMIN_EMAIL`**, **`TRIAL_LENGTH_DAYS`**, **`HOMEOWNER_FOLLOWUP_HOURS`**.
+
+Keyword lists live on the **Keywords** tab of the sheet, not in the code, so editing them
+from the dashboard is safe from any paste.
+
+**The actual routine, every time**
+
+1. Paste the new `contractor-automation.gs` over `Code.gs`
+2. Skim the config block at the top (items 1–4 above)
+3. Save (⌘S)
+4. **Deploy → Manage deployments → Edit → Version: New version → Deploy**
+5. Run **`testDemoLead`** from the function dropdown — confirms email + SMS still work
+6. Only if you renamed or removed a scheduled function: re-run **`installTriggers`**
+   (safe to re-run any time; it replaces rather than duplicates)
+
+> If the editor asks you to authorize again after a paste, that's normal — new code using a
+> Google service for the first time re-prompts for permission. Accept it and continue.
+
 ## Step 3 — Install Triggers (run once)
 
 In the Apps Script editor, select the `installTriggers` function from the dropdown and click **Run** once. This sets up:
