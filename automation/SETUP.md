@@ -142,6 +142,41 @@ if you leave PayPal off, the button simply doesn't appear at checkout.
 
 ---
 
+## Sales Demo Mode
+
+Two tools for showing the system to a contractor **without touching live data**.
+
+### Live demo lead — `demo.html`
+
+Open `https://boosthvacleads.com/demo.html?access=hfs-m-2f5bc259c054da0914085ac7`
+(same invite token as the pricing page). Enter the prospect's cell and/or email, and a
+sample lead lands on **their** phone in seconds — the same email and SMS a paying
+contractor gets, formatted identically.
+
+The demo path is sealed off from live operations. It never:
+
+- writes to the **Get Quotes** tab
+- reads or writes the **Contractors** tab
+- calls `forwardLeadToContractor()`
+- increments anyone's **Leads Sent** or burns a lead cap
+
+Demo submissions land on their own **Demo Leads** tab (purple header). The lead is still
+scored by the real keyword engine, so the quality verdict you show is genuine.
+
+> ⚠️ Never demo by submitting the real `get-quotes.html` form. That routes a fake homeowner
+> to a real paying contractor **and** spends one of their paid leads.
+
+### Dashboard demo — `dashboard.html?demo=1`
+
+Renders a built-in sample dataset — 34 leads, 5 contractors, realistic mix of Good/Review/Bad.
+No network call, **no `DASHBOARD_KEY` needed**, and every edit button is disabled. A purple
+DEMO MODE bar sits across the top so nobody mistakes it for live numbers.
+
+Use this instead of your real dashboard on a sales call: the live one shows actual homeowner
+names, phone numbers, and emails, plus the names of your other contractor customers.
+
+---
+
 ## Step 1 — Twilio (SMS only, 5 min)
 
 1. Sign up at **twilio.com**

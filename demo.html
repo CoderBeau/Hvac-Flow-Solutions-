@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" sizes="192x192" href="/favicon.svg">
+<title>Live Demo Console | HVAC Flow Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1E3B;--navy2:#1a3358;--orange:#f97316;--red:#C8102E;--purple:#7c3aed;
+    --ink:#14202e;--paper:#f6f8fb;--card:#fff;--line:#e2e8f2;--line2:#dbe3ee;
+    --muted:#5a6a80;--muted2:#8b98ab;--green:#16a34a;
+    --dsp:'Montserrat',sans-serif;--body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:2rem 1.25rem 4rem;}
+
+  .gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .gate-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:48px 40px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 60px -30px rgba(11,30,59,.5);}
+  .gate-card h1{font-family:var(--dsp);font-weight:800;font-size:1.4rem;color:var(--navy);margin-bottom:10px;}
+  .gate-card p{color:var(--muted);font-size:.9rem;}
+
+  .banner{background:linear-gradient(135deg,var(--purple),#a855f7);color:#fff;border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.5rem;display:flex;gap:.8rem;align-items:flex-start;}
+  .banner .ic{font-size:1.3rem;line-height:1;}
+  .banner b{font-family:var(--dsp);font-weight:800;display:block;font-size:.95rem;}
+  .banner span{font-size:.83rem;color:rgba(255,255,255,.9);}
+
+  h1.pt{font-family:var(--dsp);font-weight:800;font-size:1.7rem;color:var(--navy);letter-spacing:-.02em;}
+  .sub{color:var(--muted);font-size:.92rem;margin:.3rem 0 1.5rem;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 40px -24px rgba(11,30,59,.45);overflow:hidden;margin-bottom:1.2rem;}
+  .card-h{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:1rem 1.3rem;}
+  .card-h h2{font-family:var(--dsp);font-weight:800;font-size:1rem;}
+  .card-h p{font-size:.78rem;color:rgba(255,255,255,.65);margin-top:.15rem;}
+  .card-b{padding:1.3rem;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+  .fld{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.85rem;}
+  .fld.full{grid-column:1/-1;}
+  .fld label{font-family:var(--dsp);font-weight:700;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+  .fld .req{color:var(--red);}
+  .fld input,.fld select,.fld textarea{background:#fff;border:1.5px solid var(--line2);border-radius:9px;padding:.7rem .85rem;font-family:var(--body);font-size:.92rem;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;width:100%;}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,58,237,.15);}
+  .fld textarea{resize:vertical;min-height:70px;}
+  .hint{font-size:.74rem;color:var(--muted2);}
+
+  .btn{width:100%;background:linear-gradient(135deg,var(--purple),#a855f7);border:none;color:#fff;font-family:var(--dsp);font-weight:800;font-size:1rem;border-radius:12px;padding:1rem;cursor:pointer;transition:filter .15s,transform .1s;box-shadow:0 12px 26px -12px rgba(124,58,237,.6);}
+  .btn:hover{filter:brightness(1.07);}
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.6;cursor:default;filter:none;transform:none;}
+  .btn.ghost{background:#fff;border:1.5px solid var(--line2);color:var(--navy);box-shadow:none;font-size:.85rem;padding:.7rem;margin-top:.6rem;}
+  .btn.ghost:hover{background:var(--paper);filter:none;}
+
+  .err{background:#fff5f6;border:1px solid rgba(200,16,46,.25);border-radius:9px;padding:.7rem .9rem;font-size:.84rem;color:var(--red);margin-bottom:.9rem;display:none;}
+  .ok{background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);border-radius:12px;padding:1.1rem 1.2rem;margin-top:1rem;display:none;}
+  .ok h3{font-family:var(--dsp);font-weight:800;font-size:1rem;color:#15803d;margin-bottom:.35rem;}
+  .ok p{font-size:.86rem;color:#166534;}
+  .ok .meta{margin-top:.6rem;font-size:.8rem;color:var(--muted);background:#fff;border-radius:8px;padding:.6rem .75rem;}
+
+  .script{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.2rem 1.3rem;}
+  .script h3{font-family:var(--dsp);font-weight:800;font-size:.95rem;color:var(--navy);margin-bottom:.6rem;}
+  .script ol{margin:0 0 0 1.1rem;font-size:.87rem;color:var(--muted);}
+  .script li{margin-bottom:.5rem;}
+  .script b{color:var(--ink);}
+  .script .say{display:block;border-left:3px solid var(--orange);padding-left:.7rem;margin-top:.25rem;color:var(--ink);font-style:italic;}
+
+  @media(max-width:620px){.grid2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h1>🔒 Internal Tool</h1>
+    <p>This demo console is for HVAC Flow Solutions staff. Open it using your private link.</p>
+  </div>
+</div>
+
+<div class="wrap" id="main" style="display:none;">
+
+  <div class="banner">
+    <div class="ic">🎬</div>
+    <div>
+      <b>Demo mode — nothing here touches live data</b>
+      <span>Sends a sample lead only to the person you name below. No real contractor is emailed, no lead cap is used, and nothing is written to your live Get Quotes tab.</span>
+    </div>
+  </div>
+
+  <h1 class="pt">Live Demo Console</h1>
+  <p class="sub">Fill this in on a sales call and the prospect watches a lead hit their own phone in seconds.</p>
+
+  <div class="card">
+    <div class="card-h">
+      <h2>1. Who's watching the demo?</h2>
+      <p>The sample lead goes here, and nowhere else.</p>
+    </div>
+    <div class="card-b">
+      <div class="grid2">
+        <div class="fld"><label>Their cell phone</label><input type="tel" id="d-phone" placeholder="(210) 555-0100"><span class="hint">Where the lead text lands</span></div>
+        <div class="fld"><label>Their email</label><input type="email" id="d-email" placeholder="mike@abcheating.com"><span class="hint">Where the lead email lands</span></div>
+      </div>
+      <p class="hint">Fill in at least one. Use both for the strongest demo — they see the text and the email arrive together.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <h2>2. The sample homeowner</h2>
+      <p>Pre-filled with a realistic emergency call. Edit anything.</p>
+    </div>
+    <div class="card-b">
+      <div class="grid2">
+        <div class="fld"><label>First name</label><input type="text" id="h-first" value="Sandra"></div>
+        <div class="fld"><label>Last name</label><input type="text" id="h-last" value="Whitfield"></div>
+        <div class="fld"><label>Phone</label><input type="tel" id="h-phone" value="(210) 555-0147"></div>
+        <div class="fld"><label>ZIP</label><input type="text" id="h-zip" value="78209"></div>
+        <div class="fld"><label>City</label><input type="text" id="h-city" value="San Antonio"></div>
+        <div class="fld"><label>Urgency</label>
+          <select id="h-urgency">
+            <option>Emergency - Need someone today</option>
+            <option>Within 2-3 days</option>
+            <option>This week</option>
+            <option>Just getting quotes</option>
+          </select>
+        </div>
+        <div class="fld full"><label>Service needed</label><input type="text" id="h-service" value="AC not cooling - unit running but blowing warm air"></div>
+        <div class="fld full"><label>Notes</label><textarea id="h-notes">Upstairs is 88 degrees. Two kids at home. Ready to book today if someone can come out.</textarea></div>
+      </div>
+
+      <div class="err" id="err"></div>
+      <button class="btn" id="send">Send the demo lead →</button>
+      <button class="btn ghost" id="reset">Reset to the default sample</button>
+
+      <div class="ok" id="ok">
+        <h3>Sent — tell them to check their phone</h3>
+        <p id="ok-to"></p>
+        <div class="meta" id="ok-meta"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="script">
+    <h3>Suggested 60-second script</h3>
+    <ol>
+      <li><b>Set it up.</b><span class="say">"Rather than tell you how it works, let me just show you. What's the best cell number for you?"</span></li>
+      <li><b>Type their number in</b> while you talk. Say what you're doing — it builds the reveal.<span class="say">"I'm creating a homeowner in your area right now. AC out, 88 degrees upstairs, ready to book today."</span></li>
+      <li><b>Hit send, then stop talking.</b> Let the phone buzz. The silence does the work.</li>
+      <li><b>Let them read it.</b><span class="say">"That's it. Name, number, what's wrong, how urgent. Straight to your phone, and it went to you only — nobody else got that one."</span></li>
+      <li><b>Close on exclusivity.</b><span class="say">"On the shared-lead sites, four other companies just got that same homeowner. Here, it's yours. That's the whole difference."</span></li>
+    </ol>
+  </div>
+
+</div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEzU0QIrzKDlruiDQ28UKVeJpgyvlkVe0JSWVw7Y7vsLvFq8/exec";
+const VALID_TOKEN = 'hfs-m-2f5bc259c054da0914085ac7';
+
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var hashToken = (window.location.hash || '').replace('#','').replace('access=','');
+  if (params.get('access') === VALID_TOKEN || hashToken === VALID_TOKEN) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+  }
+})();
+
+var DEFAULTS = {
+  'h-first':'Sandra', 'h-last':'Whitfield', 'h-phone':'(210) 555-0147',
+  'h-zip':'78209', 'h-city':'San Antonio',
+  'h-service':'AC not cooling - unit running but blowing warm air',
+  'h-notes':'Upstairs is 88 degrees. Two kids at home. Ready to book today if someone can come out.'
+};
+
+['d-phone','h-phone'].forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(e){
+    var v = e.target.value.replace(/\D/g,'').substring(0,10);
+    if (v.length>=6) v='('+v.slice(0,3)+') '+v.slice(3,6)+'-'+v.slice(6);
+    else if (v.length>=3) v='('+v.slice(0,3)+') '+v.slice(3);
+    e.target.value = v;
+  });
+});
+
+document.getElementById('reset').addEventListener('click', function(){
+  for (var id in DEFAULTS) document.getElementById(id).value = DEFAULTS[id];
+  document.getElementById('h-urgency').selectedIndex = 0;
+  document.getElementById('ok').style.display = 'none';
+});
+
+document.getElementById('send').addEventListener('click', function(){
+  var g = function(id){ return document.getElementById(id).value.trim(); };
+  var err = document.getElementById('err');
+  var btn = this;
+  err.style.display = 'none';
+
+  var demoPhone = g('d-phone'), demoEmail = g('d-email');
+  if (!demoPhone && !demoEmail){
+    err.textContent = 'Enter the prospect’s cell phone or email so the demo lead has somewhere to go.';
+    err.style.display = 'block'; return;
+  }
+  if (demoEmail && !/\S+@\S+\.\S+/.test(demoEmail)){
+    err.textContent = 'That email address doesn’t look right.';
+    err.style.display = 'block'; return;
+  }
+  if (demoPhone && demoPhone.replace(/\D/g,'').length !== 10){
+    err.textContent = 'Enter a full 10-digit cell number.';
+    err.style.display = 'block'; return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  var payload = {
+    type: 'Demo',
+    demoPhone: demoPhone ? '+1' + demoPhone.replace(/\D/g,'') : '',
+    demoEmail: demoEmail,
+    firstName: g('h-first'), lastName: g('h-last'),
+    phone: g('h-phone'), email: 'demo@boosthvacleads.com',
+    zip: g('h-zip'), city: g('h-city'),
+    service: g('h-service'), urgency: g('h-urgency'),
+    notes: g('h-notes'), source: 'Live Demo',
+    submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'})
+  };
+
+  // no-cors means we can't read the response, so treat completion as sent and
+  // tell them to watch the phone — the phone is the real confirmation anyway.
+  var done = function(){
+    var to = [];
+    if (demoPhone) to.push(demoPhone);
+    if (demoEmail) to.push(demoEmail);
+    document.getElementById('ok-to').textContent = 'Sent to ' + to.join(' and ') + '.';
+    document.getElementById('ok-meta').textContent =
+      'Texts usually land in under 10 seconds; email can take up to a minute. ' +
+      'Logged on the "Demo Leads" tab — no live data touched.';
+    document.getElementById('ok').style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Send another demo lead →';
+  };
+
+  fetch(SHEET_URL, {
+    method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }).then(done).catch(done);
+});
+</script>
+</body>
+</html>

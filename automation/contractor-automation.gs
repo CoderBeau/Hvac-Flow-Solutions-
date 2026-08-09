@@ -156,6 +156,8 @@ function doPost(e) {
       const result = appendTrialRow(ss, data);
       emailTrialSignup(data, result.clientId, result.startDate, result.endDate);
       notifyTrialSignupSMS(data, result.clientId, result.startDate, result.endDate);
+    } else if (data.type === 'Demo') {
+      return jsonOut(handleDemoLead(ss, data));
     } else if (data.message && data.message.type === 'end-of-call-report') {
       handleVapiCall(ss, data.message);
     }
@@ -169,6 +171,83 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ── Sales demo ───────────────────────────────────────────────
+// Powers demo.html: sends a sample lead to whoever you're pitching, so they
+// watch it land on their own phone during the call.
+//
+// This path is deliberately sealed off from live operations. It NEVER:
+//   • writes to the "Get Quotes" tab       • calls forwardLeadToContractor()
+//   • reads or writes the Contractors tab  • increments anyone's Leads Sent
+// A demo can therefore never burn a paying contractor's lead cap or send a
+// fake homeowner to a real customer. Demo rows land on their own "Demo Leads"
+// tab and the alert goes only to the recipient named in the request.
+function handleDemoLead(ss, data) {
+  var email = String(data.demoEmail || '').trim();
+  var phone = String(data.demoPhone || '').trim();
+  if (!email && !phone) {
+    return { status: 'error', message: 'Provide a demo recipient email and/or phone.' };
+  }
+
+  // Score it with the real engine so the quality verdict shown is genuine.
+  var verdict = scoreLead(data, getKeywords(ss));
+
+  writeDemoLead(ss, data, verdict);
+
+  var sentTo = [];
+  if (email) {
+    MailApp.sendEmail(email, leadEmailSubject(data), leadEmailBody(data));
+    sentTo.push(email);
+  }
+  if (phone) {
+    // sendSMS no-ops silently when Twilio isn't configured.
+    sendSMS(phone, leadSmsBody(data));
+    sentTo.push(phone);
+  }
+
+  return {
+    status: 'success',
+    demo: true,
+    quality: verdict.quality,
+    score: verdict.score,
+    matched: formatMatchedKeywords(verdict),
+    sentTo: sentTo
+  };
+}
+
+function writeDemoLead(ss, data, verdict) {
+  var sheet = ss.getSheetByName('Demo Leads');
+  if (!sheet) sheet = ss.insertSheet('Demo Leads');
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'Timestamp', 'Demo Sent To', 'Homeowner', 'Phone', 'ZIP', 'City',
+      'Service Needed', 'Urgency', 'Notes', 'Lead Quality', 'Quality Score', 'Matched Keywords'
+    ]);
+    var header = sheet.getRange(1, 1, 1, 12);
+    header.setBackground('#7c3aed');   // purple, so it never reads as a live tab
+    header.setFontColor('#FFFFFF');
+    header.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    [160, 220, 180, 130, 70, 120, 180, 140, 260, 110, 100, 220]
+      .forEach(function(w, i) { sheet.setColumnWidth(i + 1, w); });
+  }
+
+  sheet.appendRow([
+    data.submittedAt || new Date().toLocaleString(),
+    [data.demoEmail || '', data.demoPhone || ''].filter(String).join(' / '),
+    ((data.firstName || '') + ' ' + (data.lastName || '')).trim(),
+    data.phone   || '',
+    data.zip     || '',
+    data.city    || '',
+    data.service || '',
+    data.urgency || '',
+    data.notes   || data.description || '',
+    verdict.quality,
+    verdict.score,
+    formatMatchedKeywords(verdict)
+  ]);
 }
 
 // ── Stripe webhook ───────────────────────────────────────────
@@ -815,12 +894,27 @@ function forwardLeadToContractor(data) {
   var contractor = pickContractor(sheet);
   if (!contractor) return null;  // no active contractors under cap, skip
 
-  var source = data.source || 'Website';
-  var subject = 'New HVAC Lead – ' + (data.service || 'Service Request') +
-                ' in ' + (data.city || data.zip || 'Texas');
+  MailApp.sendEmail(contractor.email, leadEmailSubject(data), leadEmailBody(data));
 
-  var body =
-    'You have a new HVAC lead from HVAC Flow Solutions!\n\n' +
+  if (contractor.phone && contractor.smsConsent === 'Yes') {
+    sendSMS(contractor.phone, leadSmsBody(data));
+  }
+
+  incrementLeadCount(sheet, contractor.row);
+  enforceLeadCap(sheet, contractor.row, contractor.leadCap);
+  return contractor;
+}
+
+// ── Lead alert formatting ────────────────────────────────────
+// Shared by real routing and the sales demo, so what a prospect sees on
+// their phone is byte-for-byte what a paying contractor receives.
+function leadEmailSubject(data) {
+  return 'New HVAC Lead – ' + (data.service || 'Service Request') +
+         ' in ' + (data.city || data.zip || 'Texas');
+}
+
+function leadEmailBody(data) {
+  return 'You have a new HVAC lead from HVAC Flow Solutions!\n\n' +
     'Name: '        + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
     'Phone: '       + (data.phone     || '') + '\n' +
     'Email: '       + (data.email     || '') + '\n' +
@@ -829,25 +923,17 @@ function forwardLeadToContractor(data) {
     'Service: '     + (data.service   || '') + '\n' +
     'Urgency: '     + (data.urgency   || '') + '\n' +
     'Notes: '       + (data.notes || data.description || 'None') + '\n' +
-    'Lead Source: ' + source + '\n\n' +
+    'Lead Source: ' + (data.source || 'Website') + '\n\n' +
     'Call or text this homeowner as soon as possible to win the job.\n\n' +
     '- HVAC Flow Solutions';
+}
 
-  MailApp.sendEmail(contractor.email, subject, body);
-
-  if (contractor.phone && contractor.smsConsent === 'Yes') {
-    sendSMS(contractor.phone,
-      'NEW LEAD – ' + (data.service || 'HVAC') + ' in ' + (data.city || data.zip || 'TX') + '\n' +
-      'Name: '    + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
-      'Phone: '   + (data.phone || '') + '\n' +
-      'Urgency: ' + (data.urgency || '') + '\n' +
-      'Call them back ASAP to win the job. Reply STOP to opt out.'
-    );
-  }
-
-  incrementLeadCount(sheet, contractor.row);
-  enforceLeadCap(sheet, contractor.row, contractor.leadCap);
-  return contractor;
+function leadSmsBody(data) {
+  return 'NEW LEAD – ' + (data.service || 'HVAC') + ' in ' + (data.city || data.zip || 'TX') + '\n' +
+    'Name: '    + (data.firstName || '') + ' ' + (data.lastName || '') + '\n' +
+    'Phone: '   + (data.phone || '') + '\n' +
+    'Urgency: ' + (data.urgency || '') + '\n' +
+    'Call them back ASAP to win the job. Reply STOP to opt out.';
 }
 
 // Picks the active contractor in ACTIVE_CITY with the fewest leads sent,
