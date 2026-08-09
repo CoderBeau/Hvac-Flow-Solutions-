@@ -174,6 +174,28 @@ press Run. It sends a sample lead to your own `ADMIN_EMAIL` and `ADMIN_PHONE` an
 > `TypeError: Cannot read properties of undefined`. That's the editor passing nothing in — not a
 > broken script. Always run `testDemoLead` instead.
 
+### The 60-second script
+
+Kept here rather than on the page — anyone who sees the screen would read it, and a
+contractor spotting "hit send, then stop talking" makes the whole demo feel staged.
+
+1. **Set it up.**
+   > "Rather than tell you how it works, let me just show you. What's the best cell number for you?"
+
+2. **Type their number in while you talk.** Say what you're doing — it builds the reveal.
+   > "I'm creating a homeowner in your area right now. AC out, 88 degrees upstairs, ready to book today."
+
+3. **Hit send, then stop talking.** Let the phone buzz. The silence does the work.
+
+4. **Let them read it.**
+   > "That's it. Name, number, what's wrong, how urgent. Straight to your phone, and it went to you only — nobody else got that one."
+
+5. **Close on exclusivity.**
+   > "On the shared-lead sites, four other companies just got that same homeowner. Here, it's yours. That's the whole difference."
+
+Step 5 lands hardest on contractors already paying Angi, Thumbtack, or HomeAdvisor — the
+lead going to them *only* is the entire product.
+
 ### Dashboard demo — `dashboard.html?demo=1`
 
 Renders a built-in sample dataset — 34 leads, 5 contractors, realistic mix of Good/Review/Bad.
