@@ -56,8 +56,17 @@
 
   .conn-line{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted);margin-bottom:1.2rem;padding:0 .2rem;}
   .conn-line .ok-dot{color:var(--green);font-weight:700;}
-  .conn-line button{background:none;border:none;color:var(--muted2);font-family:var(--body);font-size:.78rem;text-decoration:underline;cursor:pointer;padding:0;margin-left:auto;}
+  .conn-line button{background:none;border:none;color:var(--muted2);font-family:var(--body);font-size:.78rem;text-decoration:underline;cursor:pointer;padding:0;margin-left:auto;transition:opacity .15s,color .15s;}
   .conn-line button:hover{color:var(--navy);}
+  /* Hidden until you reach for it, so a prospect watching the screen never sees
+     it. Gated on (hover:hover) — on a touch screen there is no hover, so it
+     stays visible there instead of becoming unreachable. Keyboard focus also
+     brings it back. It keeps its layout space either way, so nothing shifts. */
+  @media (hover: hover) {
+    .conn-line button{opacity:0;}
+    .conn-line:hover button,
+    .conn-line button:focus-visible{opacity:1;}
+  }
 
   .err{background:#fff5f6;border:1px solid rgba(200,16,46,.25);border-radius:9px;padding:.7rem .9rem;font-size:.84rem;color:var(--red);margin-bottom:.9rem;display:none;}
   .ok{background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);border-radius:12px;padding:1.1rem 1.2rem;margin-top:1rem;display:none;}
