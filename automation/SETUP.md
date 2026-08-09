@@ -148,8 +148,17 @@ Two tools for showing the system to a contractor **without touching live data**.
 
 ### Live demo lead — `demo.html`
 
-Open `https://boosthvacleads.com/demo.html?access=hfs-m-2f5bc259c054da0914085ac7`
-(same invite token as the pricing page). Enter the prospect's cell and/or email, and a
+Open `https://boosthvacleads.com/demo.html?access=hfs-d-2078cdadc629421c47fcccf79f`
+
+> This is the **demo** token. It is deliberately different from the pricing page's
+> `hfs-m-…` token, so showing or sharing the demo link never also unlocks the
+> invite-only membership pricing page.
+>
+> Both gates are client-side, so they deter casual snooping rather than a determined
+> person — the token is readable in the page source. The real protection on the demo is
+> `DASHBOARD_KEY`, checked server-side, without which nobody can actually send anything.
+
+Enter the prospect's cell and/or email, and a
 sample lead lands on **their** phone in seconds — the same email and SMS a paying
 contractor gets, formatted identically.
 

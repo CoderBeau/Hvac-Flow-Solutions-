@@ -178,7 +178,15 @@
 
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEzU0QIrzKDlruiDQ28UKVeJpgyvlkVe0JSWVw7Y7vsLvFq8/exec";
-const VALID_TOKEN = 'hfs-m-2f5bc259c054da0914085ac7';
+// Demo console has its OWN token, separate from the pricing page's, so sharing
+// or screen-showing this link never hands anyone access to the invite-only
+// membership pricing page.
+//
+// Note this gate is client-side, so it deters casual snooping, not a determined
+// person — the token is readable in this file's source. What actually protects
+// the demo from being fired by someone else is DASHBOARD_KEY, which is checked
+// server-side by the Apps Script and never leaves your browser.
+const VALID_TOKEN = 'hfs-d-2078cdadc629421c47fcccf79f';
 
 (function(){
   var params = new URLSearchParams(window.location.search);
