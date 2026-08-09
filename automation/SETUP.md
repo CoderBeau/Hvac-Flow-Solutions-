@@ -166,6 +166,14 @@ scored by the real keyword engine, so the quality verdict you show is genuine.
 > ⚠️ Never demo by submitting the real `get-quotes.html` form. That routes a fake homeowner
 > to a real paying contractor **and** spends one of their paid leads.
 
+**To test it from the Apps Script editor**, pick **`testDemoLead`** in the function dropdown and
+press Run. It sends a sample lead to your own `ADMIN_EMAIL` and `ADMIN_PHONE` and logs the result.
+
+> The Run button calls the selected function **with no arguments**. `handleDemoLead`,
+> `writeDemoLead` and `apiDemoLead` all take parameters, so running them directly throws
+> `TypeError: Cannot read properties of undefined`. That's the editor passing nothing in — not a
+> broken script. Always run `testDemoLead` instead.
+
 ### Dashboard demo — `dashboard.html?demo=1`
 
 Renders a built-in sample dataset — 34 leads, 5 contractors, realistic mix of Good/Review/Bad.

@@ -183,6 +183,20 @@ function doPost(e) {
 // A demo can therefore never burn a paying contractor's lead cap or send a
 // fake homeowner to a real customer. Demo rows land on their own "Demo Leads"
 // tab and the alert goes only to the recipient named in the request.
+// Called over doGet so demo.html can actually read the result. A POST to an
+// Apps Script web app can only be sent no-cors from the browser, which makes
+// every outcome look identical — including failures.
+function apiDemoLead(ss, p) {
+  return handleDemoLead(ss, {
+    demoEmail: p.demoEmail, demoPhone: p.demoPhone,
+    firstName: p.firstName, lastName: p.lastName,
+    phone: p.phone, email: p.email || 'demo@boosthvacleads.com',
+    zip: p.zip, city: p.city, service: p.service, urgency: p.urgency,
+    notes: p.notes, source: p.source || 'Live Demo',
+    submittedAt: p.submittedAt
+  });
+}
+
 function handleDemoLead(ss, data) {
   var email = String(data.demoEmail || '').trim();
   var phone = String(data.demoPhone || '').trim();
@@ -195,15 +209,26 @@ function handleDemoLead(ss, data) {
 
   writeDemoLead(ss, data, verdict);
 
-  var sentTo = [];
+  var smsConfigured = !!getProperty('TWILIO_SID');
+  var emailSent = false, smsSent = false, warnings = [];
+
   if (email) {
-    MailApp.sendEmail(email, leadEmailSubject(data), leadEmailBody(data));
-    sentTo.push(email);
+    var quotaLeft = MailApp.getRemainingDailyQuota();
+    if (quotaLeft < 1) {
+      warnings.push('Gmail daily send quota is used up — no email sent. It resets every 24 hours.');
+    } else {
+      MailApp.sendEmail(email, leadEmailSubject(data), leadEmailBody(data));
+      emailSent = true;
+    }
   }
+
   if (phone) {
-    // sendSMS no-ops silently when Twilio isn't configured.
-    sendSMS(phone, leadSmsBody(data));
-    sentTo.push(phone);
+    if (!smsConfigured) {
+      warnings.push('No text sent: TWILIO_SID is not set in Script Properties, so SMS is skipped.');
+    } else {
+      sendSMS(phone, leadSmsBody(data));   // logs and swallows Twilio errors internally
+      smsSent = true;
+    }
   }
 
   return {
@@ -212,7 +237,10 @@ function handleDemoLead(ss, data) {
     quality: verdict.quality,
     score: verdict.score,
     matched: formatMatchedKeywords(verdict),
-    sentTo: sentTo
+    emailSent: emailSent,
+    smsSent: smsSent,
+    emailQuotaRemaining: MailApp.getRemainingDailyQuota(),
+    warnings: warnings
   };
 }
 
@@ -377,6 +405,7 @@ function doGet(e) {
     var action = p.action || 'dashboard';
 
     if (action === 'dashboard')           return jsonOut(getDashboardData(ss));
+    if (action === 'demoLead')            return jsonOut(apiDemoLead(ss, p));
     if (action === 'setQuality')          return jsonOut(apiSetQuality(ss, p));
     if (action === 'setContractorStatus') return jsonOut(apiSetContractorStatus(ss, p));
     if (action === 'addKeyword')          return jsonOut(apiAddKeyword(ss, p));
@@ -1483,6 +1512,38 @@ function getProperty(key) {
 function testSMS() {
   sendSMS(getProperty('ADMIN_PHONE'), 'Test SMS from HVAC Flow Solutions automation script.');
   Logger.log('Test SMS sent (if Twilio properties are configured).');
+}
+
+// Sends a demo lead to YOUR admin email/phone, straight from the editor.
+//
+// Pick "testDemoLead" in the function dropdown and press Run. Use this one —
+// handleDemoLead, writeDemoLead and apiDemoLead all take arguments, so pressing
+// Run on them passes undefined and throws "Cannot read properties of undefined".
+// That's the editor, not a broken script.
+function testDemoLead() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var result = handleDemoLead(ss, {
+    demoEmail: ADMIN_EMAIL,
+    demoPhone: getProperty('ADMIN_PHONE'),
+    firstName: 'Sandra', lastName: 'Whitfield',
+    phone: '(210) 555-0147', email: 'demo@boosthvacleads.com',
+    zip: '78209', city: 'San Antonio',
+    service: 'AC not cooling - unit running but blowing warm air',
+    urgency: 'Emergency - Need someone today',
+    notes: 'Upstairs is 88 degrees. Two kids at home. Ready to book today.',
+    source: 'Editor Test'
+  });
+
+  Logger.log('testDemoLead result: ' + JSON.stringify(result));
+  if (result.warnings && result.warnings.length) {
+    Logger.log('WARNINGS: ' + result.warnings.join(' | '));
+  }
+  Logger.log(result.emailSent
+    ? 'Email sent to ' + ADMIN_EMAIL + ' — check that inbox.'
+    : 'No email sent. See warnings above.');
+  Logger.log(result.smsSent
+    ? 'Text sent to ADMIN_PHONE.'
+    : 'No text sent (ADMIN_PHONE or TWILIO_SID not set).');
 }
 
 function testHomeowner() {

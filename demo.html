@@ -94,6 +94,21 @@
 
   <div class="card">
     <div class="card-h">
+      <h2>Connection</h2>
+      <p>Your dashboard key — stored in this browser only, entered once.</p>
+    </div>
+    <div class="card-b">
+      <div class="fld" style="margin-bottom:.4rem;">
+        <label>Dashboard key <span class="req">*</span></label>
+        <input type="password" id="d-key" placeholder="Your DASHBOARD_KEY value">
+        <span class="hint">Same key as dashboard.html. Needed so the demo can report back whether it actually sent.</span>
+      </div>
+      <div id="conn-state" class="hint"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
       <h2>1. Who's watching the demo?</h2>
       <p>The sample lead goes here, and nowhere else.</p>
     </div>
@@ -168,6 +183,17 @@ const VALID_TOKEN = 'hfs-m-2f5bc259c054da0914085ac7';
   }
 })();
 
+// Shares the dashboard's stored key, so if you've used dashboard.html in this
+// browser the field is already filled in.
+var LS_KEY = 'hfs_dash_key';
+(function(){
+  var saved = localStorage.getItem(LS_KEY) || '';
+  document.getElementById('d-key').value = saved;
+  document.getElementById('conn-state').textContent = saved
+    ? '✓ Key remembered from this browser.'
+    : 'No key saved yet — paste it once and it will be remembered.';
+})();
+
 var DEFAULTS = {
   'h-first':'Sandra', 'h-last':'Whitfield', 'h-phone':'(210) 555-0147',
   'h-zip':'78209', 'h-city':'San Antonio',
@@ -210,38 +236,70 @@ document.getElementById('send').addEventListener('click', function(){
     err.style.display = 'block'; return;
   }
 
-  btn.disabled = true; btn.textContent = 'Sending…';
+  var key = g('d-key');
+  if (!key){
+    err.textContent = 'Enter your dashboard key first — it is what lets this page confirm the send actually worked.';
+    err.style.display = 'block';
+    document.getElementById('d-key').focus();
+    return;
+  }
+  localStorage.setItem(LS_KEY, key);
 
-  var payload = {
-    type: 'Demo',
+  btn.disabled = true; btn.textContent = 'Sending…';
+  document.getElementById('ok').style.display = 'none';
+
+  // Sent as GET, not POST: a cross-origin POST to an Apps Script web app can
+  // only go out no-cors, which hides the response and makes a silent failure
+  // look exactly like a success.
+  var qs = new URLSearchParams({
+    key: key, action: 'demoLead',
     demoPhone: demoPhone ? '+1' + demoPhone.replace(/\D/g,'') : '',
     demoEmail: demoEmail,
     firstName: g('h-first'), lastName: g('h-last'),
-    phone: g('h-phone'), email: 'demo@boosthvacleads.com',
+    phone: g('h-phone'),
     zip: g('h-zip'), city: g('h-city'),
     service: g('h-service'), urgency: g('h-urgency'),
     notes: g('h-notes'), source: 'Live Demo',
     submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'})
-  };
+  });
 
-  // no-cors means we can't read the response, so treat completion as sent and
-  // tell them to watch the phone — the phone is the real confirmation anyway.
-  var done = function(){
-    var to = [];
-    if (demoPhone) to.push(demoPhone);
-    if (demoEmail) to.push(demoEmail);
-    document.getElementById('ok-to').textContent = 'Sent to ' + to.join(' and ') + '.';
-    document.getElementById('ok-meta').textContent =
-      'Texts usually land in under 10 seconds; email can take up to a minute. ' +
-      'Logged on the "Demo Leads" tab — no live data touched.';
-    document.getElementById('ok').style.display = 'block';
-    btn.disabled = false; btn.textContent = 'Send another demo lead →';
-  };
+  fetch(SHEET_URL + '?' + qs.toString())
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (res.status !== 'success') throw new Error(res.message || 'Request failed');
 
-  fetch(SHEET_URL, {
-    method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  }).then(done).catch(done);
+      var to = [];
+      if (res.emailSent) to.push(demoEmail);
+      if (res.smsSent)   to.push(demoPhone);
+
+      document.getElementById('ok-to').textContent = to.length
+        ? 'Sent to ' + to.join(' and ') + '.'
+        : 'Nothing was actually sent — see below.';
+
+      var meta = 'Scored ' + res.quality + ' (score ' + res.score + ') by the live keyword engine. ' +
+                 'Logged on the "Demo Leads" tab — no live data touched.';
+      if (res.warnings && res.warnings.length) meta = '⚠️ ' + res.warnings.join('  ⚠️ ') + '\n\n' + meta;
+      document.getElementById('ok-meta').textContent = meta;
+      document.getElementById('ok').style.display = 'block';
+    })
+    .catch(function(e){
+      var m = e.message || String(e);
+      if (/Unknown action/i.test(m)) {
+        m = 'Your Apps Script is still running the OLD version. Paste the new contractor-automation.gs, ' +
+            'then Deploy > Manage deployments > Edit > New version > Deploy.';
+      } else if (/Invalid dashboard key/i.test(m)) {
+        m = 'That dashboard key is wrong. Check DASHBOARD_KEY in Apps Script > Project Settings > Script Properties.';
+      } else if (/Dashboard is locked/i.test(m)) {
+        m = 'DASHBOARD_KEY is not set in Apps Script > Project Settings > Script Properties.';
+      } else if (/Failed to fetch|NetworkError|Load failed/i.test(m)) {
+        m = 'Could not reach the Apps Script. Check the deployment exists and its access is set to "Anyone".';
+      }
+      err.textContent = m;
+      err.style.display = 'block';
+    })
+    .then(function(){
+      btn.disabled = false; btn.textContent = 'Send the demo lead →';
+    });
 });
 </script>
 </body>
