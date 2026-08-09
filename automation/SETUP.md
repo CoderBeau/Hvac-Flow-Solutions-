@@ -148,8 +148,17 @@ Two tools for showing the system to a contractor **without touching live data**.
 
 ### Live demo lead — `demo.html`
 
-Open `https://boosthvacleads.com/demo.html?access=hfs-m-2f5bc259c054da0914085ac7`
-(same invite token as the pricing page). Enter the prospect's cell and/or email, and a
+Open `https://boosthvacleads.com/demo.html?access=hfs-d-2078cdadc629421c47fcccf79f`
+
+> This is the **demo** token. It is deliberately different from the pricing page's
+> `hfs-m-…` token, so showing or sharing the demo link never also unlocks the
+> invite-only membership pricing page.
+>
+> Both gates are client-side, so they deter casual snooping rather than a determined
+> person — the token is readable in the page source. The real protection on the demo is
+> `DASHBOARD_KEY`, checked server-side, without which nobody can actually send anything.
+
+Enter the prospect's cell and/or email, and a
 sample lead lands on **their** phone in seconds — the same email and SMS a paying
 contractor gets, formatted identically.
 
@@ -173,6 +182,28 @@ press Run. It sends a sample lead to your own `ADMIN_EMAIL` and `ADMIN_PHONE` an
 > `writeDemoLead` and `apiDemoLead` all take parameters, so running them directly throws
 > `TypeError: Cannot read properties of undefined`. That's the editor passing nothing in — not a
 > broken script. Always run `testDemoLead` instead.
+
+### The 60-second script
+
+Kept here rather than on the page — anyone who sees the screen would read it, and a
+contractor spotting "hit send, then stop talking" makes the whole demo feel staged.
+
+1. **Set it up.**
+   > "Rather than tell you how it works, let me just show you. What's the best cell number for you?"
+
+2. **Type their number in while you talk.** Say what you're doing — it builds the reveal.
+   > "I'm creating a homeowner in your area right now. AC out, 88 degrees upstairs, ready to book today."
+
+3. **Hit send, then stop talking.** Let the phone buzz. The silence does the work.
+
+4. **Let them read it.**
+   > "That's it. Name, number, what's wrong, how urgent. Straight to your phone, and it went to you only — nobody else got that one."
+
+5. **Close on exclusivity.**
+   > "On the shared-lead sites, four other companies just got that same homeowner. Here, it's yours. That's the whole difference."
+
+Step 5 lands hardest on contractors already paying Angi, Thumbtack, or HomeAdvisor — the
+lead going to them *only* is the entire product.
 
 ### Dashboard demo — `dashboard.html?demo=1`
 
