@@ -1494,6 +1494,38 @@ function testSMS() {
   Logger.log('Test SMS sent (if Twilio properties are configured).');
 }
 
+// Sends a demo lead to YOUR admin email/phone, straight from the editor.
+//
+// Pick "testDemoLead" in the function dropdown and press Run. Use this one —
+// handleDemoLead, writeDemoLead and apiDemoLead all take arguments, so pressing
+// Run on them passes undefined and throws "Cannot read properties of undefined".
+// That's the editor, not a broken script.
+function testDemoLead() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var result = handleDemoLead(ss, {
+    demoEmail: ADMIN_EMAIL,
+    demoPhone: getProperty('ADMIN_PHONE'),
+    firstName: 'Sandra', lastName: 'Whitfield',
+    phone: '(210) 555-0147', email: 'demo@boosthvacleads.com',
+    zip: '78209', city: 'San Antonio',
+    service: 'AC not cooling - unit running but blowing warm air',
+    urgency: 'Emergency - Need someone today',
+    notes: 'Upstairs is 88 degrees. Two kids at home. Ready to book today.',
+    source: 'Editor Test'
+  });
+
+  Logger.log('testDemoLead result: ' + JSON.stringify(result));
+  if (result.warnings && result.warnings.length) {
+    Logger.log('WARNINGS: ' + result.warnings.join(' | '));
+  }
+  Logger.log(result.emailSent
+    ? 'Email sent to ' + ADMIN_EMAIL + ' — check that inbox.'
+    : 'No email sent. See warnings above.');
+  Logger.log(result.smsSent
+    ? 'Text sent to ADMIN_PHONE.'
+    : 'No text sent (ADMIN_PHONE or TWILIO_SID not set).');
+}
+
 function testHomeowner() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var data = {
