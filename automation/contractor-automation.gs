@@ -25,7 +25,11 @@
 //   DASHBOARD_KEY  — Long random password for dashboard.html (the dashboard
 //                    API stays locked until this is set)
 //   STRIPE_WEBHOOK_TOKEN — Long random string, repeated in the Stripe webhook URL
-//                    as ?stripeToken=... (paid signups stay Pending until this is set)
+//                    as ?stripeToken=... (optional if you rely on polling below)
+//   STRIPE_SECRET_KEY — Stripe RESTRICTED key with read access to Checkout
+//                    Sessions. Powers pollStripePayments(), the reliable way
+//                    paid contractors are flipped to Active. Without it they
+//                    stay Pending Payment until activated by hand.
 // ============================================================
 
 var TRIAL_LENGTH_DAYS = 14;
@@ -345,6 +349,13 @@ function activatePaidContractor(ss, ref, email, session) {
   var rowNum = byRef !== -1 ? byRef : byEmail;
   if (rowNum === -1) return { matched: false };
 
+  // Idempotency: only a Pending Payment -> Active transition notifies anyone.
+  // An already-Active row (a webhook retry, or the same session seen again by
+  // pollStripePayments) is a silent no-op — this is what stops duplicate
+  // "payment received" texts and admin emails.
+  var currentStatus = String(sheet.getRange(rowNum, 11).getValue()).trim();
+  if (currentStatus === 'Active') return { matched: true, row: rowNum, alreadyActive: true };
+
   sheet.getRange(rowNum, 11).setValue('Active');
 
   // Store the Stripe subscription (memberships) or session id (one-time) so a
@@ -373,7 +384,80 @@ function activatePaidContractor(ss, ref, email, session) {
     );
   }
 
-  return { matched: true, row: rowNum };
+  return { matched: true, row: rowNum, activated: true };
+}
+
+// ── Stripe payment polling (reliable activation) ─────────────
+// Apps Script web apps answer a POST with a 302 redirect, which Stripe records
+// as a FAILED webhook delivery even when the script actually ran. Stripe then
+// retries the same event for hours (duplicate activations) and can eventually
+// auto-disable the endpoint (future payments stop activating silently).
+//
+// This scheduled poll is the reliable path: it asks Stripe directly for
+// recently-paid checkout sessions and activates any matching Pending Payment
+// contractor. Installed by installTriggers() to run every 5 minutes. The
+// webhook can stay on as a faster path — activation is idempotent, so whichever
+// arrives first wins and the other is a no-op.
+//
+// SETUP — Script Properties: add STRIPE_SECRET_KEY.
+//   Use a RESTRICTED key, not your main secret key: Stripe Dashboard >
+//   Developers > API keys > Create restricted key, give it READ access to
+//   "Checkout Sessions" and nothing else. That key can read payment records but
+//   cannot move money, refund, or change anything — so it's safe in Script
+//   Properties. Never put it in the code or the repo.
+function pollStripePayments() {
+  var ss  = SpreadsheetApp.getActiveSpreadsheet();
+  var key = getProperty('STRIPE_SECRET_KEY');
+  if (!key) { Logger.log('pollStripePayments: STRIPE_SECRET_KEY not set — skipping.'); return; }
+
+  // Bounded look-back keeps the response small. Activation is idempotent, so
+  // the overlapping windows between polls are harmless.
+  var since = Math.floor(Date.now() / 1000) - 3 * 24 * 3600;   // last 3 days
+  var url = 'https://api.stripe.com/v1/checkout/sessions?limit=100&created%5Bgte%5D=' + since;
+
+  var resp;
+  try {
+    resp = UrlFetchApp.fetch(url, {
+      method: 'get',
+      headers: { Authorization: 'Bearer ' + key },
+      muteHttpExceptions: true
+    });
+  } catch (e) {
+    Logger.log('pollStripePayments: fetch failed — ' + e.message);
+    return;
+  }
+
+  var code = resp.getResponseCode();
+  if (code !== 200) {
+    Logger.log('pollStripePayments: Stripe returned ' + code + ' — ' + resp.getContentText().slice(0, 200));
+    if (code === 401) {
+      MailApp.sendEmail(ADMIN_EMAIL, 'Stripe polling: API key rejected (401)',
+        'STRIPE_SECRET_KEY was rejected by Stripe. Check or recreate the restricted key in\n' +
+        'Apps Script > Project Settings > Script Properties. Payments still work; contractors\n' +
+        'just stay Pending Payment until this is fixed.');
+    }
+    return;
+  }
+
+  var data;
+  try { data = JSON.parse(resp.getContentText()); }
+  catch (e) { Logger.log('pollStripePayments: could not parse Stripe response.'); return; }
+
+  var sessions = (data && data.data) || [];
+  var activated = 0;
+  for (var i = 0; i < sessions.length; i++) {
+    var s = sessions[i];
+    if (s.status && s.status !== 'complete') continue;
+    if (s.payment_status && s.payment_status !== 'paid') continue;
+
+    var ref   = String(s.client_reference_id || '');
+    var email = String((s.customer_details && s.customer_details.email) || s.customer_email || '');
+    var r = activatePaidContractor(ss, ref, email, s);
+    if (r && r.activated) activated++;
+  }
+
+  Logger.log('pollStripePayments: scanned ' + sessions.length + ' paid session(s), activated ' + activated + '.');
+  return activated;
 }
 
 function formatStripeAmount(session) {
@@ -1339,15 +1423,17 @@ function installTriggers() {
   var triggers = ScriptApp.getProjectTriggers();
   for (var i = 0; i < triggers.length; i++) {
     var handler = triggers[i].getHandlerFunction();
-    if (handler === 'sendHomeownerFollowUps' || handler === 'runDailyMaintenance') {
+    if (handler === 'sendHomeownerFollowUps' || handler === 'runDailyMaintenance' ||
+        handler === 'pollStripePayments') {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
 
   ScriptApp.newTrigger('sendHomeownerFollowUps').timeBased().everyHours(1).create();
   ScriptApp.newTrigger('runDailyMaintenance').timeBased().everyDays(1).atHour(8).create();
+  ScriptApp.newTrigger('pollStripePayments').timeBased().everyMinutes(5).create();
 
-  Logger.log('Triggers installed: sendHomeownerFollowUps (hourly), runDailyMaintenance (daily @ 8am).');
+  Logger.log('Triggers installed: sendHomeownerFollowUps (hourly), runDailyMaintenance (daily @ 8am), pollStripePayments (every 5 min).');
 }
 
 // ── Manual Admin Control ──────────────────────────────────
@@ -1512,6 +1598,21 @@ function getProperty(key) {
 function testSMS() {
   sendSMS(getProperty('ADMIN_PHONE'), 'Test SMS from HVAC Flow Solutions automation script.');
   Logger.log('Test SMS sent (if Twilio properties are configured).');
+}
+
+// Runs one Stripe poll right now, from the editor. Pick "testStripePolling" in
+// the dropdown and press Run, then open Execution log. It confirms the API key
+// works and reports how many paid sessions it saw and activated. Safe to run any
+// time — activation is idempotent, so it never re-notifies an already-Active
+// contractor.
+function testStripePolling() {
+  if (!getProperty('STRIPE_SECRET_KEY')) {
+    Logger.log('STRIPE_SECRET_KEY is not set in Script Properties — add a restricted key first.');
+    return;
+  }
+  var n = pollStripePayments();
+  Logger.log('testStripePolling done. Newly activated this run: ' + (n || 0) +
+             '. (See the line above for how many paid sessions were scanned.)');
 }
 
 // Sends a demo lead to YOUR admin email/phone, straight from the editor.

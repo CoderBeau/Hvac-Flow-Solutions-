@@ -96,27 +96,47 @@ Then open **`automation/contractor-automation.gs`** and paste the *same* URLs in
 
 Any link left blank simply shows a "call (830) 538-0713 to pay" card instead — nothing breaks.
 
-### 0d. Turn on automatic activation (the webhook)
+### 0d. Turn on automatic activation (polling — the reliable way)
 
 Contractors are written to the sheet as **Pending Payment**, and leads are only routed to
-**Active** rows. This webhook flips them to Active the moment Stripe confirms payment.
+**Active** rows. Something has to flip them to Active once Stripe confirms payment.
 
-1. In Apps Script: **Project Settings > Script Properties** > add
-   `STRIPE_WEBHOOK_TOKEN` = a long random string you make up.
-2. In Stripe: **Developers > Webhooks > Add endpoint**. URL:
+**Use polling.** A scheduled function (`pollStripePayments`) asks Stripe every 5 minutes for
+recently-paid checkouts and activates the matching contractor. This is more reliable than the
+webhook (see the note below on why).
 
-   ```
-   https://script.google.com/macros/s/<YOUR_DEPLOY_ID>/exec?stripeToken=<that same string>
-   ```
+1. **Create a restricted Stripe key.** Stripe Dashboard > **Developers > API keys** >
+   **Create restricted key**. Give it **Read** on **Checkout Sessions** and nothing else, then
+   create and copy it. A restricted read key can see payment records but cannot move money,
+   refund, or change anything — safe to store in Apps Script.
+2. **Apps Script > Project Settings > Script Properties** > add
+   `STRIPE_SECRET_KEY` = that restricted key.
+3. **Re-run `installTriggers`** from the editor (function dropdown > Run). This adds the
+   5-minute poll alongside the existing triggers. *(Skip if you've already run it after pasting
+   this version.)*
+4. Test it: run **`testStripePolling`** from the dropdown and open the Execution log — it
+   confirms the key works and reports how many paid sessions it scanned.
 
-3. Select the event **`checkout.session.completed`**, then save.
+Without `STRIPE_SECRET_KEY`, paid contractors sit at Pending Payment until you flip them to
+Active by hand on the Contractors tab. Payments still go through either way.
 
-Without this, paid contractors sit at Pending Payment until you flip them to Active by hand
-on the Contractors tab (or from the dashboard). Payments still go through either way.
+#### Why polling instead of the webhook
 
-> Apps Script web apps can't read request headers, so Stripe's signature header can't be
-> verified. The random token in the URL is what protects the endpoint — keep it secret. The
-> handler can only ever mark a row Active; it never moves money.
+Apps Script answers Stripe's POST with a **302 redirect**, which Stripe counts as a *failed*
+delivery even when the script actually ran. Stripe then retries the same event for hours
+(duplicate "payment received" texts and admin emails) and can eventually **auto-disable** the
+endpoint — at which point new payments silently stop activating. Polling avoids all of that:
+one read, no retries, nothing to disable.
+
+Activation is idempotent, so you *can* leave the webhook on as a faster path if you like —
+whichever sees the payment first activates the row, and the other becomes a no-op. If you keep
+the webhook, it's the old `STRIPE_WEBHOOK_TOKEN` + endpoint setup:
+
+> `STRIPE_WEBHOOK_TOKEN` = a random string, repeated in the endpoint URL as
+> `…/exec?stripeToken=<that string>`, listening for `checkout.session.completed`. Apps Script
+> can't read Stripe's signature header, so this token is what guards the endpoint. The handler
+> can only ever mark a row Active; it never moves money. **Polling alone is enough — the webhook
+> is optional.**
 
 ### 0e. Turn on PayPal as a payment option (optional, ~2 min)
 
@@ -228,7 +248,7 @@ names, phone numbers, and emails, plus the names of your other contractor custom
 
 1. Open your Google Sheet > **Extensions > Apps Script**
 2. Delete existing code, paste the full contents of `contractor-automation.gs`
-3. Click the gear icon > **Script Properties**, add all 6:
+3. Click the gear icon > **Script Properties**, add these:
 
 | Property | Value |
 |---|---|
@@ -237,7 +257,8 @@ names, phone numbers, and emails, plus the names of your other contractor custom
 | `TWILIO_FROM` | Your Twilio number, e.g. `+12105551234` |
 | `ADMIN_PHONE` | Your cell, e.g. `+12105559999` |
 | `DASHBOARD_KEY` | A long random password for the dashboard (30+ characters — treat it like a password). The dashboard API refuses every request until this is set. |
-| `STRIPE_WEBHOOK_TOKEN` | A long random string, repeated in the Stripe webhook URL as `?stripeToken=...` (Step 0d). Paid contractors stay at Pending Payment until this is set. |
+| `STRIPE_SECRET_KEY` | A restricted Stripe key (read access to Checkout Sessions) — powers automatic activation (Step 0d). Paid contractors stay at Pending Payment until this is set. |
+| `STRIPE_WEBHOOK_TOKEN` | *Optional.* Only needed if you also keep the webhook on alongside polling (Step 0d). |
 
 4. Click **Deploy > New Deployment**
    - Type: **Web App** | Execute as: **Me** | Access: **Anyone**
@@ -273,7 +294,7 @@ needs your attention.**
 
 | Thing | Why it's safe |
 |---|---|
-| All 6 Script Properties | Stored on the project, not the code. Never cleared by pasting or deploying. |
+| All Script Properties (Twilio, keys, tokens) | Stored on the project, not the code. Never cleared by pasting or deploying. |
 | The `/exec` URL | Unchanged as long as you use **Edit → New version** (not *New deployment*). |
 | Triggers (`sendHomeownerFollowUps`, `runDailyMaintenance`) | Attached to the project, not the deployment. They keep firing. |
 | Stripe webhook endpoint | Points at the same `/exec` URL, so nothing to re-enter. |
