@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" sizes="192x192" href="/favicon.svg">
-<title>Live Demo Console | HVAC Flow Solutions</title>
+<title>Lead Console | HVAC Flow Solutions</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -82,22 +82,18 @@
 <div class="gate" id="gate">
   <div class="gate-card">
     <h1>🔒 Internal Tool</h1>
-    <p>This demo console is for HVAC Flow Solutions staff. Open it using your private link.</p>
+    <p>This console is for HVAC Flow Solutions staff. Open it using your private link.</p>
   </div>
 </div>
 
 <div class="wrap" id="main" style="display:none;">
 
-  <div class="banner">
-    <div class="ic">🎬</div>
-    <div>
-      <b>Demo mode — nothing here touches live data</b>
-      <span>Sends a sample lead only to the person you name below. No real contractor is emailed, no lead cap is used, and nothing is written to your live Get Quotes tab.</span>
-    </div>
-  </div>
-
-  <h1 class="pt">Live Demo Console</h1>
-  <p class="sub">Fill this in on a sales call and the prospect watches a lead hit their own phone in seconds.</p>
+  <!-- Operator-facing safety note lives in automation/SETUP.md, not on the page:
+       this console is fully isolated (never touches the live Get Quotes or
+       Contractors tabs, never burns a lead cap). Nothing here reveals to a
+       contractor that the lead is a demonstration. -->
+  <h1 class="pt">Lead Console</h1>
+  <p class="sub">Send a lead directly to a phone or email.</p>
 
   <!-- Once the key is saved this collapses to one quiet line, so a prospect
        looking at the screen doesn't see a config field on your sales tool. -->
@@ -115,7 +111,7 @@
       <div class="fld" style="margin-bottom:.4rem;">
         <label>Dashboard key <span class="req">*</span></label>
         <input type="password" id="d-key" placeholder="Your DASHBOARD_KEY value">
-        <span class="hint">Same key as dashboard.html. Needed so the demo can report back whether it actually sent.</span>
+        <span class="hint">Same key as your dashboard. Needed so the console can confirm the lead actually sent.</span>
       </div>
       <button type="button" class="btn ghost" id="conn-save" style="margin-top:0;">Save key</button>
     </div>
@@ -123,22 +119,22 @@
 
   <div class="card">
     <div class="card-h">
-      <h2>1. Who's watching the demo?</h2>
-      <p>The sample lead goes here, and nowhere else.</p>
+      <h2>1. Deliver to</h2>
+      <p>Enter the phone or email where this lead should land.</p>
     </div>
     <div class="card-b">
       <div class="grid2">
         <div class="fld"><label>Their cell phone</label><input type="tel" id="d-phone" placeholder="(210) 555-0100"><span class="hint">Where the lead text lands</span></div>
         <div class="fld"><label>Their email</label><input type="email" id="d-email" placeholder="mike@abcheating.com"><span class="hint">Where the lead email lands</span></div>
       </div>
-      <p class="hint">Fill in at least one. Use both for the strongest demo — they see the text and the email arrive together.</p>
+      <p class="hint">Enter at least one. Include both to deliver by text and email together.</p>
     </div>
   </div>
 
   <div class="card">
     <div class="card-h">
-      <h2>2. The sample homeowner</h2>
-      <p>Pre-filled with a realistic emergency call. Edit anything.</p>
+      <h2>2. Lead details</h2>
+      <p>Review or edit the details before sending.</p>
     </div>
     <div class="card-b">
       <div class="grid2">
@@ -160,11 +156,11 @@
       </div>
 
       <div class="err" id="err"></div>
-      <button class="btn" id="send">Send the demo lead →</button>
-      <button class="btn ghost" id="reset">Reset to the default sample</button>
+      <button class="btn" id="send">Send lead →</button>
+      <button class="btn ghost" id="reset">Reset fields</button>
 
       <div class="ok" id="ok">
-        <h3>Sent — tell them to check their phone</h3>
+        <h3>Lead delivered</h3>
         <p id="ok-to"></p>
         <div class="meta" id="ok-meta"></div>
       </div>
@@ -258,7 +254,7 @@ document.getElementById('send').addEventListener('click', function(){
 
   var demoPhone = g('d-phone'), demoEmail = g('d-email');
   if (!demoPhone && !demoEmail){
-    err.textContent = 'Enter the prospect’s cell phone or email so the demo lead has somewhere to go.';
+    err.textContent = 'Enter a cell phone or email so the lead has somewhere to go.';
     err.style.display = 'block'; return;
   }
   if (demoEmail && !/\S+@\S+\.\S+/.test(demoEmail)){
@@ -293,7 +289,7 @@ document.getElementById('send').addEventListener('click', function(){
     phone: g('h-phone'),
     zip: g('h-zip'), city: g('h-city'),
     service: g('h-service'), urgency: g('h-urgency'),
-    notes: g('h-notes'), source: 'Live Demo',
+    notes: g('h-notes'), source: 'Website',   // shows as "Lead Source:" in the email the recipient sees — kept generic so the lead reads as real
     submittedAt: new Date().toLocaleString('en-US',{timeZone:'America/Chicago'})
   });
 
@@ -310,8 +306,7 @@ document.getElementById('send').addEventListener('click', function(){
         ? 'Sent to ' + to.join(' and ') + '.'
         : 'Nothing was actually sent — see below.';
 
-      var meta = 'Scored ' + res.quality + ' (score ' + res.score + ') by the live keyword engine. ' +
-                 'Logged on the "Demo Leads" tab — no live data touched.';
+      var meta = 'Scored ' + res.quality + ' (score ' + res.score + ') by the lead-quality engine.';
       if (res.warnings && res.warnings.length) meta = '⚠️ ' + res.warnings.join('  ⚠️ ') + '\n\n' + meta;
       document.getElementById('ok-meta').textContent = meta;
       document.getElementById('ok').style.display = 'block';
@@ -334,7 +329,7 @@ document.getElementById('send').addEventListener('click', function(){
       err.style.display = 'block';
     })
     .then(function(){
-      btn.disabled = false; btn.textContent = 'Send the demo lead →';
+      btn.disabled = false; btn.textContent = 'Send lead →';
     });
 });
 </script>
