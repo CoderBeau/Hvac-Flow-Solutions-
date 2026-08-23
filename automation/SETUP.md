@@ -419,6 +419,6 @@ This guide covers the **lead pipeline** (forms → sheet → scoring → routing
 
 - **`automation/GOOGLE-ADS-MCP-SETUP.md`** — connect Google Ads to Claude Code so campaigns can be built, adjusted, and reported on by command. Start-to-finish, with every copy/paste step for the manager account.
 - **`.claude/skills/campaign-ops/`** — the ops skill that executes those campaigns and publishes SEO content. Loads automatically when working in this repo.
-- **`automation/PROSPECTS-SETUP.md`** — the **Prospect Outreach Center**: the scraper (`scraper/`) finds contractors paying for shared leads on Thumbtack/Angi, `prospect-outreach.gs` drafts a personalized poaching sequence for each, and `prospects.html` is the approve-and-send queue. This is the contractor-side growth engine (selling leads), where the ads/SEO above are the homeowner side (creating leads).
+- **`scraper/`** — a standalone Python tool (runs on your own computer, nothing to deploy) that finds HVAC contractors paying for shared leads on Thumbtack/Angi/etc., scores them Hot/Warm/Cool, and writes a local CSV of prospects to pitch the exclusive-lead offer to.
 
 The two halves are designed to meet: the Bad keyword list in `contractor-automation.gs` seeds the ad negative-keyword list, and the Good/Bad verdicts in the **Get Quotes** tab are what ad spend should ultimately be judged against — not Google's raw conversion count.

@@ -4,4 +4,3 @@ Disallow: /contractor-form.html
 Disallow: /homeowner-form.html
 Disallow: /get-quotes.html
 Disallow: /dashboard.html
-Disallow: /prospects.html

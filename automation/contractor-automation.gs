@@ -162,11 +162,6 @@ function doPost(e) {
       notifyTrialSignupSMS(data, result.clientId, result.startDate, result.endDate);
     } else if (data.type === 'Demo') {
       return jsonOut(handleDemoLead(ss, data));
-    } else if (data.type === 'ProspectImport') {
-      // Bulk prospect import from scraper/ — key-checked inside the
-      // handler (this endpoint is otherwise public for the site forms).
-      // Handler lives in prospect-outreach.gs.
-      return jsonOut(handleProspectImport(ss, data));
     } else if (data.message && data.message.type === 'end-of-call-report') {
       handleVapiCall(ss, data.message);
     }
@@ -482,9 +477,6 @@ function formatStripeAmount(session) {
 //   setContractorStatus  -> &row=N&status=Active|Paused
 //   addKeyword           -> &kind=good|bad&word=...
 //   removeKeyword        -> &kind=good|bad&word=...
-//   prospects / addProspect / updateProspect / setProspectStatus /
-//   sendProspectTouch / skipProspectTouch
-//                        -> prospect outreach center (prospect-outreach.gs)
 function doGet(e) {
   var p = (e && e.parameter) || {};
 
@@ -502,11 +494,6 @@ function doGet(e) {
     if (action === 'setContractorStatus') return jsonOut(apiSetContractorStatus(ss, p));
     if (action === 'addKeyword')          return jsonOut(apiAddKeyword(ss, p));
     if (action === 'removeKeyword')       return jsonOut(apiRemoveKeyword(ss, p));
-
-    // Prospect outreach actions (prospects.html) live in
-    // prospect-outreach.gs; returns null for actions it doesn't own.
-    var prospectResult = prospectApi(ss, action, p);
-    if (prospectResult) return jsonOut(prospectResult);
 
     return jsonOut({ status: 'error', message: 'Unknown action: ' + action });
   } catch (err) {

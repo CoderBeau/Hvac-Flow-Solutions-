@@ -1,4 +1,2 @@
-node_modules/
-config.json
 out/
-package-lock.json
+__pycache__/
