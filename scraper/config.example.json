@@ -1,0 +1,5 @@
+{
+  "//": "Copy this file to config.json (git-ignored) and fill in both values. Or set HFS_EXEC_URL / HFS_DASHBOARD_KEY environment variables instead — env vars win.",
+  "execUrl": "https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec",
+  "dashboardKey": "your DASHBOARD_KEY script property value"
+}
