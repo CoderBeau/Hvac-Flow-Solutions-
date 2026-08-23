@@ -303,7 +303,11 @@ async function main() {
         console.error('Playwright is not installed. Run:  cd scraper && npm install');
         process.exit(1);
       }
-      const browser = await chromium.launch({ headless: !args.headed });
+      // CHROMIUM_PATH lets environments with a system-installed Chromium
+      // (e.g. remote sandboxes) skip Playwright's own browser download.
+      const launchOpts = { headless: !args.headed };
+      if (process.env.CHROMIUM_PATH) launchOpts.executablePath = process.env.CHROMIUM_PATH;
+      const browser = await chromium.launch(launchOpts);
       const context = await browser.newContext({
         viewport: { width: 1400, height: 900 },
         locale: 'en-US'
