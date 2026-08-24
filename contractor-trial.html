@@ -111,7 +111,7 @@
   .gate-logo-text strong { display: block; color: var(--navy); font-size: 13px; }
 
   /* ── MAIN FORM ── */
-  #main-content { display: none; }
+  #main-content { display: block; }
   .page { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 40px 20px 100px; }
 
   /* Header hero card */
@@ -272,26 +272,6 @@
 <body>
 
 <!-- ── ACCESS GATE (shown when no valid token) ── -->
-<div id="access-gate">
-  <div class="gate-card">
-    <div class="gate-logo">
-      <div class="gate-logo-icon">HFS</div>
-      <div class="gate-logo-text">
-        <strong>HVAC Flow Solutions</strong>
-        boosthvacleads.com
-      </div>
-    </div>
-    <div class="gate-icon">🔒</div>
-    <div class="gate-title">Private Form</div>
-    <p class="gate-sub">This form is only available to contractors who have been personally invited by HVAC Flow Solutions.</p>
-    <div class="gate-contact">
-      Interested in our trial lead package?<br>
-      Reach out at <a href="mailto:hvacflowsolutions@gmail.com">hvacflowsolutions@gmail.com</a>
-    </div>
-  </div>
-</div>
-
-<!-- ── MAIN CONTENT (shown when token is valid) ── -->
 <div id="main-content">
 <div class="page">
 
@@ -486,7 +466,7 @@
 
   <div class="form-footer">
     <p>© 2026 HVAC Flow Solutions &nbsp;·&nbsp; <a href="mailto:hvacflowsolutions@gmail.com">hvacflowsolutions@gmail.com</a></p>
-    <p style="margin-top:6px;">This form is private and by invitation only. Your information is kept confidential.</p>
+    <p style="margin-top:6px;">Your information is kept secure and confidential.</p>
   </div>
 
 </div>
@@ -495,18 +475,6 @@
 <script>
   // Google Apps Script Web App endpoint (same backend as the main site)
   const SHEET_URL = "https://script.google.com/macros/s/AKfycbysuOn-mjAVLsxDec7dEzU0QIrzKDlruiDQ28UKVeJpgyvlkVe0JSWVw7Y7vsLvFq8/exec";
-
-  // ── ACCESS TOKEN CHECK ──
-  // Share this URL with contractors:
-  // https://boosthvacleads.com/contractor-trial.html?access=hfs-trial-2026
-  const VALID_TOKEN = 'hfs-trial-2026';
-  const params = new URLSearchParams(window.location.search);
-  const hashToken = (window.location.hash || '').replace('#', '').replace('access=', '');
-
-  if (params.get('access') === VALID_TOKEN || hashToken === VALID_TOKEN) {
-    document.getElementById('access-gate').style.display = 'none';
-    document.getElementById('main-content').style.display = 'block';
-  }
 
   // ── Form logic (checkbox e-signature; no drawn signature) ──
   (function() {
