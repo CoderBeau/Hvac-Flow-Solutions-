@@ -13,14 +13,27 @@
 </script>
 
   <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <!--
+    CITY LANDING TEMPLATE - do not publish as-is.
+    To launch a new city:
+      1. Copy this file to /<city-slug>.html (or a city folder).
+      2. Find/replace {{CITY}} with the city name (e.g. Austin).
+      3. Set {{CANONICAL_URL}} to the live URL, {{PHONE}} and {{PHONE_TEL}}
+         to that market's phone (display + tel: digits).
+      4. Remove this comment and the noindex meta tag above.
+      5. Add the new URL to sitemap.xml and submit in Search Console.
+    Note: only launch a city you actually serve - one strong page per
+    city, never bulk thin pages (Google penalizes doorway pages).
+  -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <title>San Antonio HVAC Repair: Get 3 Free Quotes | HVAC Flow Solutions</title>
-  <meta name="description" content="AC or heater out in San Antonio? Get matched with up to 3 vetted local HVAC pros for free. Compare quotes fast, no obligation. Most hear back within the hour.">
-  <link rel="canonical" href="https://boosthvacleads.com/">
+  <title>{{CITY}} HVAC Repair: Get 3 Free Quotes | HVAC Flow Solutions</title>
+  <meta name="description" content="AC or heater out in {{CITY}}? Get matched with up to 3 vetted local HVAC pros for free. Compare quotes fast, no obligation. Most hear back within the hour.">
+  <link rel="canonical" href="{{CANONICAL_URL}}">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script type="application/ld+json">
@@ -28,11 +41,11 @@
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "name": "HVAC Flow Solutions",
-    "description": "Free HVAC contractor matching for San Antonio homeowners and exclusive high-intent leads for HVAC contractors.",
+    "description": "Free HVAC contractor matching for {{CITY}} homeowners and exclusive high-intent leads for HVAC contractors.",
     "url": "https://boosthvacleads.com",
     "telephone": "+1-830-538-0713",
     "email": "hvacflowsolutions@gmail.com",
-    "areaServed": { "@type": "City", "name": "San Antonio", "addressRegion": "TX" },
+    "areaServed": { "@type": "City", "name": "{{CITY}}", "addressRegion": "TX" },
     "address": { "@type": "PostalAddress", "addressRegion": "TX", "addressCountry": "US" }
   }
   </script>
@@ -261,16 +274,16 @@
   <!-- Hero -->
   <header class="m-band hw">
     <div class="m-wrap">
-      <span class="m-eyebrow m-hero-eye"><span class="m-dot"></span>Free San Antonio HVAC Matching</span>
+      <span class="m-eyebrow m-hero-eye"><span class="m-dot"></span>Free {{CITY}} HVAC Matching</span>
       <h1 class="m-h1">Your AC quit in the heat? <span class="m-hl">We'll find your pro, fast.</span></h1>
       <p class="m-lede">When your home hits 100° and the AC dies, you don't have time to call around and hope you're not getting overcharged. Tell us what's wrong and we'll connect you with up to 3 trusted local HVAC pros who compete for your job. Free, no obligation, and most homeowners hear back within the hour.</p>
       <div class="m-hero-btns">
         <a class="m-btn m-btn-red" href="#homeowner-form" onclick="document.getElementById('hw-first').focus();return true;">Get My Free Quotes
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
-        <a class="m-btn m-btn-ghost" href="tel:+18305380713">
+        <a class="m-btn m-btn-ghost" href="tel:{{PHONE_TEL}}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4 1h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 8.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9Z"/></svg>
-          Call Ashley (830) 538-0713
+          Call {{PHONE}}
         </a>
       </div>
       <div class="m-hero-trust">
@@ -287,7 +300,7 @@
       <div class="m-stat"><b>Up to 3</b><span>Local pros compete for your job</span></div>
       <div class="m-stat"><b>1&ndash;2 hrs</b><span>Typical time to first response</span></div>
       <div class="m-stat"><b>$0</b><span>Cost to you, always free</span></div>
-      <div class="m-stat"><b>San Antonio</b><span>Local pros who know your area</span></div>
+      <div class="m-stat"><b>{{CITY}}</b><span>Local pros who know your area</span></div>
     </div>
   </div>
 
@@ -313,7 +326,7 @@
                 <div class="ff"><label class="fl">Phone <span class="req">*</span></label><input class="fi" type="tel" id="hw-phone" placeholder="(210) 555-0100"/></div>
                 <div class="ff"><label class="fl">Email <span class="req">*</span></label><input class="fi" type="email" id="hw-email" placeholder="maria@email.com"/></div>
                 <div class="ff"><label class="fl">ZIP <span class="req">*</span></label><input class="fi" type="text" id="hw-zip" placeholder="78201" maxlength="5"/></div>
-                <div class="ff"><label class="fl">City</label><input class="fi" type="text" id="hw-city" placeholder="San Antonio"/></div>
+                <div class="ff"><label class="fl">City</label><input class="fi" type="text" id="hw-city" placeholder="{{CITY}}"/></div>
                 <div class="ff ff-full">
                   <label class="fl">Service Needed <span class="req">*</span></label>
                   <select class="fse" id="hw-service">
@@ -427,8 +440,8 @@
         </div>
         <div class="m-bcard">
           <div class="m-bic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 21s-7-4.35-7-10a7 7 0 0 1 14 0c0 5.65-7 10-7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg></div>
-          <h3>100% San Antonio</h3>
-          <p>We work only in San Antonio and the surrounding area, so you get pros who know our climate, our homes, and our summers firsthand.</p>
+          <h3>100% {{CITY}}</h3>
+          <p>We work only in {{CITY}} and the surrounding area, so you get pros who know our climate, our homes, and our summers firsthand.</p>
         </div>
       </div>
 
@@ -455,14 +468,14 @@
     <div class="m-wrap">
       <div class="m-cta">
         <h2>Ready to get matched with a trusted pro?</h2>
-        <p>Tell us what's going on and we'll connect you with up to 3 vetted San Antonio HVAC pros, free, and in about 45 seconds.</p>
+        <p>Tell us what's going on and we'll connect you with up to 3 vetted {{CITY}} HVAC pros, free, and in about 45 seconds.</p>
         <div class="m-btns">
           <a class="m-btn m-btn-red" href="#homeowner-form" onclick="document.getElementById('hw-first').focus();return true;">Get My Free Quotes
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
-          <a class="m-btn m-btn-ghost" href="tel:+18305380713">
+          <a class="m-btn m-btn-ghost" href="tel:{{PHONE_TEL}}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4 1h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 8.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9Z"/></svg>
-            Call Ashley (830) 538-0713
+            Call {{PHONE}}
           </a>
         </div>
       </div>
@@ -472,10 +485,10 @@
 
 <!-- Sticky mobile call bar (homeowner only) -->
 <div id="sticky-call-bar" class="fixed bottom-0 left-0 right-0 z-50 md:hidden" style="padding:0.75rem 1rem;background:linear-gradient(135deg,#0B1E3B,#1a3358);box-shadow:0 -4px 20px rgba(0,0,0,0.25);">
-  <a href="tel:+18305380713" class="flex items-center justify-center gap-3 bg-[#C8102E] hover:bg-[#a50d25] text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95"
+  <a href="tel:{{PHONE_TEL}}" class="flex items-center justify-center gap-3 bg-[#C8102E] hover:bg-[#a50d25] text-white font-bold py-3.5 rounded-2xl transition-all active:scale-95"
      style="font-family:'Montserrat',sans-serif;font-size:1rem;letter-spacing:0.03em;">
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.66A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-    📞 Call Ashley for a Free Quote: (830) 538-0713
+    📞 Call for a Free Quote: {{PHONE}}
   </a>
 </div>
 
