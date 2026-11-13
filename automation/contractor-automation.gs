@@ -1754,6 +1754,10 @@ function handleVapiCall(ss, msg) {
     sheet.setFrozenRows(1);
   }
 
+  // Snap a mis-heard city ("San Antone") to the closest real one before routing.
+  var heardCity = city;
+  city = canonicalCity(city) || city;
+
   // Route to contractor in the caller's city
   var cSheet     = ss.getSheetByName('Contractors');
   var contractor = pickContractorByCity(cSheet, city);
@@ -1797,7 +1801,9 @@ function handleVapiCall(ss, msg) {
 
   // Admin alert
   sendSMS(getProperty('ADMIN_PHONE'),
-    'AI CALL: ' + callerName + ' in ' + (city || '?') + ' – ' + (problem || 'HVAC issue') +
+    'AI CALL: ' + callerName + ' in ' + (city || '?') +
+    (heardCity && heardCity !== city ? ' (heard "' + heardCity + '")' : '') +
+    ' – ' + (problem || 'HVAC issue') +
     ' (' + (urgency || '?') + ')' +
     (notified ? ' → routed to ' + notified : ' → NO contractor matched')
   );
@@ -1808,13 +1814,13 @@ function handleVapiCall(ss, msg) {
 function pickContractorByCity(sheet, city) {
   if (!sheet || !city || sheet.getLastRow() < 2) return null;
 
-  var cityLower = city.toLowerCase();
+  var cityLower = canonicalCity(city).toLowerCase();
   var lastCol   = Math.max(sheet.getLastColumn(), 15);
   var rows      = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   var candidates = [];
 
   rows.forEach(function(row, i) {
-    var serviceAreas = String(row[8]).toLowerCase();
+    var serviceAreas = String(row[8]);
     var status       = String(row[10]).trim();
     var leadsCount   = parseInt(row[11], 10) || 0;
     var leadCapRaw   = row[12];
@@ -1822,7 +1828,7 @@ function pickContractorByCity(sheet, city) {
       ? null : parseInt(leadCapRaw, 10);
 
     var isActive   = (status === 'Active' || status === '');
-    var coversCity = serviceAreas.indexOf(cityLower) !== -1;
+    var coversCity = serviceAreaCovers(serviceAreas, cityLower);
     var underCap   = (leadCap === null || leadsCount < leadCap);
 
     if (isActive && coversCity && underCap) {
@@ -1839,6 +1845,77 @@ function pickContractorByCity(sheet, city) {
   if (!candidates.length) return null;
   candidates.sort(function(a, b) { return a.leadsCount - b.leadsCount; });
   return candidates[0];
+}
+
+// ── Forgiving city matching (voice transcription safety net) ──
+// Speech-to-text often mangles city names ("San Antone", "Santa Antonio",
+// "Ft Worth"). These helpers snap what the caller was heard saying to the
+// closest known city before routing, so a small mis-hearing doesn't
+// silently drop the lead.
+var KNOWN_CITIES = ['San Antonio', 'Houston', 'Dallas', 'Austin', 'Fort Worth', 'El Paso'];
+
+var CITY_ALIASES = {
+  'san antone': 'San Antonio', 'santa antonio': 'San Antonio', 'san antonia': 'San Antonio',
+  'san antonio tx': 'San Antonio', 'sa': 'San Antonio', 'sat': 'San Antonio',
+  'ft worth': 'Fort Worth', 'fort wroth': 'Fort Worth', 'forth worth': 'Fort Worth',
+  'elpaso': 'El Paso', 'el paso tx': 'El Paso', 'l paso': 'El Paso',
+  'houstan': 'Houston', 'dalas': 'Dallas', 'austen': 'Austin', 'austin tx': 'Austin'
+};
+
+// Lowercase, strip punctuation / "texas" / "tx", collapse whitespace.
+function normalizeCityText(raw) {
+  return String(raw || '').toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\b(texas|tx)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function editDistance(a, b) {
+  var prev = [], cur = [], i, j;
+  for (j = 0; j <= b.length; j++) prev[j] = j;
+  for (i = 1; i <= a.length; i++) {
+    cur = [i];
+    for (j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1,
+                        prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// Returns the canonical city name for whatever was heard, or the cleaned
+// original text when nothing is close enough (so unknown cities still work).
+function canonicalCity(raw) {
+  var norm = normalizeCityText(raw);
+  if (!norm) return '';
+  if (CITY_ALIASES[norm]) return CITY_ALIASES[norm];
+
+  var best = null, bestDist = Infinity;
+  KNOWN_CITIES.forEach(function(c) {
+    var cn = c.toLowerCase();
+    if (norm === cn) { best = c; bestDist = 0; return; }
+    var d = editDistance(norm, cn);
+    if (d < bestDist) { best = c; bestDist = d; }
+  });
+  var limit = Math.max(1, Math.floor(norm.length * 0.25));
+  return (best && bestDist <= limit) ? best : String(raw).trim();
+}
+
+// True if a contractor's free-text "Service Areas" cell covers the city.
+// Handles "San Antonio, Austin", "San Antonio & surrounding areas",
+// "Ft Worth", odd punctuation, and tokens that are themselves misspelled.
+function serviceAreaCovers(serviceAreasRaw, cityLower) {
+  var areas = normalizeCityText(serviceAreasRaw);
+  var target = normalizeCityText(cityLower);
+  if (!areas || !target) return false;
+  if (areas.indexOf(target) !== -1) return true;
+
+  return String(serviceAreasRaw).split(/[,;\/&|\n]|\band\b/i).some(function(tok) {
+    var t = normalizeCityText(tok);
+    return t && canonicalCity(t).toLowerCase() === target;
+  });
 }
 
 // Simulates a Vapi end-of-call-report so you can test the handler from the
