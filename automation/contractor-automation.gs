@@ -1771,9 +1771,11 @@ function handleVapiCall(ss, msg) {
       'Problem: ' + problem       + '\n' +
       'Urgency: ' + urgency       + '\n' +
       'Call: '    + callbackPhone + '\n' +
-      (recordingUrl ? 'Recording: ' + recordingUrl : '');
+      (recordingUrl ? 'Recording: ' + recordingUrl + '\n' : '') +
+      'Reply STOP to opt out.';
 
-    if (contractor.phone) sendSMS(contractor.phone, smsBody);
+    // Only text contractors who opted in to SMS (email always goes out).
+    if (contractor.phone && contractor.smsConsent === 'Yes') sendSMS(contractor.phone, smsBody);
 
     MailApp.sendEmail(
       contractor.email,
@@ -1815,7 +1817,7 @@ function pickContractorByCity(sheet, city) {
   if (!sheet || !city || sheet.getLastRow() < 2) return null;
 
   var cityLower = canonicalCity(city).toLowerCase();
-  var lastCol   = Math.max(sheet.getLastColumn(), 15);
+  var lastCol   = Math.max(sheet.getLastColumn(), 17);
   var rows      = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   var candidates = [];
 
@@ -1831,11 +1833,13 @@ function pickContractorByCity(sheet, city) {
     var coversCity = serviceAreaCovers(serviceAreas, cityLower);
     var underCap   = (leadCap === null || leadsCount < leadCap);
 
-    if (isActive && coversCity && underCap) {
+    var email = String(row[5]).trim();
+    if (isActive && coversCity && underCap && email) {
       candidates.push({
         row:        i + 2,
-        email:      String(row[5]).trim(),
+        email:      email,
         phone:      String(row[4]).trim(),
+        smsConsent: String(row[16]).trim(),   // col 17 — same opt-in rule as web-form leads
         leadsCount: leadsCount,
         leadCap:    leadCap
       });
