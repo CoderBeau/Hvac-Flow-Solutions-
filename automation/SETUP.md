@@ -314,6 +314,11 @@ the top of the file):
    correct. Only an issue if you created new links and didn't push them here.
 3. **`PACKAGE_LEAD_CAPS` / `MEMBERSHIP_LEAD_CAPS`** — lead limits per tier.
 4. **`ADMIN_EMAIL`**, **`TRIAL_LENGTH_DAYS`**, **`HOMEOWNER_FOLLOWUP_HOURS`**.
+5. **`CITY_METRO_AREAS`** — near the bottom of the file. Lists the suburbs that count as
+   covering a city, so a contractor who only ticks "Stone Oak / North" or "New Braunfels /
+   Boerne" on the form still receives San Antonio leads. Add a suburb here (lowercase) to
+   cover it. After a deploy, run **`testServiceAreaMatching`** from the editor: every form
+   option should log `covers`.
 
 Keyword lists live on the **Keywords** tab of the sheet, not in the code, so editing them
 from the dashboard is safe from any paste.

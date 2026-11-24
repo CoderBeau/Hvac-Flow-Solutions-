@@ -1089,7 +1089,7 @@ function pickContractor(sheet) {
       ? null : parseInt(leadCapRaw, 10);
 
     var isActive   = (status === 'Active' || status === '');
-    var coversCity = (serviceAreas.indexOf(city) !== -1);
+    var coversCity = serviceAreaCovers(serviceAreas, city);
     var underCap   = (leadCap === null || leadsCount < leadCap);
 
     if (isActive && coversCity && email && underCap) {
@@ -1693,6 +1693,19 @@ function testLeadRouting() {
   Logger.log(contractor ? JSON.stringify(contractor) : 'No eligible contractor found.');
 }
 
+// Run from the editor after deploying: every service-area option on the
+// contractor form should cover San Antonio, and other cities should not.
+function testServiceAreaMatching() {
+  var formOptions = ['Central San Antonio', 'Stone Oak / North', 'Alamo Ranch / Northwest',
+                     'Schertz / Northeast', 'South San Antonio', 'New Braunfels / Boerne'];
+  formOptions.forEach(function(area) {
+    Logger.log((serviceAreaCovers(area, 'san antonio') ? 'covers ' : 'MISSES ') + 'San Antonio  <-  ' + area);
+  });
+  ['Houston', 'Austin / Round Rock', 'Dallas, Fort Worth'].forEach(function(area) {
+    Logger.log((serviceAreaCovers(area, 'san antonio') ? 'WRONGLY covers ' : 'correctly skips ') + 'San Antonio  <-  ' + area);
+  });
+}
+
 function testTrial() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var data = {
@@ -1907,14 +1920,32 @@ function canonicalCity(raw) {
   return (best && bestDist <= limit) ? best : String(raw).trim();
 }
 
+// Suburbs and neighborhoods that count as part of a city's metro. The
+// contractor form offers areas like "Stone Oak / North" and "New Braunfels /
+// Boerne" that never spell out the city, so without this a contractor who
+// ticks only those would be active and paid but never matched to a lead.
+// Keys are normalized city names; values are normalized area names. To cover
+// another suburb, add it here (lowercase, letters and spaces only).
+var CITY_METRO_AREAS = {
+  'san antonio': ['stone oak', 'alamo ranch', 'schertz', 'converse', 'helotes',
+                  'new braunfels', 'boerne']
+};
+
 // True if a contractor's free-text "Service Areas" cell covers the city.
 // Handles "San Antonio, Austin", "San Antonio & surrounding areas",
-// "Ft Worth", odd punctuation, and tokens that are themselves misspelled.
+// "Ft Worth", odd punctuation, tokens that are themselves misspelled, and
+// metro suburbs listed in CITY_METRO_AREAS (whole words only).
 function serviceAreaCovers(serviceAreasRaw, cityLower) {
   var areas = normalizeCityText(serviceAreasRaw);
   var target = normalizeCityText(cityLower);
   if (!areas || !target) return false;
   if (areas.indexOf(target) !== -1) return true;
+
+  var padded = ' ' + areas + ' ';
+  var inMetro = (CITY_METRO_AREAS[target] || []).some(function(area) {
+    return padded.indexOf(' ' + area + ' ') !== -1;
+  });
+  if (inMetro) return true;
 
   return String(serviceAreasRaw).split(/[,;\/&|\n]|\band\b/i).some(function(tok) {
     var t = normalizeCityText(tok);
